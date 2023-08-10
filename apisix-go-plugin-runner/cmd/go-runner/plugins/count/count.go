@@ -1,0 +1,138 @@
+package count
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/auth"
+	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser"
+	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
+	"github.com/apache/apisix-go-plugin-runner/pkg/log"
+	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
+	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
+	mredis "github.com/nft-rainbow/rainbow-fiat/common/redis"
+	"github.com/pkg/errors"
+)
+
+func init() {
+	err := plugin.RegisterPlugin(&Count{})
+	if err != nil {
+		log.Fatalf("failed to register plugin count: %s", err)
+	}
+	InitQuotaLimit()
+}
+
+type Count struct {
+	plugin.DefaultPlugin
+}
+
+func (c *Count) Name() string {
+	return "count"
+}
+
+type CountConf struct {
+}
+
+func (c *Count) ParseConf(in []byte) (conf interface{}, err error) {
+	return CountConf{}, nil
+}
+
+func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
+	fn := func() error {
+		userIdStr := r.Header().Get(auth.RAINBOW_USER_ID_HEADER_KEY)
+		costTypeStr := r.Header().Get(reqparser.RAINBOW_COST_TYPE_HEADER_KEY)
+		costCountStr := r.Header().Get(reqparser.RAINBOW_COST_COUNT_HEADER_KEY)
+
+		log.Infof("userId: %v, costType: %v, costCount %v", userIdStr, costTypeStr, costCountStr)
+
+		costCount, err := strconv.Atoi(costCountStr)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse cost count %s", costCountStr)
+		}
+
+		// 如果超过 quotalimit，返回失败
+		pengdingCountKey := mredis.UserPendingCountKey(userIdStr, costTypeStr)
+		countKey := mredis.UserCountKey(userIdStr, costTypeStr)
+
+		currentPendingCount, err := mredis.DB().GetIntOrDefault(context.Background(), pengdingCountKey).Result()
+		if err != nil {
+			return errors.Wrapf(err, "failed to get pending cost count")
+		}
+		currentCount, err := mredis.DB().GetIntOrDefault(context.Background(), countKey).Result()
+		if err != nil {
+			return errors.Wrapf(err, "failed to get cost count")
+		}
+		log.Infof("currentCount %d, currentPendingCount %d, costCount %d", currentCount, currentPendingCount, costCount)
+		costType, err := enums.ParseCostType(costTypeStr)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse cost type")
+		}
+		if int(currentCount)+int(currentPendingCount)+costCount > quotaLimit[*costType] {
+			return errors.Errorf("balance not enough")
+		}
+
+		_, err = mredis.DB().IncrBy(context.Background(), pengdingCountKey, int64(costCount)).Result()
+		if err != nil {
+			return errors.Wrapf(err, "failed to increase pending cost count")
+		}
+
+		reqKey, reqVal := mredis.RequestCountKey(uint(r.ID())), mredis.RequestCountValue(userIdStr, costTypeStr, costCountStr)
+		if _, err = mredis.DB().Set(context.Background(), reqKey, reqVal, time.Minute*10).Result(); err != nil {
+			return errors.Wrapf(err, "failed to cache request")
+		}
+
+		return nil
+	}
+
+	if err := fn(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if _, err := w.Write([]byte(fmt.Sprintf("failed count for request: %v", err))); err != nil {
+			log.Errorf("failed to write: %s", err)
+		}
+	}
+}
+
+func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
+
+	reqKey := mredis.RequestCountKey(uint(w.ID()))
+	defer func() {
+		_, err := mredis.DB().Del(context.Background(), reqKey).Result()
+		if err != nil {
+			log.Errorf("failed to del key %d: %s", reqKey, err)
+		}
+	}()
+
+	val, err := mredis.DB().Get(context.Background(), reqKey).Result()
+	if err != nil {
+		log.Errorf("failed to get req %d val: %s", w.ID(), err)
+		return
+	}
+
+	userId, costType, count, err := mredis.ParseRequestValue(val)
+	if err != nil {
+		log.Errorf("failed to parse req %d val %s: %s", w.ID(), val, err)
+		return
+	}
+
+	pengdingCountKey := mredis.UserPendingCountKey(fmt.Sprintf("%d", userId), costType.String())
+	countKey := mredis.UserCountKey(fmt.Sprintf("%d", userId), costType.String())
+
+	// 无论成功失败都减去pending count
+	_, err = mredis.DB().DecrBy(context.Background(), pengdingCountKey, int64(count)).Result()
+	if err != nil {
+		log.Errorf("failed to decrease pending cost count of req %d: %s", w.ID(), err)
+		return
+	}
+
+	// 请求成功，改变pending count 为 count
+	if w.StatusCode() >= http.StatusOK && w.StatusCode() < http.StatusMultipleChoices {
+		_, err = mredis.DB().IncrBy(context.Background(), countKey, int64(count)).Result()
+		if err != nil {
+			log.Errorf("failed to increase cost count of req %d: %s", w.ID(), err)
+			return
+		}
+	}
+}

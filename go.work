@@ -1,0 +1,8 @@
+go 1.18
+
+use (
+	./apisix-go-plugin-runner
+	./common
+	./settle
+	/Users/dayong/myspace/mywork/rainbow-api
+)

@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+option go_package = "github.com/nft-rainbow/rainbow-settle/proto";
+
+package rainbowsettle;
+
+enum CostType {
+  RainbowNormal = 0;
+  RainbowMint = 1;
+  RainbowDeploy = 2;
+  ConfuraNormal = 5;
+  ScanNormal = 10;
+}
+
+message Empty {
+}
+
+message FreeApiQuota {
+  string FreeApiWorkMonth = 1;
+  uint32 FreeOtherApiQuota = 2;
+  uint32 FreeMintQuota = 3;
+  uint32 FreeDeployQuota = 4;
+}
+
+message UserBalance {
+  uint32 UserId = 1;
+  float Balance = 2;
+  float ArrearsQuota = 3;
+  float CfxPrice = 4;
+  FreeApiQuota FreeApiQuota = 10;
+}
+
+message DepositRequest {
+  uint32 UserId = 1;
+  float Amount = 2;
+  string Description = 3;
+}
+
+message WxOrder {
+  optional string CodeUrl = 1;
+  optional string H5Url = 2;
+  optional string TradeNo = 3;       //`json:"trade_no,omitempty"`
+  optional string TradeProvider = 4; //  `json:"trade_provider,omitempty"`
+  optional string TradeState = 5;    // `json:"trade_state,omitempty"`
+}
+
+message WxOrderRequest { string TradeNo = 1; }
+
+message RefundQuotaRequest {
+  uint32 UserId = 1;
+  CostType CostType = 2;
+  uint32 Count = 3;
+}
+
+message UserID { uint32 UserId = 1; }
+
+// message CmbDepositNo {
+//   uint32 ID = 1;
+//   uint32 UserId = 2;
+//   string UserName = 3;
+//   string UserBankNo = 4;
+//   string UserBankName = 5;
+//   string CmbNo = 6;
+// }
+
+// message CreateCmbDepositNoRequest {
+//   string Name = 1;
+//   string Bank = 2;
+//   string CardNo = 3;
+//   // type CmbDepositNoDto struct {
+//   //   Name   string `form:"name" json:"name" binding:"required"`
+//   //   Bank   string `form:"bank" json:"bank" binding:"required"`
+//   //   CardNo string `form:"card_no" json:"card_no" binding:"required"`
+//   // }
+// }
+
+service Settle {
+  rpc Deposite(DepositRequest) returns (WxOrder);
+  rpc GetWxOrder(WxOrderRequest) returns (WxOrder);
+  rpc RefundQuota(RefundQuotaRequest) returns (UserBalance);
+  rpc GetUserBalance(UserID) returns (UserBalance);
+
+  // rpc GetCmbDepositNo(UserID) returns (CmbDepositNo);
+  // rpc CreateCmbDepositNo(CreateCmbDepositNoRequest) returns (Empty);
+  // rpc UpdateCmbDepositNo(UserID) returns (UserBalance);
+  // rpc GetCmbRecentDeposits(UserID) returns (UserBalance);
+  // rpc GetCmbDepositMeta(UserID) returns (UserBalance);
+}

@@ -1,0 +1,131 @@
+package models
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/nft-rainbow/rainbow-fiat/common/config"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+)
+
+var (
+	db *gorm.DB
+)
+
+const (
+	STATUS_INIT = iota
+	STATUS_SUCCESS
+	STATUS_FAIL
+)
+
+type BaseModel struct {
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+}
+
+func (b BaseModel) GetID() uint { return b.ID }
+
+type Count struct {
+	Count int64 `json:"count"`
+}
+
+type ItemsWithCount[T any] struct {
+	Count int `json:"count"`
+	Items []T `json:"items"`
+}
+
+func NewItemsWithCount[T any](items []T) *ItemsWithCount[T] {
+	return &ItemsWithCount[T]{
+		Count: len(items),
+		Items: items,
+	}
+}
+
+func Init() {
+	ConnectDB(config.Mysql{})
+}
+
+func ConnectDB(dbConfig config.Mysql) {
+	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
+	var err error
+	// dbConfig := config.GetConfig().Mysql
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Db)
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	// Migrate the schema
+	err = db.AutoMigrate(
+		// &User{},
+		// &Application{},
+		// &Transaction{},
+		// &TxContext{},
+		// &ChainAccount{},
+		// &Contract{},
+
+		// &Metadata{},
+		// &MetadataAttribute{},
+		// &File{},
+		// &Statistic{},
+		// &Company{},
+
+		// &Plan{},
+		// &Whitelist{},
+		// &PlanMeta{},
+
+		// &MintTask{},
+		// &MintBatchTask{},
+		// &MintItem{},
+
+		// &TransferTask{},
+		// &TransferBatchTask{},
+		// &TransferItem{},
+
+		// &BurnTask{},
+		// &BurnBatchTask{},
+		// &BurnItem{},
+
+		// &Poap{},
+
+		// &AutoSponsorContract{},
+		// &SponsorTask{},
+		// &SponsorLog{},
+
+		// &BalanceAlert{},
+
+		// &VerifyCode{},
+
+		// &Account{},
+
+		&ApiProfile{},
+		&FiatLog{},
+		&UserBalance{},
+		&DepositOrder{},
+		&Cost{},
+		&CmbDepositNo{},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func GetDB() *gorm.DB {
+	return db
+}
+
+type IdReader interface {
+	GetID() uint
+}
+
+func GetIds[T IdReader](items []T) []uint {
+	var ids []uint
+	for _, item := range items {
+		ids = append(ids, item.GetID())
+	}
+	return ids
+}
