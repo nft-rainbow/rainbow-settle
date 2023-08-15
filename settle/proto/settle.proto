@@ -4,30 +4,22 @@ option go_package = "github.com/nft-rainbow/rainbow-settle/proto";
 
 package rainbowsettle;
 
-enum CostType {
-  RainbowNormal = 0;
-  RainbowMint = 1;
-  RainbowDeploy = 2;
-  ConfuraNormal = 5;
-  ScanNormal = 10;
-}
-
-message Empty {
-}
-
-message FreeApiQuota {
-  string FreeApiWorkMonth = 1;
-  uint32 FreeOtherApiQuota = 2;
-  uint32 FreeMintQuota = 3;
-  uint32 FreeDeployQuota = 4;
-}
+message Empty {}
 
 message UserBalance {
   uint32 UserId = 1;
   float Balance = 2;
   float ArrearsQuota = 3;
   float CfxPrice = 4;
-  FreeApiQuota FreeApiQuota = 10;
+}
+
+message UserApiQuotas { map<string,UserApiQuota> Items = 1; }
+
+message UserApiQuota {
+  uint32 UserID = 1;
+  string CostType = 2;
+  uint32 CountReset = 3;
+  uint32 CountRollover = 4;
 }
 
 message DepositRequest {
@@ -46,9 +38,9 @@ message WxOrder {
 
 message WxOrderRequest { string TradeNo = 1; }
 
-message RefundQuotaRequest {
+message RefundCostRequest {
   uint32 UserId = 1;
-  CostType CostType = 2;
+  string CostType = 2;
   uint32 Count = 3;
 }
 
@@ -77,8 +69,9 @@ message UserID { uint32 UserId = 1; }
 service Settle {
   rpc Deposite(DepositRequest) returns (WxOrder);
   rpc GetWxOrder(WxOrderRequest) returns (WxOrder);
-  rpc RefundQuota(RefundQuotaRequest) returns (UserBalance);
+  rpc RefundCost(RefundCostRequest) returns (Empty);
   rpc GetUserBalance(UserID) returns (UserBalance);
+  rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
 
   // rpc GetCmbDepositNo(UserID) returns (CmbDepositNo);
   // rpc CreateCmbDepositNo(CreateCmbDepositNoRequest) returns (Empty);

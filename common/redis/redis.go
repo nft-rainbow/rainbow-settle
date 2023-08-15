@@ -17,6 +17,12 @@ var (
 	dbSync sync.Once
 )
 
+const (
+	PREFIX_COUNT_KEY         = "count-"
+	PREFIX_COUNT_PENDING_KEY = "count-pending-"
+	PREFIX_REQ_KEY           = "req-"
+)
+
 type ExtendClient struct {
 	*redis.Client
 }
@@ -60,41 +66,146 @@ func DB() *ExtendClient {
 }
 
 func UserCountKey(userId, costType string) string {
-	return fmt.Sprintf("count-%s-%s", userId, costType)
+	return fmt.Sprintf("%s%s-%s", PREFIX_COUNT_KEY, userId, costType)
 }
 
 func UserPendingCountKey(userId, costType string) string {
-	return fmt.Sprintf("count-pending-%s-%s", userId, costType)
+	return fmt.Sprintf("%s%s-%s", PREFIX_COUNT_PENDING_KEY, userId, costType)
 }
 
-func RequestCountKey(reqId uint) string {
-	return fmt.Sprintf("req-%d", reqId)
+func RequestKey(reqId uint) string {
+	return fmt.Sprintf("%s%d", PREFIX_REQ_KEY, reqId)
 }
 
-func RequestCountValue(userId, costType, count string) string {
+func RequestValue(userId, costType, count string) string {
 	return fmt.Sprintf("%s-%s-%s", userId, costType, count)
 }
 
+func ParseCountKey(key string) (userId uint, costType enums.CostType, err error) {
+	return parseCountKeyByPrefix(key, PREFIX_COUNT_KEY)
+}
+
+func ParsePendingCountKey(key string) (userId uint, costType enums.CostType, err error) {
+	return parseCountKeyByPrefix(key, PREFIX_COUNT_PENDING_KEY)
+}
+
+func parseCountKeyByPrefix(key string, prefix string) (userId uint, costType enums.CostType, err error) {
+	err = func() error {
+		core, ok := strings.CutPrefix(key, prefix)
+		if !ok {
+			return errors.Errorf("invalid count key: %s, expect prefix %s", prefix)
+		}
+
+		items := strings.Split(core, "-")
+		if len(items) != 2 {
+			return errors.Errorf("expect 2 items, got %d", len(items))
+		}
+
+		userId, err = ParseUserId(items[0])
+		if err != nil {
+			return err
+		}
+
+		costType, err = ParseCostType(items[1])
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}()
+	return
+}
+
 func ParseRequestValue(val string) (userId uint, costType enums.CostType, count int, err error) {
-	items := strings.Split(val, "-")
-	if len(items) != 3 {
-		return 0, enums.CostType(0), 0, errors.Errorf("expect 3 items, got %d", len(items))
-	}
+	err = func() error {
+		items := strings.Split(val, "-")
+		if len(items) != 3 {
+			return errors.Errorf("expect 3 items, got %d", len(items))
+		}
 
-	_userId, err := strconv.Atoi(items[0])
+		userId, err = ParseUserId(items[0])
+		if err != nil {
+			return err
+		}
+
+		costType, err = ParseCostType(items[1])
+		if err != nil {
+			return err
+		}
+
+		count, err = ParseCount(items[2])
+		if err != nil {
+			return err
+		}
+
+		return nil
+
+	}()
+	return
+}
+
+func ParseUserId(userId string) (uint, error) {
+	_userId, err := strconv.Atoi(userId)
 	if err != nil {
-		return 0, enums.CostType(0), 0, errors.Wrapf(err, "failed to parse user id %s", items[0])
+		return 0, errors.Wrapf(err, "failed to parse user id %s", userId)
 	}
+	return uint(_userId), nil
+}
 
-	_costType, err := enums.ParseCostType(items[1])
+func ParseCostType(costType string) (enums.CostType, error) {
+	_costType, err := enums.ParseCostType(costType)
 	if err != nil {
-		return 0, enums.CostType(0), 0, err
+		return enums.CostType(0), errors.Wrapf(err, "failed parse costtype %s", costType)
 	}
+	return *_costType, nil
+}
 
-	_count, err := strconv.Atoi(items[2])
+func ParseCount(count string) (int, error) {
+	_count, err := strconv.Atoi(count)
 	if err != nil {
-		return 0, enums.CostType(0), 0, errors.Wrapf(err, "failed to parse count %s", items[0])
+		return 0, errors.Wrapf(err, "failed to parse count %s", count)
+	}
+	return _count, nil
+}
+
+func GetUserCounts() (map[string]string, error) {
+	return GetValuesByRegexKey(fmt.Sprintf("^%s-\\d*-.*$", PREFIX_COUNT_KEY))
+}
+
+func GetValuesByRegexKey(pattern string) (map[string]string, error) {
+	// 使用 SCAN 命令获取匹配的 key
+	var cursor uint64
+	var keys []string
+
+	for {
+		var partialKeys []string
+		var err error
+
+		partialKeys, cursor, err = rdb.Scan(context.Background(), cursor, pattern, 10).Result()
+		if err != nil {
+			fmt.Println("Error:", err)
+			return nil, err
+		}
+
+		keys = append(keys, partialKeys...)
+
+		if cursor == 0 {
+			break
+		}
 	}
 
-	return uint(_userId), *_costType, _count, nil
+	result := make(map[string]string)
+	// 获取匹配的 key 对应的 value
+	for _, key := range keys {
+		value, err := rdb.Get(context.Background(), key).Result()
+		if err != nil {
+			// fmt.Printf("Error getting value for key %s: %v\n", key, err)
+			return nil, errors.Wrapf(err, "failed to get value for key %s", key)
+		}
+
+		result[key] = value
+
+		fmt.Printf("Key: %s, Value: %s\n", key, value)
+	}
+	return result, nil
 }

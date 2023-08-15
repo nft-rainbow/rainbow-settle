@@ -79,7 +79,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 			return errors.Wrapf(err, "failed to increase pending cost count")
 		}
 
-		reqKey, reqVal := mredis.RequestCountKey(uint(r.ID())), mredis.RequestCountValue(userIdStr, costTypeStr, costCountStr)
+		reqKey, reqVal := mredis.RequestKey(uint(r.ID())), mredis.RequestValue(userIdStr, costTypeStr, costCountStr)
 		if _, err = mredis.DB().Set(context.Background(), reqKey, reqVal, time.Minute*10).Result(); err != nil {
 			return errors.Wrapf(err, "failed to cache request")
 		}
@@ -97,7 +97,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 
 func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 
-	reqKey := mredis.RequestCountKey(uint(w.ID()))
+	reqKey := mredis.RequestKey(uint(w.ID()))
 	defer func() {
 		_, err := mredis.DB().Del(context.Background(), reqKey).Result()
 		if err != nil {

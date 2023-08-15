@@ -24,8 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 type SettleClient interface {
 	Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*WxOrder, error)
 	GetWxOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*WxOrder, error)
-	RefundQuota(ctx context.Context, in *RefundQuotaRequest, opts ...grpc.CallOption) (*UserBalance, error)
+	RefundCost(ctx context.Context, in *RefundCostRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
+	GetUserApiQuota(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserApiQuotas, error)
 }
 
 type settleClient struct {
@@ -54,9 +55,9 @@ func (c *settleClient) GetWxOrder(ctx context.Context, in *WxOrderRequest, opts 
 	return out, nil
 }
 
-func (c *settleClient) RefundQuota(ctx context.Context, in *RefundQuotaRequest, opts ...grpc.CallOption) (*UserBalance, error) {
-	out := new(UserBalance)
-	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/RefundQuota", in, out, opts...)
+func (c *settleClient) RefundCost(ctx context.Context, in *RefundCostRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/RefundCost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,14 +73,24 @@ func (c *settleClient) GetUserBalance(ctx context.Context, in *UserID, opts ...g
 	return out, nil
 }
 
+func (c *settleClient) GetUserApiQuota(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserApiQuotas, error) {
+	out := new(UserApiQuotas)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/GetUserApiQuota", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SettleServer is the server API for Settle service.
 // All implementations must embed UnimplementedSettleServer
 // for forward compatibility
 type SettleServer interface {
 	Deposite(context.Context, *DepositRequest) (*WxOrder, error)
 	GetWxOrder(context.Context, *WxOrderRequest) (*WxOrder, error)
-	RefundQuota(context.Context, *RefundQuotaRequest) (*UserBalance, error)
+	RefundCost(context.Context, *RefundCostRequest) (*Empty, error)
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
+	GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error)
 	mustEmbedUnimplementedSettleServer()
 }
 
@@ -93,11 +104,14 @@ func (UnimplementedSettleServer) Deposite(context.Context, *DepositRequest) (*Wx
 func (UnimplementedSettleServer) GetWxOrder(context.Context, *WxOrderRequest) (*WxOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWxOrder not implemented")
 }
-func (UnimplementedSettleServer) RefundQuota(context.Context, *RefundQuotaRequest) (*UserBalance, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RefundQuota not implemented")
+func (UnimplementedSettleServer) RefundCost(context.Context, *RefundCostRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefundCost not implemented")
 }
 func (UnimplementedSettleServer) GetUserBalance(context.Context, *UserID) (*UserBalance, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserBalance not implemented")
+}
+func (UnimplementedSettleServer) GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserApiQuota not implemented")
 }
 func (UnimplementedSettleServer) mustEmbedUnimplementedSettleServer() {}
 
@@ -148,20 +162,20 @@ func _Settle_GetWxOrder_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Settle_RefundQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefundQuotaRequest)
+func _Settle_RefundCost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefundCostRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SettleServer).RefundQuota(ctx, in)
+		return srv.(SettleServer).RefundCost(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/rainbowsettle.Settle/RefundQuota",
+		FullMethod: "/rainbowsettle.Settle/RefundCost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SettleServer).RefundQuota(ctx, req.(*RefundQuotaRequest))
+		return srv.(SettleServer).RefundCost(ctx, req.(*RefundCostRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -184,6 +198,24 @@ func _Settle_GetUserBalance_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Settle_GetUserApiQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).GetUserApiQuota(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/GetUserApiQuota",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).GetUserApiQuota(ctx, req.(*UserID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Settle_ServiceDesc is the grpc.ServiceDesc for Settle service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,12 +232,16 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Settle_GetWxOrder_Handler,
 		},
 		{
-			MethodName: "RefundQuota",
-			Handler:    _Settle_RefundQuota_Handler,
+			MethodName: "RefundCost",
+			Handler:    _Settle_RefundCost_Handler,
 		},
 		{
 			MethodName: "GetUserBalance",
 			Handler:    _Settle_GetUserBalance_Handler,
+		},
+		{
+			MethodName: "GetUserApiQuota",
+			Handler:    _Settle_GetUserApiQuota_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

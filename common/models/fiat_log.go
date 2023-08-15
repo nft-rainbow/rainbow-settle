@@ -18,7 +18,8 @@ type PayType int
 const (
 	PAY_TYPE_WX PayType = iota + 1
 	PAY_TYPE_CMB
-	PAY_TYPE_BALANCE_REFUND
+	PAY_TYPE_BALANCE_REFUND_OTHER
+	PAY_TYPE_BALANCE_REFUND_SPONSOR
 	PAY_TYPE_BALANCE = 10
 )
 
@@ -31,7 +32,14 @@ const (
 	FIAT_LOG_TYPE_BUY_STORAGE
 	FIAT_LOG_TYPE_PAY_API_FEE
 	FIAT_LOG_TYPE_CMB_CHARGE // 招行对公充值
-	FIAT_LOG_TYPE_REFUND
+	FIAT_LOG_TYPE_REFUND_OTHER
+	FIAT_LOG_TYPE_REFUND_SPONSOR
+	FIAT_LOG_TYPE_REFUND_API_QUOTA
+	FIAT_LOG_TYPE_REFUND_RESERV3_2
+	FIAT_LOG_TYPE_REFUND_RESERV3_3
+	FIAT_LOG_TYPE_PAY_API_QUOTA
+	FIAT_LOG_TYPE_RESET_API_QUOTA
+	FIAT_LOG_TYPE_DEPOSITE_API_QUOTA
 )
 
 func (f FiatLogType) PayType() PayType {
@@ -40,8 +48,10 @@ func (f FiatLogType) PayType() PayType {
 		return PAY_TYPE_WX
 	case FIAT_LOG_TYPE_CMB_CHARGE:
 		return PAY_TYPE_CMB
-	case FIAT_LOG_TYPE_REFUND:
-		return PAY_TYPE_BALANCE_REFUND
+	case FIAT_LOG_TYPE_REFUND_OTHER:
+		return PAY_TYPE_BALANCE_REFUND_OTHER
+	case FIAT_LOG_TYPE_REFUND_SPONSOR:
+		return PAY_TYPE_BALANCE_REFUND_SPONSOR
 	}
 	return PAY_TYPE_BALANCE
 }
@@ -227,17 +237,18 @@ func FiatLogsMonthSummary(cond FiatlogSummaryFilter, offset, limit int) (items [
 }
 
 type FiatlogChangesItem struct {
-	UserId       uint            `json:"user_id"`
-	Email        string          `json:"email"`
-	Deposit      decimal.Decimal `json:"deposit"`
-	Withdraw     decimal.Decimal `json:"withdraw"`
-	Gas          decimal.Decimal `json:"gas"`
-	Storage      decimal.Decimal `json:"storage"`
-	ApiFee       decimal.Decimal `json:"api_fee"`
-	CmbDeposit   decimal.Decimal `json:"cmb_deposit"`
-	Refund       decimal.Decimal `json:"refund"`
-	StartBalance decimal.Decimal `json:"start_balance"`
-	EndBalance   decimal.Decimal `json:"end_balance"`
+	UserId           uint            `json:"user_id"`
+	Email            string          `json:"email"`
+	Deposit          decimal.Decimal `json:"deposit"`
+	Withdraw         decimal.Decimal `json:"withdraw"`
+	Gas              decimal.Decimal `json:"gas"`
+	Storage          decimal.Decimal `json:"storage"`
+	ApiFee           decimal.Decimal `json:"api_fee"`
+	CmbDeposit       decimal.Decimal `json:"cmb_deposit"`
+	RefundForSponsor decimal.Decimal `json:"refund_for_sponsor"`
+	RefundForOther   decimal.Decimal `json:"refund_for_other"`
+	StartBalance     decimal.Decimal `json:"start_balance"`
+	EndBalance       decimal.Decimal `json:"end_balance"`
 }
 
 func FiatlogOfBalanceChanges(cond FiatlogSummaryFilter, offset, limit int) ([]*FiatlogChangesItem, int64, error) {
@@ -279,8 +290,10 @@ func FiatlogOfBalanceChanges(cond FiatlogSummaryFilter, offset, limit int) ([]*F
 			userChanges[userId].ApiFee = summaryItem.Amount
 		case FIAT_LOG_TYPE_CMB_CHARGE: // 招行对公充值
 			userChanges[userId].CmbDeposit = summaryItem.Amount
-		case FIAT_LOG_TYPE_REFUND:
-			userChanges[userId].Refund = summaryItem.Amount
+		case FIAT_LOG_TYPE_REFUND_OTHER:
+			userChanges[userId].RefundForOther = summaryItem.Amount
+		case FIAT_LOG_TYPE_REFUND_SPONSOR:
+			userChanges[userId].RefundForSponsor = summaryItem.Amount
 		}
 	}
 

@@ -10,21 +10,23 @@ import (
 type CostType uint
 
 const (
-	COST_TYPE_NORMAL CostType = iota
-	COST_TYPE_MINT
-	COST_TYPE_DEPLOY
+	COST_TYPE_RAINBOW_NORMAL CostType = iota
+	COST_TYPE_RAINBOW_MINT
+	COST_TYPE_RAINBOW_DEPLOY
+	COST_TYPE_CONFURA_NOMRAL = 5
+	COST_TYPE_SCAN_NORMAL    = 10
 )
 
 func GetCostType(isTestnet bool, method string, path string) CostType {
 	if !isTestnet {
 		if utils.IsMint(method, path) {
-			return COST_TYPE_MINT
+			return COST_TYPE_RAINBOW_MINT
 		}
 		if utils.IsDeploy(method, path) {
-			return COST_TYPE_DEPLOY
+			return COST_TYPE_RAINBOW_DEPLOY
 		}
 	}
-	return COST_TYPE_NORMAL
+	return COST_TYPE_RAINBOW_NORMAL
 }
 
 var (
@@ -38,9 +40,9 @@ var (
 
 func init() {
 	CostTypeValue2StrMap = map[CostType]string{
-		COST_TYPE_NORMAL: "normal",
-		COST_TYPE_MINT:   "mint",
-		COST_TYPE_DEPLOY: "deploy",
+		COST_TYPE_RAINBOW_NORMAL: "normal",
+		COST_TYPE_RAINBOW_MINT:   "mint",
+		COST_TYPE_RAINBOW_DEPLOY: "deploy",
 	}
 
 	CostTypeStr2ValueMap = make(map[string]CostType)

@@ -3,17 +3,12 @@ package server
 import (
 	"context"
 
+	"github.com/nft-rainbow/rainbow-api/models"
+	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"github.com/nft-rainbow/rainbow-fiat/settle/proto"
 	"github.com/nft-rainbow/rainbow-fiat/settle/services"
 	"google.golang.org/grpc"
 )
-
-// type SettleClient interface {
-// 	Deposite(ctx context.Context, in *proto.DepositRequest, opts ...grpc.CallOption) (*proto.WxOrder, error)
-// 	GetWxOrder(ctx context.Context, in *proto.WxOrderRequest, opts ...grpc.CallOption) (*proto.WxOrder, error)
-// 	RefundQuota(ctx context.Context, in *proto.RefundQuotaRequest, opts ...grpc.CallOption) (*proto.UserBalance, error)
-// 	GetUserBalance(ctx context.Context, in *proto.UserID, opts ...grpc.CallOption) (*proto.UserBalance, error)
-// }
 
 type SettleServer struct {
 }
@@ -36,10 +31,47 @@ func (s *SettleServer) GetWxOrder(ctx context.Context, in *proto.WxOrderRequest,
 	return nil, nil
 }
 
-func (s *SettleServer) RefundQuota(ctx context.Context, in *proto.RefundQuotaRequest, opts ...grpc.CallOption) (*proto.UserBalance, error) {
+// 根据settle堆栈判断退quota还是balance
+func (s *SettleServer) RefundCost(ctx context.Context, in *proto.RefundCostRequest, opts ...grpc.CallOption) (*proto.Empty, error) {
+	costType, err := enums.ParseCostType(in.CostType)
+	if err != nil {
+		return nil, err
+	}
 
+	err = services.RefundApiCost(uint(in.UserId), *costType, int(in.Count))
+	if err != nil {
+		return nil, err
+	}
+	return nil, err
 }
 
 func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID, opts ...grpc.CallOption) (*proto.UserBalance, error) {
+	ub, err := models.GetUserBalance(uint(in.UserId))
+	if err != nil {
+		return nil, err
+	}
+	return &proto.UserBalance{
+		UserId: uint32(ub.UserId),
+	}, nil
+}
 
+func (s *SettleServer) GetUserApiQuota(ctx context.Context, in *proto.UserID, opts ...grpc.CallOption) (*proto.UserApiQuotas, error) {
+	_uqs, err := services.GetUserQuotaOperator().GetUserQuotas(uint(in.UserId))
+	if err != nil {
+		return nil, err
+	}
+
+	uqs := &proto.UserApiQuotas{}
+	uqs.Items = make(map[string]*proto.UserApiQuota)
+	for _, _u := range _uqs {
+
+		u := proto.UserApiQuota{
+			UserID:        uint32(_u.UserId),
+			CostType:      _u.CostType.String(),
+			CountReset:    uint32(_u.CountReset),
+			CountRollover: uint32(_u.CountRollover),
+		}
+		uqs.Items[_u.CostType.String()] = &u
+	}
+	return uqs, nil
 }

@@ -10,7 +10,10 @@ import (
 )
 
 var (
-	db *gorm.DB
+	db          *gorm.DB
+	mysqlConfig *config.Mysql
+	fee         *config.Fee
+	cfxPrice    float64
 )
 
 const (
@@ -44,8 +47,15 @@ func NewItemsWithCount[T any](items []T) *ItemsWithCount[T] {
 	}
 }
 
-func Init() {
-	ConnectDB(config.Mysql{})
+func Init(mysqlConfig config.Mysql, fee config.Fee, cfxPrice float64) {
+	initConfigs(mysqlConfig, fee, cfxPrice)
+	ConnectDB(mysqlConfig)
+}
+
+func initConfigs(_mysqlConfig config.Mysql, _fee config.Fee, _cfxPrice float64) {
+	mysqlConfig = &_mysqlConfig
+	fee = &_fee
+	cfxPrice = _cfxPrice
 }
 
 func ConnectDB(dbConfig config.Mysql) {

@@ -52,11 +52,11 @@ func NewCost(userId uint, method string, path string, isTestnet bool, count uint
 }
 
 func (c *Cost) IsMainnetMint() bool {
-	return enums.GetCostType(c.IsTestnet, c.Method, c.Path) == enums.COST_TYPE_MINT
+	return enums.GetCostType(c.IsTestnet, c.Method, c.Path) == enums.COST_TYPE_RAINBOW_MINT
 }
 
 func (c *Cost) IsMainnetDeploy() bool {
-	return enums.GetCostType(c.IsTestnet, c.Method, c.Path) == enums.COST_TYPE_DEPLOY
+	return enums.GetCostType(c.IsTestnet, c.Method, c.Path) == enums.COST_TYPE_RAINBOW_DEPLOY
 }
 
 func FindAllUserCostUnSettledBeforeToday() (map[uint][]*Cost, error) {
@@ -159,12 +159,12 @@ func calcUserRemain(ur *userRemain, cost *Cost, verfiy bool) error {
 }
 
 func CalcApiFee(c *Cost, unfree *FreeApiUsed) decimal.Decimal {
-	unitPrice := getApiPrice(c.Method, c.Path, c.IsTestnet)
+	unitPrice := decimal.NewFromInt(0) //getApiPrice(c.Method, c.Path, c.IsTestnet)
 
 	switch c.CostType {
-	case enums.COST_TYPE_MINT:
+	case enums.COST_TYPE_RAINBOW_MINT:
 		return unitPrice.Mul(decimal.NewFromInt(int64(unfree.FreeMint)))
-	case enums.COST_TYPE_DEPLOY:
+	case enums.COST_TYPE_RAINBOW_DEPLOY:
 		return unitPrice.Mul(decimal.NewFromInt(int64(unfree.FreeDeploy)))
 	default:
 		return unitPrice.Mul(decimal.NewFromInt(int64(unfree.FreeOtherApi)))
