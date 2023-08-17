@@ -45,6 +45,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		userIdStr := r.Header().Get(auth.RAINBOW_USER_ID_HEADER_KEY)
 		costTypeStr := r.Header().Get(reqparser.RAINBOW_COST_TYPE_HEADER_KEY)
 		costCountStr := r.Header().Get(reqparser.RAINBOW_COST_COUNT_HEADER_KEY)
+		reqId := r.Header().Get(reqparser.RAINBOW_REQUEST_ID)
 
 		log.Infof("userId: %v, costType: %v, costCount %v", userIdStr, costTypeStr, costCountStr)
 
@@ -79,7 +80,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 			return errors.Wrapf(err, "failed to increase pending cost count")
 		}
 
-		reqKey, reqVal := mredis.RequestKey(uint(r.ID())), mredis.RequestValue(userIdStr, costTypeStr, costCountStr)
+		reqKey, reqVal := mredis.RequestKey(reqId), mredis.RequestValue(userIdStr, costTypeStr, costCountStr)
 		if _, err = mredis.DB().Set(context.Background(), reqKey, reqVal, time.Minute*10).Result(); err != nil {
 			return errors.Wrapf(err, "failed to cache request")
 		}
@@ -96,8 +97,16 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 }
 
 func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
+	// log.Infof("get content-type %s", w.Header().Get("Content-Type"))
+	// w.Header().Set("Content-Type", w.Header().Get("Content-Type"))
 
-	reqKey := mredis.RequestKey(uint(w.ID()))
+	reqId := w.Header().Get(reqparser.RAINBOW_REQUEST_ID)
+	// log.Infof("get x-rainbow-request-id %s", reqId)
+	if reqId == "" {
+		return
+	}
+
+	reqKey := mredis.RequestKey(reqId)
 	defer func() {
 		_, err := mredis.DB().Del(context.Background(), reqKey).Result()
 		if err != nil {

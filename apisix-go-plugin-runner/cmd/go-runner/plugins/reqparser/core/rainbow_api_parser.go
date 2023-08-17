@@ -3,7 +3,7 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -64,7 +64,7 @@ func ParseRainbowApiRequest(r pkgHTTP.Request) (*RainbowApiReqParseResult, error
 	if err != nil {
 		return nil, err
 	}
-	c.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
+	c.Request.Body = io.NopCloser(bytes.NewReader(body))
 	return parseRainbowApiRequestByGin(c)
 }
 

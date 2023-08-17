@@ -4,5 +4,6 @@ use (
 	./apisix-go-plugin-runner
 	./common
 	./settle
+	/Users/dayong/myspace/mywork/conflux-gin-helper
 	/Users/dayong/myspace/mywork/rainbow-api
 )
