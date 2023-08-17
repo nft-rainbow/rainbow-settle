@@ -132,7 +132,7 @@ func refreshUserRemainBalanceQuota(tx *gorm.DB, ub *UserBalance) error {
 	ur := &userRemain{
 		// initial:      *ub,
 		balanceQuota: ub.Balance.Add(ub.ArrearsQuota),
-		freeApiQuota: &ub.FreeApiQuota,
+		// freeApiQuota: &ub.FreeApiQuota,
 	}
 
 	for _, c := range costs {
@@ -273,7 +273,7 @@ func GetRuntimeUserBalance(userId uint) (*UserBalance, error) {
 	ur := current.(*userRemain)
 
 	ub.Balance = ur.balanceQuota.Sub(ub.ArrearsQuota)
-	ub.FreeApiQuota = *ur.freeApiQuota
+	// ub.FreeApiQuota = *ur.freeApiQuota
 	return ub, nil
 }
 

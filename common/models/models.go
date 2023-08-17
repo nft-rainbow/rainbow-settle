@@ -50,6 +50,10 @@ func NewItemsWithCount[T any](items []T) *ItemsWithCount[T] {
 func Init(mysqlConfig config.Mysql, fee config.Fee, cfxPrice float64) {
 	initConfigs(mysqlConfig, fee, cfxPrice)
 	ConnectDB(mysqlConfig)
+	InitApiProfile()
+	InitUserBalances()
+	InitUserUserApiQuota()
+	InitUserSettleds()
 }
 
 func initConfigs(_mysqlConfig config.Mysql, _fee config.Fee, _cfxPrice float64) {
@@ -113,7 +117,10 @@ func ConnectDB(dbConfig config.Mysql) {
 
 		&ApiProfile{},
 		&FiatLog{},
+		&FiatLogCache{},
 		&UserBalance{},
+		&UserApiQuota{},
+		&UserSettled{},
 		&DepositOrder{},
 		&Cost{},
 		&CmbDepositNo{},

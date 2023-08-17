@@ -17,7 +17,7 @@ type UserBalance struct {
 	UserId       uint            `gorm:"type:int;unique" json:"user_id"`
 	Balance      decimal.Decimal `gorm:"type:decimal(20,2)" json:"balance"`       // 单位元
 	ArrearsQuota decimal.Decimal `gorm:"type:decimal(20,2)" json:"arrears_quota"` // 单位元
-	FreeApiQuota
+	// FreeApiQuota
 	FreeApiWorkMonth string          `gorm:"type:varchar(10);index" json:"free_api_work_month"`   // 生效的月份
 	CfxPrice         decimal.Decimal `gorm:"type:decimal(20,2);default:0.8" json:"storage_price"` // 存储售卖单价单位分
 }
@@ -26,11 +26,11 @@ func NewUserBalance(userId uint) *UserBalance {
 	return &UserBalance{
 		UserId:       userId,
 		ArrearsQuota: decimal.NewFromInt(fee.UserDefaultArrearsQuota),
-		FreeApiQuota: FreeApiQuota{
-			FreeOtherApiQuota: fee.UserDefaultFreeOtherAPIQuota,
-			FreeMintQuota:     fee.UserDefaultFreeMintQuota,
-			FreeDeployQuota:   fee.UserDefaultFreeDeployQuota,
-		},
+		// FreeApiQuota: FreeApiQuota{
+		// 	FreeOtherApiQuota: fee.UserDefaultFreeOtherAPIQuota,
+		// 	FreeMintQuota:     fee.UserDefaultFreeMintQuota,
+		// 	FreeDeployQuota:   fee.UserDefaultFreeDeployQuota,
+		// },
 
 		FreeApiWorkMonth: utils.CurrentMonthStr(),
 	}
@@ -103,9 +103,9 @@ func InitUserBalances() {
 		}
 	}
 
-	if err := initUsersRemainBalanceQuota(); err != nil {
-		panic(err)
-	}
+	// if err := initUsersRemainBalanceQuota(); err != nil {
+	// 	panic(err)
+	// }
 }
 
 func GetUserBalance(userId uint) (*UserBalance, error) {
@@ -248,26 +248,26 @@ func UpdateUserArrearsQuota(userId uint, amount decimal.Decimal) error {
 // 	return GetDB().Save(&ub).Error
 // }
 
-func ResetAllUserFreeApiQuota() error {
-	currntMonth := utils.CurrentMonthStr()
+// func ResetAllUserFreeApiQuota() error {
+// 	currntMonth := utils.CurrentMonthStr()
 
-	return GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := GetDB().Model(&UserBalance{}).
-			Where("free_api_work_month<?", currntMonth).
-			Or("free_api_work_month is NULL").
-			Updates(map[string]interface{}{
-				"free_other_api_quota": fee.UserDefaultFreeOtherAPIQuota,
-				"free_mint_quota":      fee.UserDefaultFreeMintQuota,
-				"free_deploy_quota":    fee.UserDefaultFreeDeployQuota,
-				"free_api_work_month":  utils.CurrentMonthStr(),
-			}).
-			Error; err != nil {
-			return err
-		}
+// 	return GetDB().Transaction(func(tx *gorm.DB) error {
+// 		if err := GetDB().Model(&UserBalance{}).
+// 			Where("free_api_work_month<?", currntMonth).
+// 			Or("free_api_work_month is NULL").
+// 			Updates(map[string]interface{}{
+// 				"free_other_api_quota": fee.UserDefaultFreeOtherAPIQuota,
+// 				"free_mint_quota":      fee.UserDefaultFreeMintQuota,
+// 				"free_deploy_quota":    fee.UserDefaultFreeDeployQuota,
+// 				"free_api_work_month":  utils.CurrentMonthStr(),
+// 			}).
+// 			Error; err != nil {
+// 			return err
+// 		}
 
-		return initUsersRemainBalanceQuota()
-	})
-}
+// 		return initUsersRemainBalanceQuota()
+// 	})
+// }
 
 func (u *UserBalance) AfterSave(tx *gorm.DB) error {
 	if u.ID == 0 {

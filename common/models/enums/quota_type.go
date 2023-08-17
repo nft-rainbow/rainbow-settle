@@ -38,9 +38,9 @@ var (
 
 func init() {
 	SettleTypeValue2StrMap = map[SettleType]string{
-		SETTLE_TYPE_BALANCE:        "normal",
-		SETTLE_TYPE_QUOTA_RESET:    "mint",
-		SETTLE_TYPE_QUOTA_ROLLOVER: "deploy",
+		SETTLE_TYPE_BALANCE:        "balance",
+		SETTLE_TYPE_QUOTA_RESET:    "reset",
+		SETTLE_TYPE_QUOTA_ROLLOVER: "rollover",
 	}
 
 	SettleTypeStr2ValueMap = make(map[string]SettleType)

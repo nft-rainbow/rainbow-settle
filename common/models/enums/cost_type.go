@@ -10,11 +10,12 @@ import (
 type CostType uint
 
 const (
-	COST_TYPE_RAINBOW_NORMAL CostType = iota
+	COST_TYPE_RAINBOW_FREE CostType = iota + 1
+	COST_TYPE_RAINBOW_NORMAL
 	COST_TYPE_RAINBOW_MINT
 	COST_TYPE_RAINBOW_DEPLOY
-	COST_TYPE_CONFURA_NOMRAL = 5
-	COST_TYPE_SCAN_NORMAL    = 10
+	COST_TYPE_CONFURA_NOMRAL = 10
+	COST_TYPE_SCAN_NORMAL    = 20
 )
 
 func GetCostType(isTestnet bool, method string, path string) CostType {
@@ -40,9 +41,12 @@ var (
 
 func init() {
 	CostTypeValue2StrMap = map[CostType]string{
-		COST_TYPE_RAINBOW_NORMAL: "normal",
-		COST_TYPE_RAINBOW_MINT:   "mint",
-		COST_TYPE_RAINBOW_DEPLOY: "deploy",
+		COST_TYPE_RAINBOW_FREE:   "rainbow_free",
+		COST_TYPE_RAINBOW_NORMAL: "rainbow_normal",
+		COST_TYPE_RAINBOW_MINT:   "rainbow_mint",
+		COST_TYPE_RAINBOW_DEPLOY: "rainbow_deploy",
+		COST_TYPE_CONFURA_NOMRAL: "confura_normal",
+		COST_TYPE_SCAN_NORMAL:    "scan_normal",
 	}
 
 	CostTypeStr2ValueMap = make(map[string]CostType)

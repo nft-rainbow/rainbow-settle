@@ -54,7 +54,7 @@ func DB() *ExtendClient {
 	dbSync.Do(
 		func() {
 			c := redis.NewClient(&redis.Options{
-				Addr:     "redis:6379",
+				Addr:     ":6379",
 				Password: "", // 密码
 				DB:       0,  // 数据库
 				PoolSize: 20, // 连接池大小
@@ -73,8 +73,8 @@ func UserPendingCountKey(userId, costType string) string {
 	return fmt.Sprintf("%s%s-%s", PREFIX_COUNT_PENDING_KEY, userId, costType)
 }
 
-func RequestKey(reqId uint) string {
-	return fmt.Sprintf("%s%d", PREFIX_REQ_KEY, reqId)
+func RequestKey(reqId string) string {
+	return fmt.Sprintf("%s%s", PREFIX_REQ_KEY, reqId)
 }
 
 func RequestValue(userId, costType, count string) string {
@@ -169,7 +169,7 @@ func ParseCount(count string) (int, error) {
 }
 
 func GetUserCounts() (map[string]string, error) {
-	return GetValuesByRegexKey(fmt.Sprintf("^%s-\\d*-.*$", PREFIX_COUNT_KEY))
+	return GetValuesByRegexKey(fmt.Sprintf("%s[0-9]*-*", PREFIX_COUNT_KEY))
 }
 
 func GetValuesByRegexKey(pattern string) (map[string]string, error) {
@@ -181,9 +181,8 @@ func GetValuesByRegexKey(pattern string) (map[string]string, error) {
 		var partialKeys []string
 		var err error
 
-		partialKeys, cursor, err = rdb.Scan(context.Background(), cursor, pattern, 10).Result()
+		partialKeys, cursor, err = DB().Scan(context.Background(), cursor, pattern, 10).Result()
 		if err != nil {
-			fmt.Println("Error:", err)
 			return nil, err
 		}
 
@@ -197,15 +196,15 @@ func GetValuesByRegexKey(pattern string) (map[string]string, error) {
 	result := make(map[string]string)
 	// 获取匹配的 key 对应的 value
 	for _, key := range keys {
-		value, err := rdb.Get(context.Background(), key).Result()
+		value, err := DB().Get(context.Background(), key).Result()
 		if err != nil {
 			// fmt.Printf("Error getting value for key %s: %v\n", key, err)
 			return nil, errors.Wrapf(err, "failed to get value for key %s", key)
 		}
 
-		result[key] = value
-
-		fmt.Printf("Key: %s, Value: %s\n", key, value)
+		if c, _ := ParseCount(value); c > 0 {
+			result[key] = value
+		}
 	}
 	return result, nil
 }

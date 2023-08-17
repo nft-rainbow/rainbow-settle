@@ -1,7 +1,10 @@
 package models
 
 import (
+	"math"
+
 	. "github.com/ahmetalpbalkan/go-linq"
+	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"gorm.io/gorm"
 )
@@ -74,11 +77,36 @@ func KycReviewCount() int64 {
 }
 
 func (u *User) AfterCreate(tx *gorm.DB) (err error) {
-	return tx.Create(NewUserBalance(u.ID)).Error
+	if err := tx.Create(NewUserBalance(u.ID)).Error; err != nil {
+		return err
+	}
+	costTypes, err := GetAllCostTypes()
+	if err != nil {
+		return err
+	}
+	if err := GetUserQuotaOperator().CreateIfNotExists(tx, []uint{u.ID}, costTypes); err != nil {
+		return err
+	}
+	if err := GetUserSettledOperator().CreateIfNotExists(tx, []uint{u.ID}, costTypes); err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetAllUser(filter map[string]interface{}, offset, limit int) ([]*User, error) {
 	items := []*User{}
 	err := db.Model(&User{}).Where(filter).Offset(offset).Limit(limit).Order("id DESC").Find(&items).Error
 	return items, err
+}
+
+func GetAllUserIds() ([]uint, error) {
+	users, err := GetAllUser(nil, 0, math.MaxInt)
+	if err != nil {
+		return nil, err
+	}
+	return utils.MapSlice(users, func(u *User) (uint, error) { return u.ID, nil })
+}
+
+func MustGetAllUserIds() []uint {
+	return utils.Must(GetAllUserIds())
 }
