@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"github.com/nft-rainbow/rainbow-fiat/common/models"
 )
 
@@ -14,4 +16,11 @@ func Init() {
 
 func GetUserQuotaOperator() *models.UserQuotaOperator {
 	return userQuotaOperater
+}
+
+func Run() {
+	go LoopSettle(time.Second * 2)
+	go LoopResetQuota()
+	go StartWxOrderPolling()
+	go StartCmbOrderPolling()
 }

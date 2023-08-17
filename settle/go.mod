@@ -50,4 +50,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/nft-rainbow/conflux-gin-helper v0.0.0 => /Users/dayong/myspace/mywork/conflux-gin-helper
+// replace github.com/nft-rainbow/conflux-gin-helper v0.0.0 => /Users/dayong/myspace/mywork/conflux-gin-helper

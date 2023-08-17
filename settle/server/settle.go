@@ -7,13 +7,13 @@ import (
 	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"github.com/nft-rainbow/rainbow-fiat/settle/proto"
 	"github.com/nft-rainbow/rainbow-fiat/settle/services"
-	"google.golang.org/grpc"
 )
 
 type SettleServer struct {
+	proto.UnimplementedSettleServer
 }
 
-func (s *SettleServer) Deposite(ctx context.Context, in *proto.DepositRequest, opts ...grpc.CallOption) (*proto.WxOrder, error) {
+func (s *SettleServer) Deposite(ctx context.Context, in *proto.DepositRequest) (*proto.WxOrder, error) {
 	order, err := services.CreateWechatOrder(uint(in.UserId), int32(in.Amount), in.Description)
 	if err != nil {
 		return nil, err
@@ -27,12 +27,12 @@ func (s *SettleServer) Deposite(ctx context.Context, in *proto.DepositRequest, o
 	}, nil
 }
 
-func (s *SettleServer) GetWxOrder(ctx context.Context, in *proto.WxOrderRequest, opts ...grpc.CallOption) (*proto.WxOrder, error) {
+func (s *SettleServer) GetWxOrder(ctx context.Context, in *proto.WxOrderRequest) (*proto.WxOrder, error) {
 	return nil, nil
 }
 
 // 根据settle堆栈判断退quota还是balance
-func (s *SettleServer) RefundCost(ctx context.Context, in *proto.RefundCostRequest, opts ...grpc.CallOption) (*proto.Empty, error) {
+func (s *SettleServer) RefundCost(ctx context.Context, in *proto.RefundCostRequest) (*proto.Empty, error) {
 	costType, err := enums.ParseCostType(in.CostType)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (s *SettleServer) RefundCost(ctx context.Context, in *proto.RefundCostReque
 	return nil, err
 }
 
-func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID, opts ...grpc.CallOption) (*proto.UserBalance, error) {
+func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID) (*proto.UserBalance, error) {
 	ub, err := models.GetUserBalance(uint(in.UserId))
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID, opt
 	}, nil
 }
 
-func (s *SettleServer) GetUserApiQuota(ctx context.Context, in *proto.UserID, opts ...grpc.CallOption) (*proto.UserApiQuotas, error) {
+func (s *SettleServer) GetUserApiQuota(ctx context.Context, in *proto.UserID) (*proto.UserApiQuotas, error) {
 	_uqs, err := services.GetUserQuotaOperator().GetUserQuotas(uint(in.UserId))
 	if err != nil {
 		return nil, err

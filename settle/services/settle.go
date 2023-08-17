@@ -2,23 +2,27 @@ package services
 
 import (
 	"context"
-	"errors"
+
 	"time"
 
 	"github.com/nft-rainbow/rainbow-api/utils/mathutils"
 	"github.com/nft-rainbow/rainbow-fiat/common/models"
 	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"github.com/nft-rainbow/rainbow-fiat/common/redis"
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
-func SettleLooping(interval time.Duration) {
+func LoopSettle(interval time.Duration) {
+	logrus.Info("start settle looping")
 	for {
-		go settle()
-		time.Sleep(time.Second)
+		if err := settle(); err != nil {
+			logrus.WithError(err).Info("failed to settle")
+		}
+		time.Sleep(interval)
 	}
 }
 
@@ -31,18 +35,25 @@ func SettleLooping(interval time.Duration) {
 //  3. TODO: 发现余额<=0且free quota为0后置标记 USER-COSTTYPE-RICH 为false
 //  4. 写fiat log cache
 func settle() error {
-	var userBalances map[uint]*models.UserBalance
-	var userFreeQuotas map[uint]map[enums.CostType]*models.UserApiQuota
-	var userSettleds map[uint]map[enums.CostType]*models.UserSettled
+	userBalances := make(map[uint]*models.UserBalance)
+	userApiQuotas := make(map[uint]map[enums.CostType]*models.UserApiQuota)
+	userSettleds := make(map[uint]map[enums.CostType]*models.UserSettled)
 
 	userCounts, err := redis.GetUserCounts()
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "failed to get user count")
 	}
+
+	if len(userCounts) == 0 {
+		return nil
+	}
+
+	logrus.WithField("val", userCounts).Info("found need settle counts")
 
 	for k, v := range userCounts {
 		userId, costType, err := redis.ParseCountKey(k)
 		if err != nil {
+			logrus.WithError(err).WithField("key", k).Info("failed to parse count key")
 			continue
 		}
 
@@ -50,22 +61,25 @@ func settle() error {
 		if userBalances[userId] == nil {
 			ub, err := models.GetUserBalance(userId)
 			if err != nil {
+				logrus.WithError(err).WithField("user id", userId).Info("failed to get user balance")
 				continue
 			}
 			userBalances[userId] = ub
 		}
 
-		if userFreeQuotas[userId] == nil {
+		if userApiQuotas[userId] == nil {
 			uq, err := userQuotaOperater.GetUserQuotas(userId)
 			if err != nil {
+				logrus.WithError(err).WithField("user id", userId).Info("failed to get user quotas")
 				continue
 			}
-			userFreeQuotas[userId] = uq
+			userApiQuotas[userId] = uq
 		}
 
 		if userSettleds[userId] == nil {
-			us, err := models.GetUserSettled(userId)
+			us, err := models.GetUserSettledOperator().GetUserSettled(userId)
 			if err != nil {
+				logrus.WithError(err).WithField("user id", userId).Info("failed to get user settled")
 				continue
 			}
 			userSettleds[userId] = us
@@ -74,13 +88,17 @@ func settle() error {
 		// calc cost
 		count, err := redis.ParseCount(v)
 		if err != nil {
+			logrus.WithError(err).WithField("val", v).Info("failed to parse count")
 			continue
 		}
 
 		// if has quota, cost quota
-		countInQuota := mathutils.Min[int](count, userFreeQuotas[userId][costType].Total())
-		countInResetQuota := mathutils.Min[int](countInQuota, userFreeQuotas[userId][costType].CountReset)
-		countInRolloverQuota := countInQuota - countInResetQuota
+		var countInQuota, countInResetQuota, countInRolloverQuota int
+		if q, ok := userApiQuotas[userId][costType]; ok {
+			countInQuota = mathutils.Min(count, q.Total())
+			countInResetQuota = mathutils.Min(countInQuota, q.CountReset)
+			countInRolloverQuota = countInQuota - countInResetQuota
+		}
 
 		// calc count in balance
 		price := models.GetApiPrice(costType)
@@ -88,22 +106,29 @@ func settle() error {
 		actualCost := decimal.Min(needCost, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota))
 		countInBalance := actualCost.Div(price).BigInt().Int64()
 
+		if countInBalance == 0 && countInQuota == 0 {
+			continue
+		}
+		logrus.WithField("cost type", costType).WithField("in reset", countInResetQuota).WithField("in rollover", countInRolloverQuota).WithField("in balance", countInBalance).Info("calculated cost quota")
+
 		// update mysql
 		err = models.GetDB().Transaction(func(tx *gorm.DB) error {
 			// update free quota
 			if countInQuota > 0 {
 				fl, _err := userQuotaOperater.Pay(tx, userId, costType, countInResetQuota, countInRolloverQuota)
 				if _err != nil {
-					return _err
+					return errors.WithMessage(_err, "failed to pay api quota")
 				}
 				logrus.WithField("user id", userId).WithField("fl", fl).Info("pay quota")
 			}
 
 			// update user balance
 			if countInBalance > 0 {
-				if _, _err := models.PayAPIFee(tx, userId, costType, uint(countInBalance)); _err != nil {
-					return _err
+				fl, _err := models.PayAPIFee(tx, userId, costType, uint(countInBalance))
+				if _err != nil {
+					return errors.WithMessage(_err, "failed to pay api fee")
 				}
+				logrus.WithField("user id", userId).WithField("fl", fl).Info("pay api fee")
 			}
 
 			// update settle
@@ -134,15 +159,17 @@ func settle() error {
 				}
 			}
 			us.Stack = datatypes.NewJSONType(data)
+			logrus.WithField("stack", us.Stack).Info("update user settle stack")
 			return tx.Save(us).Error
 		})
 		if err != nil {
+			logrus.WithError(err).Info("failed to update mysql user_balance and user_api_quota")
 			continue
 		}
 
 		// update state on memory
-		userFreeQuotas[userId][costType].CountReset -= countInResetQuota
-		userFreeQuotas[userId][costType].CountRollover -= countInRolloverQuota
+		userApiQuotas[userId][costType].CountReset -= countInResetQuota
+		userApiQuotas[userId][costType].CountRollover -= countInRolloverQuota
 		userBalances[userId].Balance = userBalances[userId].Balance.Sub(actualCost)
 
 		// update redis
@@ -154,7 +181,7 @@ func settle() error {
 }
 
 func RefundApiCost(userId uint, costType enums.CostType, count int) error {
-	us, err := models.GetUserSettled(uint(userId))
+	us, err := models.GetUserSettledOperator().GetUserSettled(uint(userId))
 	if err != nil {
 		return err
 	}
