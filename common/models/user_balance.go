@@ -124,7 +124,7 @@ func GetUserBalance(userId uint) (*UserBalance, error) {
 }
 
 func DepositBalance(userId uint, amount decimal.Decimal, depositOrderId uint, logType FiatLogType) (uint, error) {
-	return UpdateUserBalance(userId, amount, logType, map[string]uint{"deposit_order_id": depositOrderId})
+	return UpdateUserBalance(userId, amount, logType, FiatMetaDeposit{depositOrderId})
 }
 
 func WithdrawBalance(userId uint, amount decimal.Decimal) (uint, error) {
@@ -132,11 +132,11 @@ func WithdrawBalance(userId uint, amount decimal.Decimal) (uint, error) {
 }
 
 func BuyGas(userId uint, amount decimal.Decimal, txId uint, address string, price decimal.Decimal) (uint, error) {
-	return UpdateUserBalance(userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_BUY_GAS, map[string]interface{}{"address": address, "tx_id": txId, "price": price})
+	return UpdateUserBalance(userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_BUY_GAS, FiatMetaBuySponsor{address, txId, price})
 }
 
 func BuyStorage(userId uint, amount decimal.Decimal, txId uint, address string, price decimal.Decimal) (uint, error) {
-	return UpdateUserBalance(userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_BUY_STORAGE, map[string]interface{}{"address": address, "tx_id": txId, "price": price})
+	return UpdateUserBalance(userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_BUY_STORAGE, FiatMetaBuySponsor{address, txId, price})
 }
 
 func RefundSponsor(userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType FiatLogType, txId uint) (uint, error) {
@@ -144,27 +144,17 @@ func RefundSponsor(userId uint, amount decimal.Decimal, sponsorFiatlogId uint, s
 }
 
 func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType FiatLogType, txId uint) (uint, error) {
-	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_SPONSOR, map[string]interface{}{"refund_for_fiatlog_id": sponsorFiatlogId, "refund_for_fiatlog_type": sponsorFiatlogType, "tx_id": txId, "reason": "tx failed"})
+	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_SPONSOR, FiatMetaRefundSponsor{sponsorFiatlogId, sponsorFiatlogType, txId, "tx failed"})
 }
 
 func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	amount := GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_OTHER, map[string]interface{}{"cost type": costType, "count": count}, false)
+	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_OTHER, FiatMetaRefundApiFee{costType, count}, false)
 }
 
 func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
-	// logrus.WithFields(logrus.Fields{
-	// 	"user_id":       userId,
-	// 	"free_api_cost": freeApiCost,
-	// 	"amount":        amount,
-	// 	"details":       details,
-	// }).Info("pay api fee")
-
-	// if freeApiCost == FreeApiUsedDefault && amount.IsZero() {
-	// 	return 0, nil
-	// }
 	amount := GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return UpdateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_PAY_API_FEE, map[string]interface{}{"cost type": costType, "count": count}, false)
+	return UpdateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_PAY_API_FEE, FiatMetaPayApiFee{costType, count}, false)
 }
 
 func UpdateUserBalance(userId uint, amount decimal.Decimal, logType FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
