@@ -216,7 +216,7 @@ func RefundApiCost(userId uint, costType enums.CostType, count int) error {
 		if err != nil {
 			return err
 		}
-		logrus.WithField("fiatlog", fl).Info("refund api fee")
+		logrus.WithField("fiatlog", fl).Info("refund api cost")
 
 		if data[i].Count == 0 {
 			data = data[:i]

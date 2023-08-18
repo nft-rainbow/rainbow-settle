@@ -149,7 +149,7 @@ func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, spons
 
 func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	amount := GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_PAY_API_FEE, map[string]interface{}{"cost type": costType, "count": count}, false)
+	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_OTHER, map[string]interface{}{"cost type": costType, "count": count}, false)
 }
 
 func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
@@ -269,14 +269,14 @@ func UpdateUserArrearsQuota(userId uint, amount decimal.Decimal) error {
 // 	})
 // }
 
-func (u *UserBalance) AfterSave(tx *gorm.DB) error {
-	if u.ID == 0 {
-		return nil
-	}
-	err := refreshUserRemainBalanceQuota(tx, u)
-	logrus.WithError(err).WithField("user balance", u).Info("save user balance")
-	return err
-}
+// func (u *UserBalance) AfterSave(tx *gorm.DB) error {
+// 	if u.ID == 0 {
+// 		return nil
+// 	}
+// 	err := refreshUserRemainBalanceQuota(tx, u)
+// 	logrus.WithError(err).WithField("user balance", u).Info("save user balance")
+// 	return err
+// }
 
 func (u *UserBalance) BalanceWithArrears() decimal.Decimal {
 	return u.ArrearsQuota.Add(u.Balance)

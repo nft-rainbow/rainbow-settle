@@ -42,7 +42,7 @@ func (s *SettleServer) RefundCost(ctx context.Context, in *proto.RefundCostReque
 	if err != nil {
 		return nil, err
 	}
-	return nil, err
+	return &proto.Empty{}, nil
 }
 
 func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID) (*proto.UserBalance, error) {

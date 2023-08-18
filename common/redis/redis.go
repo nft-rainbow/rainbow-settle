@@ -93,7 +93,7 @@ func parseCountKeyByPrefix(key string, prefix string) (userId uint, costType enu
 	err = func() error {
 		core, ok := strings.CutPrefix(key, prefix)
 		if !ok {
-			return errors.Errorf("invalid count key: %s, expect prefix %s", prefix)
+			return errors.Errorf("invalid count key: %s, expect prefix %s", key, prefix)
 		}
 
 		items := strings.Split(core, "-")

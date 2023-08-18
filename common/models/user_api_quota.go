@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -93,28 +94,41 @@ func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costT
 
 func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetCounts map[enums.CostType]int, nextResetTime time.Time) error {
 	err := func() error {
-		for costType, count := range resetCounts {
-			if err := tx.Table("user_api_quota").
-				Where("cost_type=?", costType).
-				Where("user_id in ?", userIds).
-				Where("next_reset_count_time<?", nextResetTime).
-				Update("count_reset", count).
-				Update("next_reset_count_time", nextResetTime).Error; err != nil {
-				return err
-			}
-
-			meta, _ := json.Marshal(map[string]interface{}{"cost_type": costType, "count": count})
-			for _, userId := range userIds {
-				if err := tx.Create(&FiatLogCache{
-					UserId:  userId,
-					Type:    FIAT_LOG_TYPE_RESET_API_QUOTA,
-					Meta:    meta,
-					OrderNO: RandomOrderNO(),
-				}).Error; err != nil {
-					return err
-				}
-			}
+		var matched []*UserApiQuota
+		if err := tx.Table("user_api_quota").
+			Where("cost_type in ?", utils.GetMapKeys(resetCounts)).
+			Where("user_id in ?", userIds).
+			Where("next_reset_count_time<?", nextResetTime).Find(&matched).Error; err != nil {
+			return err
 		}
+		if len(matched) == 0 {
+			return nil
+		}
+
+		for _, uaq := range matched {
+			uaq.CountReset = resetCounts[uaq.CostType]
+			uaq.NextResetCountTime = nextResetTime
+		}
+		if err := tx.Save(&matched).Error; err != nil {
+			return err
+		}
+
+		var flcs []*FiatLogCache
+		for _, uaq := range matched {
+			meta, _ := json.Marshal(map[string]interface{}{"cost_type": uaq.CostType, "count": resetCounts[uaq.CostType]})
+			flcs = append(flcs, &FiatLogCache{
+				UserId:  uaq.UserId,
+				Type:    FIAT_LOG_TYPE_RESET_API_QUOTA,
+				Meta:    meta,
+				OrderNO: RandomOrderNO(),
+			})
+
+		}
+		if err := tx.Save(&flcs).Error; err != nil {
+			return err
+		}
+
+		logrus.WithField("len", len(matched)).Info("reset api quota completed")
 		return nil
 	}()
 
