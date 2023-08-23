@@ -21,6 +21,7 @@ func GetUserQuotaOperator() *models.UserQuotaOperator {
 func Run() {
 	go LoopSettle(time.Second * 2)
 	go LoopResetQuota()
+	go LoopMergeFiatlog()
 	go StartWxOrderPolling()
 	go StartCmbOrderPolling()
 }
