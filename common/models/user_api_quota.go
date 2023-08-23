@@ -117,10 +117,12 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetCounts map[e
 		for _, uaq := range matched {
 			meta, _ := json.Marshal(map[string]interface{}{"cost_type": uaq.CostType, "count": resetCounts[uaq.CostType]})
 			flcs = append(flcs, &FiatLogCache{
-				UserId:  uaq.UserId,
-				Type:    FIAT_LOG_TYPE_RESET_API_QUOTA,
-				Meta:    meta,
-				OrderNO: RandomOrderNO(),
+				FiatLogCore: FiatLogCore{
+					UserId:  uaq.UserId,
+					Type:    FIAT_LOG_TYPE_RESET_API_QUOTA,
+					Meta:    meta,
+					OrderNO: RandomOrderNO(),
+				},
 			})
 
 		}
@@ -146,10 +148,12 @@ func (u *UserQuotaOperator) Refund(tx *gorm.DB, userId uint, costType enums.Cost
 
 	meta, _ := json.Marshal(map[string]interface{}{"cost_type": costType, "count": countReset})
 	fl := FiatLogCache{
-		UserId:  userId,
-		Type:    FIAT_LOG_TYPE_REFUND_API_QUOTA,
-		Meta:    meta,
-		OrderNO: RandomOrderNO(),
+		FiatLogCore: FiatLogCore{
+			UserId:  userId,
+			Type:    FIAT_LOG_TYPE_REFUND_API_QUOTA,
+			Meta:    meta,
+			OrderNO: RandomOrderNO(),
+		},
 	}
 	if err := tx.Create(&fl).Error; err != nil {
 		return 0, err
@@ -168,10 +172,12 @@ func (u *UserQuotaOperator) Pay(tx *gorm.DB, userId uint, costType enums.CostTyp
 
 	meta, _ := json.Marshal(map[string]interface{}{"cost_type": costType, "count": countReset})
 	fl := FiatLogCache{
-		UserId:  userId,
-		Type:    FIAT_LOG_TYPE_PAY_API_QUOTA,
-		Meta:    meta,
-		OrderNO: RandomOrderNO(),
+		FiatLogCore: FiatLogCore{
+			UserId:  userId,
+			Type:    FIAT_LOG_TYPE_PAY_API_QUOTA,
+			Meta:    meta,
+			OrderNO: RandomOrderNO(),
+		},
 	}
 	if err := tx.Create(&fl).Error; err != nil {
 		return 0, err

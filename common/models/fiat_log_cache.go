@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
@@ -9,18 +10,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type FiatLogCache struct {
 	BaseModel
-	UserId  uint            `gorm:"type:int;index" json:"user_id"`
-	Amount  decimal.Decimal `gorm:"type:decimal(20,2)" json:"amount"`         // 单位分
-	Type    FiatLogType     `gorm:"type:int;default:0" json:"type"`           // 1-deposit
-	Meta    datatypes.JSON  `gorm:"type:json" json:"meta"`                    // metadata
-	OrderNO string          `gorm:"type:varchar(255);unique" json:"order_no"` // order NO in rainbow platform
-	Balance decimal.Decimal `gorm:"type:decimal(20,2)" json:"balance"`        // apply log balance
+	FiatLogCore
+	IsMerged bool `gorm:"default:0" json:"isMerged,omitempty"`
 }
 
 func MergeToFiatlog(start, end time.Time) error {
@@ -31,11 +29,15 @@ func MergeToFiatlog(start, end time.Time) error {
 		CacheIds string `json:"cache_ids"`
 	}
 
-	return GetDB().Transaction(func(tx *gorm.DB) error {
+	err := GetDB().Transaction(func(tx *gorm.DB) error {
+		tx = tx.Debug()
+		needGroupFiatLogTypes := []FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE, FIAT_LOG_TYPE_PAY_API_QUOTA, FIAT_LOG_TYPE_REFUND_API_QUOTA}
+
 		var apiFeeTmpFls []*TmpFiatLog
-		err := tx.Debug().Model(&FiatLogCache{}).Group("user_id,type").
+		err := tx.Model(&FiatLogCache{}).Group("user_id,type").
 			Where("created_at>=? and created_at<?", start, end).
-			Where("type in ?", []FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE}).
+			Where("is_merged=0").
+			Where("type in ?", needGroupFiatLogTypes).
 			Select("user_id, sum(amount) as amount, type, GROUP_CONCAT(meta) as meta, GROUP_CONCAT(id) as cache_ids").
 			Scan(&apiFeeTmpFls).Error
 		if err != nil {
@@ -46,11 +48,17 @@ func MergeToFiatlog(start, end time.Time) error {
 		for _, tmpFl := range apiFeeTmpFls {
 			fl := tmpFl.FiatLog
 
-			metas, _ := summaryMetas(fl.Type, tmpFl.Meta)
+			metas, err := summaryMetas(fl.Type, fmt.Sprintf("[%s]", tmpFl.Meta))
+			if err != nil {
+				return err
+			}
 			meta, _ := json.Marshal(metas)
 			fl.Meta = meta
 
-			ids, _ := unmarshalType[[]uint]("[" + tmpFl.CacheIds + "]")
+			ids, err := unmarshalType[[]uint](fmt.Sprintf("[%s]", tmpFl.CacheIds))
+			if err != nil {
+				return err
+			}
 			fl.CacheIds = datatypes.JSONSlice[uint](*ids)
 
 			fl.OrderNO = RandomOrderNO()
@@ -58,18 +66,24 @@ func MergeToFiatlog(start, end time.Time) error {
 		}
 
 		var otherFls []*FiatLog
-		err = tx.Debug().Model(&FiatLogCache{}).
+		err = tx.Model(&FiatLogCache{}).
 			Where("created_at>=? and created_at<?", start, end).
-			Where("type not in ?", []FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE}).
-			Find(&otherFls).Error
+			Where("is_merged=0").
+			Where("type not in ?", needGroupFiatLogTypes).
+			Select("user_id, amount, type, meta, order_no, CONCAT('[' , id, ']') as cache_ids").
+			Scan(&otherFls).Error
 		if err != nil {
 			return err
 		}
 
 		allFls := append(otherFls, apiFeeFls...)
+		if len(allFls) == 0 {
+			return nil
+		}
+
 		for _, fl := range allFls {
 			var lastFiatLog FiatLog
-			if err := GetDB().Debug().Model(&FiatLog{}).Where("user_id=?", fl.UserId).Order("id desc").First(&lastFiatLog).Error; err != nil {
+			if err := tx.Model(&FiatLog{}).Where("user_id=?", fl.UserId).Order("id desc").First(&lastFiatLog).Error; err != nil {
 				if !gormutils.IsRecordNotFoundError(err) {
 					return err
 				}
@@ -77,16 +91,32 @@ func MergeToFiatlog(start, end time.Time) error {
 			}
 
 			fl.Balance = lastFiatLog.Balance.Add(fl.Amount)
-			if err := tx.Save(&fl).Error; err != nil {
-				return err
-			}
+
 		}
+		if err := tx.Save(&allFls).Error; err != nil {
+			return err
+		}
+
+		// update is_merged flag
+		err = tx.Model(&FiatLogCache{}).
+			Where("created_at>=? and created_at<?", start, end).
+			Where("is_merged=0").Update("is_merged", true).Error
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
+	logrus.WithError(err).WithField("start", start).WithField("end", end).Info("merged fiatlog")
+	return err
 }
 
 func summaryMetas(fiatLogType FiatLogType, metasJson string) (interface{}, error) {
 	switch fiatLogType {
+	case FIAT_LOG_TYPE_PAY_API_QUOTA:
+		fallthrough
+	case FIAT_LOG_TYPE_REFUND_API_QUOTA:
+		fallthrough
 	case FIAT_LOG_TYPE_REFUND_API_FEE:
 		fallthrough
 	case FIAT_LOG_TYPE_PAY_API_FEE:
@@ -101,7 +131,7 @@ func summaryMetas(fiatLogType FiatLogType, metasJson string) (interface{}, error
 			return lo.Reduce(fms, func(aggr *FiatMetaPayApiFee, item *FiatMetaPayApiFee, index int) *FiatMetaPayApiFee {
 				aggr.Count = aggr.Count + item.Count
 				return aggr
-			}, &FiatMetaPayApiFee{})
+			}, &FiatMetaPayApiFee{CostType: fms[0].CostType})
 		})
 		return _fms, nil
 	default:

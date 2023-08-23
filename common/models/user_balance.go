@@ -188,12 +188,14 @@ func UpdateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 
 		metaJson, _ := json.Marshal(meta)
 		l := FiatLogCache{
-			UserId:  userId,
-			Amount:  amount,
-			Type:    logType,
-			Meta:    metaJson,
-			OrderNO: RandomOrderNO(),
-			Balance: userBalance.Balance.Add(amount),
+			FiatLogCore: FiatLogCore{
+				UserId:  userId,
+				Amount:  amount,
+				Type:    logType,
+				Meta:    metaJson,
+				OrderNO: RandomOrderNO(),
+				Balance: userBalance.Balance.Add(amount),
+			},
 		}
 		if err := tx.Create(&l).Error; err != nil {
 			return 0, err
