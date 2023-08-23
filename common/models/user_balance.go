@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
 	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"github.com/pkg/errors"
@@ -18,8 +17,8 @@ type UserBalance struct {
 	Balance      decimal.Decimal `gorm:"type:decimal(20,2)" json:"balance"`       // 单位元
 	ArrearsQuota decimal.Decimal `gorm:"type:decimal(20,2)" json:"arrears_quota"` // 单位元
 	// FreeApiQuota
-	FreeApiWorkMonth string          `gorm:"type:varchar(10);index" json:"free_api_work_month"`   // 生效的月份
-	CfxPrice         decimal.Decimal `gorm:"type:decimal(20,2);default:0.8" json:"storage_price"` // 存储售卖单价单位分
+	// FreeApiWorkMonth string          `gorm:"type:varchar(10);index" json:"free_api_work_month"`   // 生效的月份
+	CfxPrice decimal.Decimal `gorm:"type:decimal(20,2);default:0.8" json:"storage_price"` // 存储售卖单价单位分
 }
 
 func NewUserBalance(userId uint) *UserBalance {
@@ -32,59 +31,59 @@ func NewUserBalance(userId uint) *UserBalance {
 		// 	FreeDeployQuota:   fee.UserDefaultFreeDeployQuota,
 		// },
 
-		FreeApiWorkMonth: utils.CurrentMonthStr(),
+		// FreeApiWorkMonth: utils.CurrentMonthStr(),
 	}
 }
 
-type FreeApiQuota struct {
-	FreeOtherApiQuota int `gorm:"type:int;default:0" json:"free_other_api_quota" binding:"required"` // 单位次，每月重置
-	FreeMintQuota     int `gorm:"type:int;default:0" json:"free_mint_quota" binding:"required"`      // 单位次，每月重置
-	FreeDeployQuota   int `gorm:"type:int;default:0" json:"free_deploy_quota" binding:"required"`    // 单位次，每月重置
-}
+// type FreeApiQuota struct {
+// 	FreeOtherApiQuota int `gorm:"type:int;default:0" json:"free_other_api_quota" binding:"required"` // 单位次，每月重置
+// 	FreeMintQuota     int `gorm:"type:int;default:0" json:"free_mint_quota" binding:"required"`      // 单位次，每月重置
+// 	FreeDeployQuota   int `gorm:"type:int;default:0" json:"free_deploy_quota" binding:"required"`    // 单位次，每月重置
+// }
 
-func (f *FreeApiQuota) Decrease(dec FreeApiUsed) {
-	f.FreeMintQuota -= dec.FreeMint
-	f.FreeDeployQuota -= dec.FreeDeploy
-	f.FreeOtherApiQuota -= dec.FreeOtherApi
-}
+// func (f *FreeApiQuota) Decrease(dec FreeApiUsed) {
+// 	f.FreeMintQuota -= dec.FreeMint
+// 	f.FreeDeployQuota -= dec.FreeDeploy
+// 	f.FreeOtherApiQuota -= dec.FreeOtherApi
+// }
 
-type ApiFeeCostItem struct {
-	Method    string          `json:"method"`
-	Path      string          `json:"path"`
-	Count     uint            `json:"count"`
-	IsTestnet bool            `json:"is_testnet"`
-	Fee       decimal.Decimal `json:"fee"`
-	CostType  enums.CostType  `json:"cost_type"`
-	FreeApiUsed
-}
+// type ApiFeeCostItem struct {
+// 	Method    string          `json:"method"`
+// 	Path      string          `json:"path"`
+// 	Count     uint            `json:"count"`
+// 	IsTestnet bool            `json:"is_testnet"`
+// 	Fee       decimal.Decimal `json:"fee"`
+// 	CostType  enums.CostType  `json:"cost_type"`
+// 	FreeApiUsed
+// }
 
-func NewApiFeeCostItem(method string, path string, count uint, isTestNet bool, fee decimal.Decimal, free FreeApiUsed) *ApiFeeCostItem {
-	item := ApiFeeCostItem{
-		Method:      method,
-		Path:        path,
-		Count:       count,
-		Fee:         fee,
-		CostType:    enums.GetCostType(isTestNet, method, path),
-		FreeApiUsed: free,
-	}
-	return &item
-}
+// func NewApiFeeCostItem(method string, path string, count uint, isTestNet bool, fee decimal.Decimal, free FreeApiUsed) *ApiFeeCostItem {
+// 	item := ApiFeeCostItem{
+// 		Method:      method,
+// 		Path:        path,
+// 		Count:       count,
+// 		Fee:         fee,
+// 		CostType:    enums.GetCostType(isTestNet, method, path),
+// 		FreeApiUsed: free,
+// 	}
+// 	return &item
+// }
 
-type FreeApiUsed struct {
-	FreeMint     int `json:"free_mint"`      // 单位次，每月重置
-	FreeDeploy   int `json:"free_deploy"`    // 单位次，每月重置
-	FreeOtherApi int `json:"free_other_api"` // 单位次，每月重置
-}
+// type FreeApiUsed struct {
+// 	FreeMint     int `json:"free_mint"`      // 单位次，每月重置
+// 	FreeDeploy   int `json:"free_deploy"`    // 单位次，每月重置
+// 	FreeOtherApi int `json:"free_other_api"` // 单位次，每月重置
+// }
 
-func (f *FreeApiUsed) Increase(inc FreeApiUsed) {
-	f.FreeMint += inc.FreeMint
-	f.FreeDeploy += inc.FreeDeploy
-	f.FreeOtherApi += inc.FreeOtherApi
-}
+// func (f *FreeApiUsed) Increase(inc FreeApiUsed) {
+// 	f.FreeMint += inc.FreeMint
+// 	f.FreeDeploy += inc.FreeDeploy
+// 	f.FreeOtherApi += inc.FreeOtherApi
+// }
 
-var (
-	FreeApiUsedDefault = FreeApiUsed{}
-)
+// var (
+// 	FreeApiUsedDefault = FreeApiUsed{}
+// )
 
 func InitUserBalances() {
 	var exists []uint

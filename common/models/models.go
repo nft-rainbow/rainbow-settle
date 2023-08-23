@@ -122,7 +122,7 @@ func ConnectDB(dbConfig config.Mysql) {
 		&UserApiQuota{},
 		&UserSettled{},
 		&DepositOrder{},
-		&Cost{},
+		// &Cost{},
 		&CmbDepositNo{},
 	)
 

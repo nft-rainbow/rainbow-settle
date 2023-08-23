@@ -22,6 +22,7 @@ func Run() {
 	go LoopSettle(time.Second * 2)
 	go LoopResetQuota()
 	go LoopMergeFiatlog()
+	go LoopSetRichFlag()
 	go StartWxOrderPolling()
 	go StartCmbOrderPolling()
 }

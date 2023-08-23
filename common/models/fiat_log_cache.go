@@ -30,7 +30,7 @@ func MergeToFiatlog(start, end time.Time) error {
 	}
 
 	err := GetDB().Transaction(func(tx *gorm.DB) error {
-		tx = tx.Debug()
+		// tx = tx.Debug()
 		needGroupFiatLogTypes := []FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE, FIAT_LOG_TYPE_PAY_API_QUOTA, FIAT_LOG_TYPE_REFUND_API_QUOTA}
 
 		var apiFeeTmpFls []*TmpFiatLog

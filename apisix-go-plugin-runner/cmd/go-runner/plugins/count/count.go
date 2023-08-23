@@ -49,9 +49,25 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 
 		log.Infof("userId: %v, costType: %v, costCount %v", userIdStr, costTypeStr, costCountStr)
 
+		userId, err := strconv.Atoi(userIdStr)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse user id %s", userIdStr)
+		}
+
 		costCount, err := strconv.Atoi(costCountStr)
 		if err != nil {
 			return errors.Wrapf(err, "failed to parse cost count %s", costCountStr)
+		}
+
+		costType, err := enums.ParseCostType(costTypeStr)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse cost type")
+		}
+
+		// 如果rich标记为0，返回失败
+		isRich := mredis.CheckIsRich(uint(userId), *costType)
+		if !isRich {
+			return errors.New("balance not enough")
 		}
 
 		// 如果超过 quotalimit，返回失败
@@ -67,10 +83,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 			return errors.Wrapf(err, "failed to get cost count")
 		}
 		log.Infof("currentCount %d, currentPendingCount %d, costCount %d", currentCount, currentPendingCount, costCount)
-		costType, err := enums.ParseCostType(costTypeStr)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse cost type")
-		}
+
 		if int(currentCount)+int(currentPendingCount)+costCount > quotaLimit[*costType] {
 			return errors.Errorf("balance not enough")
 		}

@@ -21,6 +21,7 @@ const (
 	PREFIX_COUNT_KEY         = "count-"
 	PREFIX_COUNT_PENDING_KEY = "count-pending-"
 	PREFIX_REQ_KEY           = "req-"
+	PREFIX_RICH              = "rich-"
 )
 
 type ExtendClient struct {
@@ -79,6 +80,10 @@ func RequestKey(reqId string) string {
 
 func RequestValue(userId, costType, count string) string {
 	return fmt.Sprintf("%s-%s-%s", userId, costType, count)
+}
+
+func RichKey(userId uint) string {
+	return fmt.Sprintf("%s%d", PREFIX_RICH, userId)
 }
 
 func ParseCountKey(key string) (userId uint, costType enums.CostType, err error) {
@@ -207,4 +212,16 @@ func GetValuesByRegexKey(pattern string) (map[string]string, error) {
 		}
 	}
 	return result, nil
+}
+
+func CheckIsRich(userId uint, costType enums.CostType) bool {
+	flagStr, err := DB().Get(context.Background(), RichKey(userId)).Result()
+	if err != nil {
+		return false
+	}
+	flag, err := strconv.Atoi(flagStr)
+	if err != nil {
+		return false
+	}
+	return (1 << costType & flag) > 0
 }
