@@ -46,7 +46,7 @@ func refreshRichFlag() error {
 	for userId, costStates := range userCostStates {
 		flag := 0
 		for _, cs := range costStates {
-			isRich := cs.CountReset+cs.CountRollover > 0 || cs.Balance.Add(cs.ArrearsQuota).GreaterThan(decimal.Zero)
+			isRich := cs.CountReset+cs.CountRollover > 0 || cs.Balance.Add(cs.ArrearsQuota).GreaterThanOrEqual(models.GetApiPrice(cs.CostType))
 			if isRich {
 				flag = flag | 1<<int(cs.CostType)
 			}
