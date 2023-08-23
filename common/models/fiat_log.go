@@ -32,7 +32,7 @@ const (
 	FIAT_LOG_TYPE_BUY_STORAGE
 	FIAT_LOG_TYPE_PAY_API_FEE
 	FIAT_LOG_TYPE_CMB_CHARGE // 招行对公充值
-	FIAT_LOG_TYPE_REFUND_OTHER
+	FIAT_LOG_TYPE_REFUND_API_FEE
 	FIAT_LOG_TYPE_REFUND_SPONSOR
 	FIAT_LOG_TYPE_REFUND_API_QUOTA
 	FIAT_LOG_TYPE_REFUND_RESERV3_2
@@ -48,7 +48,7 @@ func (f FiatLogType) PayType() PayType {
 		return PAY_TYPE_WX
 	case FIAT_LOG_TYPE_CMB_CHARGE:
 		return PAY_TYPE_CMB
-	case FIAT_LOG_TYPE_REFUND_OTHER:
+	case FIAT_LOG_TYPE_REFUND_API_FEE:
 		return PAY_TYPE_BALANCE_REFUND_OTHER
 	case FIAT_LOG_TYPE_REFUND_SPONSOR:
 		return PAY_TYPE_BALANCE_REFUND_SPONSOR
@@ -57,13 +57,8 @@ func (f FiatLogType) PayType() PayType {
 }
 
 type FiatLog struct {
-	BaseModel
-	UserId  uint            `gorm:"type:int;index" json:"user_id"`
-	Amount  decimal.Decimal `gorm:"type:decimal(20,2)" json:"amount"`         // 单位分
-	Type    FiatLogType     `gorm:"type:int;default:0" json:"type"`           // 1-deposit
-	Meta    datatypes.JSON  `gorm:"type:json" json:"meta"`                    // metadata
-	OrderNO string          `gorm:"type:varchar(255);unique" json:"order_no"` // order NO in rainbow platform
-	Balance decimal.Decimal `gorm:"type:decimal(20,2)" json:"balance"`        // apply log balance
+	FiatLogCache
+	CacheIds datatypes.JSONSlice[uint] `json:"cache_ids"`
 }
 
 func FindFiatLogs(userId uint, offset int, limit int) (*[]FiatLog, error) {
@@ -290,7 +285,7 @@ func FiatlogOfBalanceChanges(cond FiatlogSummaryFilter, offset, limit int) ([]*F
 			userChanges[userId].ApiFee = summaryItem.Amount
 		case FIAT_LOG_TYPE_CMB_CHARGE: // 招行对公充值
 			userChanges[userId].CmbDeposit = summaryItem.Amount
-		case FIAT_LOG_TYPE_REFUND_OTHER:
+		case FIAT_LOG_TYPE_REFUND_API_FEE:
 			userChanges[userId].RefundForOther = summaryItem.Amount
 		case FIAT_LOG_TYPE_REFUND_SPONSOR:
 			userChanges[userId].RefundForSponsor = summaryItem.Amount

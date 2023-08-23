@@ -149,7 +149,7 @@ func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, spons
 
 func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	amount := GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_OTHER, FiatMetaRefundApiFee{costType, count}, false)
+	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_API_FEE, FiatMetaRefundApiFee{costType, count}, false)
 }
 
 func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {

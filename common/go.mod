@@ -3,6 +3,7 @@ module github.com/nft-rainbow/rainbow-fiat/common
 go 1.20
 
 replace github.com/nft-rainbow/conflux-gin-helper v0.0.0 => /Users/dayong/myspace/mywork/conflux-gin-helper
+
 require (
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/btcsuite/btcd v0.21.0-beta // indirect
@@ -18,5 +19,7 @@ require (
 	github.com/jessevdk/go-flags v1.4.0 // indirect
 	github.com/jrick/logrotate v1.0.0 // indirect
 	github.com/kkdai/bstream v0.0.0-20161212061736-f391b8402d23 // indirect
+	github.com/samber/lo v1.38.1 // indirect
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 )
