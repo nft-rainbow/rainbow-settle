@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )

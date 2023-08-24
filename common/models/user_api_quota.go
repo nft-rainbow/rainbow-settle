@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )

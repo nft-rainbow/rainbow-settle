@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )

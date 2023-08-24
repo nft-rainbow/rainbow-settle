@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nft-rainbow/rainbow-fiat/common/config"
+	"github.com/nft-rainbow/rainbow-settle/common/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
