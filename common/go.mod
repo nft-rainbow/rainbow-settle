@@ -1,4 +1,4 @@
-module github.com/nft-rainbow/rainbow-fiat/common
+module github.com/nft-rainbow/rainbow-settle/common
 
 go 1.20
 
