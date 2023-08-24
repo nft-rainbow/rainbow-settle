@@ -5,7 +5,7 @@ import (
 
 	"time"
 
-	"github.com/nft-rainbow/rainbow-api/utils/mathutils"
+	"github.com/nft-rainbow/conflux-gin-helper/utils/mathutils"
 	"github.com/nft-rainbow/rainbow-fiat/common/models"
 	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"github.com/nft-rainbow/rainbow-fiat/common/redis"

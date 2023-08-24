@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/testutils"
-	"github.com/nft-rainbow/rainbow-api/models/enums"
+	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +25,7 @@ func TestParseRainbowApiRequest(t *testing.T) {
 }
 
 func TestCostType(t *testing.T) {
-	fmt.Println(enums.COST_TYPE_NORMAL.String())
-	fmt.Println(enums.COST_TYPE_DEPLOY.String())
-	fmt.Println(enums.COST_TYPE_MINT.String())
+	fmt.Println(enums.COST_TYPE_RAINBOW_NORMAL.String())
+	fmt.Println(enums.COST_TYPE_RAINBOW_DEPLOY.String())
+	fmt.Println(enums.COST_TYPE_RAINBOW_MINT.String())
 }

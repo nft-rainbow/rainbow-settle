@@ -8,7 +8,7 @@ require (
 	github.com/appleboy/gin-jwt/v2 v2.9.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/google/flatbuffers v2.0.0+incompatible
-	// github.com/nft-rainbow/rainbow-api v0.0.0
+	github.com/nft-rainbow/rainbow-api v0.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/sirupsen/logrus v1.9.0
@@ -128,7 +128,7 @@ require (
 replace (
 	github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.25
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.1 => github.com/miguelmota/go-ethereum-hdwallet v0.0.0-20230703073920-dca85a91a62c
-	// github.com/nft-rainbow/rainbow-api v0.0.0 => /Users/dayong/myspace/mywork/rainbow-api
+	github.com/nft-rainbow/rainbow-api v0.0.0 => /Users/dayong/myspace/mywork/rainbow-api
 	// github.com/thediveo/enumflag@v0.10.1 depends on github.com/spf13/cobra@v0.0.7
 	github.com/spf13/cobra v0.0.7 => github.com/spf13/cobra v1.2.1
 )
