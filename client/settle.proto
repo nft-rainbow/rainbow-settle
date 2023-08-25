@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+option go_package = "github.com/nft-rainbow/rainbow-settle/proto";
+
+package rainbowsettle;
+
+message Empty {}
+
+message UserBalance {
+  uint32 UserId = 1;
+  float Balance = 2;
+  float ArrearsQuota = 3;
+  float CfxPrice = 4;
+}
+
+message UserApiQuotas { map<string, UserApiQuota> Items = 1; }
+
+message UserApiQuota {
+  uint32 UserID = 1;
+  string CostType = 2;
+  uint32 CountReset = 3;
+  uint32 CountRollover = 4;
+}
+
+message WxOrder {
+  optional string CodeUrl = 1;
+  optional string H5Url = 2;
+  optional string TradeNo = 3;       //`json:"trade_no,omitempty"`
+  optional string TradeProvider = 4; //  `json:"trade_provider,omitempty"`
+  optional string TradeState = 5;    // `json:"trade_state,omitempty"`
+}
+
+message UserID { uint32 UserId = 1; }
+
+message DepositRequest {
+  uint32 UserId = 1;
+  float Amount = 2;
+  string Description = 3;
+}
+
+message WxOrderRequest { string TradeNo = 1; }
+
+message RefundApiFeeRequest {
+  uint32 UserId = 1;
+  string CostType = 2;
+  uint32 Count = 3;
+}
+
+message BuySponsorRequest {
+  uint32 UserId = 1;
+  float Amount = 2;
+  uint32 TxId = 3;
+  string Address = 4;
+}
+
+message RefundSponsorRequest {
+  uint32 UserId = 1;
+  float Amount = 2;
+  uint32 SponsorFiatlogId = 3;
+  string Address = 4;
+  uint32 FiatlogType = 5;
+  uint32 TxId = 6;
+}
+
+// message UpdateUserArrearsQuotaRequest{
+//   uint32 UserId = 1;
+//   float Amount = 2;
+// }
+
+// message UpdateUserCfxPriceRequest{
+//   uint32 UserId = 1;
+//   float Price = 2;
+// }
+
+// message CmbDepositNo {
+//   uint32 ID = 1;
+//   uint32 UserId = 2;
+//   string UserName = 3;
+//   string UserBankNo = 4;
+//   string UserBankName = 5;
+//   string CmbNo = 6;
+// }
+
+// message CreateCmbDepositNoRequest {
+//   string Name = 1;
+//   string Bank = 2;
+//   string CardNo = 3;
+//   // type CmbDepositNoDto struct {
+//   //   Name   string `form:"name" json:"name" binding:"required"`
+//   //   Bank   string `form:"bank" json:"bank" binding:"required"`
+//   //   CardNo string `form:"card_no" json:"card_no" binding:"required"`
+//   // }
+// }
+
+service Settle {
+  rpc Deposite(DepositRequest) returns (WxOrder);
+  rpc GetWxOrder(WxOrderRequest) returns (WxOrder);
+
+  rpc BuyGas(BuySponsorRequest) returns (Empty);
+  rpc BuyStorage(BuySponsorRequest) returns (Empty);
+  rpc RefundSponsor(RefundSponsorRequest) returns (Empty);
+
+  rpc RefundApiFee(RefundApiFeeRequest)returns(Empty);
+
+  rpc GetUserBalance(UserID) returns (UserBalance);
+  rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
+
+  // rpc UpdateUserArrearsQuota(Empty) returns (Empty);
+  // rpc UpdateUserCfxPrice(Empty) returns (Empty);
+
+  // rpc GetCmbDepositNo(UserID) returns (CmbDepositNo);
+  // rpc CreateCmbDepositNo(CreateCmbDepositNoRequest) returns (Empty);
+  // rpc UpdateCmbDepositNo(UserID) returns (UserBalance);
+  // rpc GetCmbRecentDeposits(UserID) returns (UserBalance);
+  // rpc GetCmbDepositMeta(UserID) returns (UserBalance);
+}

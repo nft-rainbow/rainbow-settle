@@ -1,0 +1,35 @@
+environment: development
+port: 8090
+log:
+  level: trace # trace,debug,info,warn,error,fatal,panic
+  folder: .log
+  format: json
+mysql:
+  host: localhost
+  port: 3306
+  user: root
+  password: new-password
+  db: rainbowtest
+wechatPay:
+  #url: https://app-test.web3verse.space/conflux-pay/v0
+  url: http://127.0.0.1:8082/v0
+fee:
+  userDefaultArrearsQuota: 0
+  userDefaultFreeOtherAPIQuota: 5000
+  userDefaultFreeMintQuota: 100
+  userDefaultFreeDeployQuota: 5
+cfxPrice: 0.8 # unit 元
+
+# default quota reset rules
+quotaRules: 
+  - name: rainbow
+    schedule: "@monthly"
+    quotas:
+      rainbow_normal: 50000
+      rainbow_mint: 100
+      rainbow_deploy: 2
+  - name: confura
+    schedule: "@daily"
+    quotas:
+      confura_normal: 100000
+
