@@ -5,8 +5,8 @@ import (
 
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
-	"github.com/nft-rainbow/rainbow-settle/settle/proto"
-	"github.com/nft-rainbow/rainbow-settle/settle/services"
+	"github.com/nft-rainbow/rainbow-settle/proto"
+	"github.com/nft-rainbow/rainbow-settle/server/services"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )

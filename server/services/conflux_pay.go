@@ -10,7 +10,7 @@ import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/rand"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
-	"github.com/nft-rainbow/rainbow-settle/settle/config"
+	"github.com/nft-rainbow/rainbow-settle/server/config"
 	"github.com/shopspring/decimal"
 
 	confluxpay "github.com/web3-identity/conflux-pay-sdk-go"
