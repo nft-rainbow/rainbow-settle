@@ -7,11 +7,13 @@ import (
 )
 
 var (
-	userQuotaOperater *models.UserQuotaOperator
+	userQuotaOperater    *models.UserQuotaOperator
+	cmbDepositNoOperator *models.CmbDepositNoOperator
 )
 
 func Init() {
 	userQuotaOperater = &models.UserQuotaOperator{}
+	cmbDepositNoOperator = &models.CmbDepositNoOperator{}
 }
 
 func GetUserQuotaOperator() *models.UserQuotaOperator {

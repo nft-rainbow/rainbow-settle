@@ -127,6 +127,14 @@ func (s *SettleServer) CreateCmcDepositNo(ctx context.Context, in *proto.CreateC
 	return &proto.Empty{}, nil
 }
 
+func (s *SettleServer) GetCmcDepositNo(ctx context.Context, in *proto.UserID) (*proto.CmbDepositNo, error) {
+	result, err := (&models.CmbDepositNoOperator{}).FindByUserId(uint(in.UserId))
+	if err != nil {
+		return nil, err
+	}
+	return convertCmbDepositNo(result), nil
+}
+
 func (s *SettleServer) QueryRecentCmbHistory(ctx context.Context, in *proto.Pagenation) (*proto.QueryRecentCmbHistoryResponse, error) {
 	resp, err := services.QueryRecentCmbHistory(int32(in.Limit), int32(in.Offset))
 	if err != nil {
@@ -140,6 +148,17 @@ func (s *SettleServer) UpdateCmcDepositNoRelation(ctx context.Context, in *proto
 		return nil, err
 	}
 	return &proto.Empty{}, nil
+}
+
+func convertCmbDepositNo(in *models.CmbDepositNo) *proto.CmbDepositNo {
+	return &proto.CmbDepositNo{
+		ID:           uint32(in.ID),
+		UserId:       uint32(in.UserId),
+		UserName:     in.UserName,
+		UserBankNo:   in.UserBankNo,
+		UserBankName: in.UserBankName,
+		CmbNo:        in.CmbNo,
+	}
 }
 
 func convertCmbHistory(records []confluxpay.ModelsCmbRecord) *proto.QueryRecentCmbHistoryResponse {

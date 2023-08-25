@@ -31,6 +31,7 @@ type SettleClient interface {
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
 	GetUserApiQuota(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserApiQuotas, error)
 	CreateCmcDepositNo(ctx context.Context, in *CreateCmcDepositNoReqeust, opts ...grpc.CallOption) (*Empty, error)
+	GetCmcDepositNo(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*CmbDepositNo, error)
 	QueryRecentCmbHistory(ctx context.Context, in *Pagenation, opts ...grpc.CallOption) (*QueryRecentCmbHistoryResponse, error)
 	UpdateCmcDepositNoRelation(ctx context.Context, in *UpdateCmcDepositNoRelationRequest, opts ...grpc.CallOption) (*Empty, error)
 }
@@ -124,6 +125,15 @@ func (c *settleClient) CreateCmcDepositNo(ctx context.Context, in *CreateCmcDepo
 	return out, nil
 }
 
+func (c *settleClient) GetCmcDepositNo(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*CmbDepositNo, error) {
+	out := new(CmbDepositNo)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/GetCmcDepositNo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *settleClient) QueryRecentCmbHistory(ctx context.Context, in *Pagenation, opts ...grpc.CallOption) (*QueryRecentCmbHistoryResponse, error) {
 	out := new(QueryRecentCmbHistoryResponse)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/QueryRecentCmbHistory", in, out, opts...)
@@ -155,6 +165,7 @@ type SettleServer interface {
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
 	GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error)
 	CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error)
+	GetCmcDepositNo(context.Context, *UserID) (*CmbDepositNo, error)
 	QueryRecentCmbHistory(context.Context, *Pagenation) (*QueryRecentCmbHistoryResponse, error)
 	UpdateCmcDepositNoRelation(context.Context, *UpdateCmcDepositNoRelationRequest) (*Empty, error)
 	mustEmbedUnimplementedSettleServer()
@@ -190,6 +201,9 @@ func (UnimplementedSettleServer) GetUserApiQuota(context.Context, *UserID) (*Use
 }
 func (UnimplementedSettleServer) CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCmcDepositNo not implemented")
+}
+func (UnimplementedSettleServer) GetCmcDepositNo(context.Context, *UserID) (*CmbDepositNo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCmcDepositNo not implemented")
 }
 func (UnimplementedSettleServer) QueryRecentCmbHistory(context.Context, *Pagenation) (*QueryRecentCmbHistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryRecentCmbHistory not implemented")
@@ -372,6 +386,24 @@ func _Settle_CreateCmcDepositNo_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Settle_GetCmcDepositNo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).GetCmcDepositNo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/GetCmcDepositNo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).GetCmcDepositNo(ctx, req.(*UserID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Settle_QueryRecentCmbHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Pagenation)
 	if err := dec(in); err != nil {
@@ -450,6 +482,10 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateCmcDepositNo",
 			Handler:    _Settle_CreateCmcDepositNo_Handler,
+		},
+		{
+			MethodName: "GetCmcDepositNo",
+			Handler:    _Settle_GetCmcDepositNo_Handler,
 		},
 		{
 			MethodName: "QueryRecentCmbHistory",

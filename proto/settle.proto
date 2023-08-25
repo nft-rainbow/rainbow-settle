@@ -38,6 +38,15 @@ message CmbDepositNoDto {
   string CardNo = 3;
 }
 
+message CmbDepositNo {
+  uint32 ID = 1;
+  uint32 UserId = 2;
+  string UserName = 3;
+  string UserBankNo = 4;
+  string UserBankName = 5;
+  string CmbNo = 6;
+}
+
 message DepositRequest {
   uint32 UserId = 1;
   float Amount = 2;
@@ -115,6 +124,7 @@ service Settle {
   rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
 
   rpc CreateCmcDepositNo(CreateCmcDepositNoReqeust) returns (Empty);
+  rpc GetCmcDepositNo(UserID) returns (CmbDepositNo);
   rpc QueryRecentCmbHistory(Pagenation) returns (QueryRecentCmbHistoryResponse);
   rpc UpdateCmcDepositNoRelation(UpdateCmcDepositNoRelationRequest)
       returns (Empty);

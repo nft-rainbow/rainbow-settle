@@ -159,8 +159,7 @@ func CreateCmcDepositNo(userId uint, info CmbDepositNoDto) error {
 
 // 更新 cmb 关联充值卡信息
 func UpdateCmcDepositNoRelation(userId uint, info CmbDepositNoDto) error {
-	var cmbDepositNo *models.CmbDepositNo
-	item, err := cmbDepositNo.FindByUserId(userId)
+	item, err := cmbDepositNoOperator.FindByUserId(userId)
 	if err != nil {
 		return err
 	}
@@ -256,8 +255,7 @@ func saveCmbDepositOrder(order *confluxpay.ModelsCmbRecord) (bool, error) {
 	if exist != nil && err == nil {
 		return false, nil
 	}
-	var cmb *models.CmbDepositNo
-	cmbInfo, err := cmb.FindByCmbNo(*order.DmaNbr)
+	cmbInfo, err := cmbDepositNoOperator.FindByCmbNo(*order.DmaNbr)
 	if err != nil {
 		return false, err
 	}

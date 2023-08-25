@@ -11,13 +11,16 @@ type CmbDepositNo struct {
 	CmbNo        string `gorm:"type:varchar(255);index" json:"cmb_no"`       // 用户专属招行对公充值卡号
 }
 
-func (item *CmbDepositNo) FindByUserId(uid uint) (*CmbDepositNo, error) {
+type CmbDepositNoOperator struct {
+}
+
+func (*CmbDepositNoOperator) FindByUserId(uid uint) (*CmbDepositNo, error) {
 	var item1 CmbDepositNo
 	err := GetDB().Where("user_id = ?", uid).First(&item1).Error
 	return &item1, err
 }
 
-func (item *CmbDepositNo) FindByCmbNo(cmbNo string) (*CmbDepositNo, error) {
+func (*CmbDepositNoOperator) FindByCmbNo(cmbNo string) (*CmbDepositNo, error) {
 	var item1 CmbDepositNo
 	err := GetDB().Where("cmb_no = ?", cmbNo).First(&item1).Error
 	return &item1, err
