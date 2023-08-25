@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils/mathutils"
-	"github.com/nft-rainbow/rainbow-fiat/common/models"
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
-	"github.com/nft-rainbow/rainbow-fiat/common/redis"
+	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -124,7 +124,7 @@ func settle() error {
 
 			// update user balance
 			if countInBalance > 0 {
-				fl, _err := models.PayAPIFee(tx, userId, costType, uint(countInBalance))
+				fl, _err := PayAPIFee(tx, userId, costType, uint(countInBalance))
 				if _err != nil {
 					return errors.WithMessage(_err, "failed to pay api fee")
 				}
@@ -207,7 +207,7 @@ func RefundApiCost(userId uint, costType enums.CostType, count int) error {
 		var err error
 		switch data[i].SettleType {
 		case enums.SETTLE_TYPE_BALANCE:
-			fl, err = models.RefundApiFee(models.GetDB(), userId, costType, uint(matchCount))
+			fl, err = RefundApiFee(models.GetDB(), userId, costType, uint(matchCount))
 		case enums.SETTLE_TYPE_QUOTA_RESET:
 			fl, err = userQuotaOperater.Refund(models.GetDB(), userId, costType, matchCount, 0)
 		case enums.SETTLE_TYPE_QUOTA_ROLLOVER:

@@ -10,7 +10,7 @@ import (
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/auth"
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser"
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/testutils"
-	mredis "github.com/nft-rainbow/rainbow-fiat/common/redis"
+	mredis "github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/stretchr/testify/assert"
 )
 

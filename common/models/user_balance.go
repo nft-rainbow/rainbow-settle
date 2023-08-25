@@ -1,13 +1,9 @@
 package models
 
 import (
-	"encoding/json"
-
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
-	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -122,114 +118,6 @@ func GetUserBalance(userId uint) (*UserBalance, error) {
 	return &ub, nil
 }
 
-func DepositBalance(userId uint, amount decimal.Decimal, depositOrderId uint, logType FiatLogType) (uint, error) {
-	return UpdateUserBalance(userId, amount, logType, FiatMetaDeposit{depositOrderId})
-}
-
-func WithdrawBalance(userId uint, amount decimal.Decimal) (uint, error) {
-	return UpdateUserBalance(userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_WITHDRAW, nil)
-}
-
-func BuyGas(userId uint, amount decimal.Decimal, txId uint, address string, price decimal.Decimal) (uint, error) {
-	return UpdateUserBalance(userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_BUY_GAS, FiatMetaBuySponsor{address, txId, price})
-}
-
-func BuyStorage(userId uint, amount decimal.Decimal, txId uint, address string, price decimal.Decimal) (uint, error) {
-	return UpdateUserBalance(userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_BUY_STORAGE, FiatMetaBuySponsor{address, txId, price})
-}
-
-func RefundSponsor(userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType FiatLogType, txId uint) (uint, error) {
-	return RefundSponsorWithTx(GetDB(), userId, amount, sponsorFiatlogId, sponsorFiatlogType, txId)
-}
-
-func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType FiatLogType, txId uint) (uint, error) {
-	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_SPONSOR, FiatMetaRefundSponsor{sponsorFiatlogId, sponsorFiatlogType, txId, "tx failed"})
-}
-
-func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
-	amount := GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return UpdateUserBalanceWithTx(tx, userId, amount, FIAT_LOG_TYPE_REFUND_API_FEE, FiatMetaRefundApiFee{costType, count}, false)
-}
-
-func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
-	amount := GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return UpdateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), FIAT_LOG_TYPE_PAY_API_FEE, FiatMetaPayApiFee{costType, count}, false)
-}
-
-func UpdateUserBalance(userId uint, amount decimal.Decimal, logType FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
-	var fiatLogId uint
-	err := GetDB().Transaction(func(tx *gorm.DB) error {
-		l, err := UpdateUserBalanceWithTx(tx, userId, amount, logType, meta, checkBalance...)
-		fiatLogId = l
-		return err
-	})
-	return fiatLogId, err
-}
-
-func UpdateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, logType FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
-
-	fl, err := func() (uint, error) {
-		if err := checkDecimalQualified(amount); err != nil {
-			return 0, err
-		}
-
-		userBalance := UserBalance{
-			UserId: userId,
-		}
-
-		if err := tx.Where(&userBalance).Find(&userBalance).Error; err != nil {
-			return 0, err
-		}
-
-		if (len(checkBalance) == 0 || checkBalance[0]) && userBalance.Balance.Add(userBalance.ArrearsQuota).Add(amount).Cmp(decimal.Zero) < 0 {
-			return 0, errors.New("insufficient balance")
-		}
-
-		metaJson, _ := json.Marshal(meta)
-		l := FiatLogCache{
-			FiatLogCore: FiatLogCore{
-				UserId:  userId,
-				Amount:  amount,
-				Type:    logType,
-				Meta:    metaJson,
-				OrderNO: RandomOrderNO(),
-				Balance: userBalance.Balance.Add(amount),
-			},
-		}
-		if err := tx.Create(&l).Error; err != nil {
-			return 0, err
-		}
-
-		userBalance.Balance = userBalance.Balance.Add(amount)
-		// if freeApiCost != nil {
-		// 	userBalance.FreeOtherApiQuota -= freeApiCost.FreeOtherApi
-		// 	userBalance.FreeMintQuota -= freeApiCost.FreeMint
-		// 	userBalance.FreeDeployQuota -= freeApiCost.FreeDeploy
-		// }
-
-		return l.ID, tx.Save(&userBalance).Error
-	}()
-
-	logrus.WithFields(logrus.Fields{
-		"userId": userId,
-		"amount": amount,
-		// "freeApiCost": freeApiCost,
-		"logType":   logType,
-		"fiatLogId": fl,
-	}).WithError(err).Info("update user balance")
-
-	return fl, err
-}
-
-func UpdateUserArrearsQuota(userId uint, amount decimal.Decimal) error {
-	var ub UserBalance
-	if err := GetDB().Where(&UserBalance{UserId: userId}).First(&ub).Error; err != nil {
-		return err
-	}
-	ub.ArrearsQuota = amount
-	return GetDB().Save(&ub).Error
-}
-
 // func UpdateUserFreeQuotas(userId uint, quotas FreeApiQuota) error {
 // 	var ub UserBalance
 // 	if err := GetDB().Where(&UserBalance{UserId: userId}).First(&ub).Error; err != nil {
@@ -287,19 +175,4 @@ func GetUserCfxPrice(userId uint) (decimal.Decimal, error) {
 		return normalCfxPrice, nil
 	}
 	return ub.CfxPrice, nil
-}
-
-func UpdateUserCfxPrice(userId uint, price decimal.Decimal) error {
-	if err := checkDecimalQualified(price); err != nil {
-		return err
-	}
-	return GetDB().Model(&UserBalance{}).Where(&UserBalance{UserId: userId}).Update("cfx_price", price).Error
-}
-
-func checkDecimalQualified(amount decimal.Decimal) error {
-	amountX100 := amount.Mul(decimal.NewFromInt(100))
-	if amountX100.Cmp(amountX100.Floor()) != 0 {
-		return errors.Errorf("the decimal place of value cannot be greater than 2, but got %v", amount)
-	}
-	return nil
 }

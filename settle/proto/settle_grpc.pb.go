@@ -24,7 +24,10 @@ const _ = grpc.SupportPackageIsVersion7
 type SettleClient interface {
 	Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*WxOrder, error)
 	GetWxOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*WxOrder, error)
-	RefundCost(ctx context.Context, in *RefundCostRequest, opts ...grpc.CallOption) (*Empty, error)
+	BuyGas(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
+	BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
+	RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error)
+	RefundApiFee(ctx context.Context, in *RefundApiFeeRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
 	GetUserApiQuota(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserApiQuotas, error)
 }
@@ -55,9 +58,36 @@ func (c *settleClient) GetWxOrder(ctx context.Context, in *WxOrderRequest, opts 
 	return out, nil
 }
 
-func (c *settleClient) RefundCost(ctx context.Context, in *RefundCostRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *settleClient) BuyGas(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/RefundCost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/BuyGas", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/BuyStorage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/RefundSponsor", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) RefundApiFee(ctx context.Context, in *RefundApiFeeRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/RefundApiFee", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +118,10 @@ func (c *settleClient) GetUserApiQuota(ctx context.Context, in *UserID, opts ...
 type SettleServer interface {
 	Deposite(context.Context, *DepositRequest) (*WxOrder, error)
 	GetWxOrder(context.Context, *WxOrderRequest) (*WxOrder, error)
-	RefundCost(context.Context, *RefundCostRequest) (*Empty, error)
+	BuyGas(context.Context, *BuySponsorRequest) (*Empty, error)
+	BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error)
+	RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error)
+	RefundApiFee(context.Context, *RefundApiFeeRequest) (*Empty, error)
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
 	GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error)
 	mustEmbedUnimplementedSettleServer()
@@ -104,8 +137,17 @@ func (UnimplementedSettleServer) Deposite(context.Context, *DepositRequest) (*Wx
 func (UnimplementedSettleServer) GetWxOrder(context.Context, *WxOrderRequest) (*WxOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWxOrder not implemented")
 }
-func (UnimplementedSettleServer) RefundCost(context.Context, *RefundCostRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RefundCost not implemented")
+func (UnimplementedSettleServer) BuyGas(context.Context, *BuySponsorRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BuyGas not implemented")
+}
+func (UnimplementedSettleServer) BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BuyStorage not implemented")
+}
+func (UnimplementedSettleServer) RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefundSponsor not implemented")
+}
+func (UnimplementedSettleServer) RefundApiFee(context.Context, *RefundApiFeeRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefundApiFee not implemented")
 }
 func (UnimplementedSettleServer) GetUserBalance(context.Context, *UserID) (*UserBalance, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserBalance not implemented")
@@ -162,20 +204,74 @@ func _Settle_GetWxOrder_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Settle_RefundCost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefundCostRequest)
+func _Settle_BuyGas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuySponsorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SettleServer).RefundCost(ctx, in)
+		return srv.(SettleServer).BuyGas(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/rainbowsettle.Settle/RefundCost",
+		FullMethod: "/rainbowsettle.Settle/BuyGas",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SettleServer).RefundCost(ctx, req.(*RefundCostRequest))
+		return srv.(SettleServer).BuyGas(ctx, req.(*BuySponsorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_BuyStorage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuySponsorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).BuyStorage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/BuyStorage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).BuyStorage(ctx, req.(*BuySponsorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_RefundSponsor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefundSponsorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).RefundSponsor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/RefundSponsor",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).RefundSponsor(ctx, req.(*RefundSponsorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_RefundApiFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefundApiFeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).RefundApiFee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/RefundApiFee",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).RefundApiFee(ctx, req.(*RefundApiFeeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -232,8 +328,20 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Settle_GetWxOrder_Handler,
 		},
 		{
-			MethodName: "RefundCost",
-			Handler:    _Settle_RefundCost_Handler,
+			MethodName: "BuyGas",
+			Handler:    _Settle_BuyGas_Handler,
+		},
+		{
+			MethodName: "BuyStorage",
+			Handler:    _Settle_BuyStorage_Handler,
+		},
+		{
+			MethodName: "RefundSponsor",
+			Handler:    _Settle_RefundSponsor_Handler,
+		},
+		{
+			MethodName: "RefundApiFee",
+			Handler:    _Settle_RefundApiFee_Handler,
 		},
 		{
 			MethodName: "GetUserBalance",

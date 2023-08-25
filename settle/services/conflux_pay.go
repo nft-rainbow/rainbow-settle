@@ -9,8 +9,8 @@ import (
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/rand"
-	"github.com/nft-rainbow/rainbow-fiat/common/models"
-	"github.com/nft-rainbow/rainbow-fiat/settle/config"
+	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/settle/config"
 	"github.com/shopspring/decimal"
 
 	confluxpay "github.com/web3-identity/conflux-pay-sdk-go"
@@ -119,7 +119,7 @@ func UpdateDepositOrder(orderId uint, status int) error {
 		if err := models.GetDB().First(&order, orderId).Error; err != nil {
 			return err
 		}
-		if _, err = models.DepositBalance(order.UserId, order.Amount, orderId, models.FIAT_LOG_TYPE_DEPOSIT); err != nil {
+		if _, err = DepositBalance(order.UserId, order.Amount, orderId, models.FIAT_LOG_TYPE_DEPOSIT); err != nil {
 			utils.DingWarnf("deposit balance failed: %d %s", orderId, err.Error())
 			return err
 		}
@@ -280,7 +280,7 @@ func saveCmbDepositOrder(order *confluxpay.ModelsCmbRecord) (bool, error) {
 	}
 
 	// deposit balance
-	_, err = models.DepositBalance(cmbInfo.UserId, amount, item.ID, models.FIAT_LOG_TYPE_CMB_CHARGE)
+	_, err = DepositBalance(cmbInfo.UserId, amount, item.ID, models.FIAT_LOG_TYPE_CMB_CHARGE)
 	if err != nil {
 		return false, err
 	}

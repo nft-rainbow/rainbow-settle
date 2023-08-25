@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/testutils"
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/stretchr/testify/assert"
 )
 

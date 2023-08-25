@@ -3,7 +3,7 @@ package services
 import (
 	"time"
 
-	"github.com/nft-rainbow/rainbow-fiat/common/models"
+	"github.com/nft-rainbow/rainbow-settle/common/models"
 )
 
 var (

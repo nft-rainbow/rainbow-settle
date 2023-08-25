@@ -6,11 +6,11 @@ import (
 	"net"
 
 	"github.com/nft-rainbow/conflux-gin-helper/logger"
-	"github.com/nft-rainbow/rainbow-fiat/common/models"
-	"github.com/nft-rainbow/rainbow-fiat/settle/config"
-	"github.com/nft-rainbow/rainbow-fiat/settle/proto"
-	"github.com/nft-rainbow/rainbow-fiat/settle/server"
-	"github.com/nft-rainbow/rainbow-fiat/settle/services"
+	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/settle/config"
+	"github.com/nft-rainbow/rainbow-settle/settle/proto"
+	"github.com/nft-rainbow/rainbow-settle/settle/server"
+	"github.com/nft-rainbow/rainbow-settle/settle/services"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )

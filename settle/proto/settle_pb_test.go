@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/influxdata/influxdb/pkg/testing/assert"
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -19,7 +19,7 @@ func TestRefund(t *testing.T) {
 	}
 	defer conn.Close()
 	c := NewSettleClient(conn)
-	_, err = c.RefundCost(context.Background(), &RefundCostRequest{
+	_, err = c.RefundApiFee(context.Background(), &RefundApiFeeRequest{
 		UserId:   1,
 		CostType: enums.COST_TYPE_RAINBOW_MINT.String(),
 		Count:    1,

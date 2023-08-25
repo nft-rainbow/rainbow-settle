@@ -10,8 +10,8 @@ import (
 
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/testutils"
 	"github.com/gin-gonic/gin"
-	"github.com/nft-rainbow/rainbow-api/models/enums"
 	"github.com/nft-rainbow/rainbow-api/services"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +60,7 @@ func TestParseRainbowApiRequest(t *testing.T) {
 
 	assert.Equal(t, true, result.IsMainnet)
 	assert.Equal(t, 1, result.Count)
-	assert.Equal(t, enums.COST_TYPE_MINT, result.CostType)
+	assert.Equal(t, enums.COST_TYPE_RAINBOW_MINT, result.CostType)
 
 	// fmt.Println(result.CostType.String())
 

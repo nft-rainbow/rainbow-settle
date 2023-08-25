@@ -12,8 +12,8 @@ import (
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
-	mredis "github.com/nft-rainbow/rainbow-fiat/common/redis"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	mredis "github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/pkg/errors"
 )
 

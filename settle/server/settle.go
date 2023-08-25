@@ -3,10 +3,12 @@ package server
 import (
 	"context"
 
-	"github.com/nft-rainbow/rainbow-fiat/common/models"
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
-	"github.com/nft-rainbow/rainbow-fiat/settle/proto"
-	"github.com/nft-rainbow/rainbow-fiat/settle/services"
+	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/settle/proto"
+	"github.com/nft-rainbow/rainbow-settle/settle/services"
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 )
 
 type SettleServer struct {
@@ -31,8 +33,44 @@ func (s *SettleServer) GetWxOrder(ctx context.Context, in *proto.WxOrderRequest)
 	return nil, nil
 }
 
+func (s *SettleServer) BuyGas(ctx context.Context, in *proto.BuySponsorRequest) (*proto.Empty, error) {
+	price, err := models.GetUserCfxPrice(uint(in.UserId))
+	if err != nil {
+		return nil, err
+	}
+	fl, err := services.BuyGas(uint(in.UserId), decimal.NewFromFloat32(in.Amount), uint(in.TxId), in.Address, price)
+	if err != nil {
+		return nil, err
+	}
+	logrus.WithField("fiatlog", fl).Info("buy gas completed")
+	return &proto.Empty{}, nil
+}
+
+func (s *SettleServer) BuyStorage(ctx context.Context, in *proto.BuySponsorRequest) (*proto.Empty, error) {
+	price, err := models.GetUserCfxPrice(uint(in.UserId))
+	if err != nil {
+		return nil, err
+	}
+	fl, err := services.BuyStorage(uint(in.UserId), decimal.NewFromFloat32(in.Amount), uint(in.TxId), in.Address, price)
+	if err != nil {
+		return nil, err
+	}
+	logrus.WithField("fiatlog", fl).Info("buy storage completed")
+	return &proto.Empty{}, nil
+}
+
+func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponsorRequest) (*proto.Empty, error) {
+
+	fl, err := services.RefundSponsor(uint(in.UserId), decimal.NewFromFloat32(in.Amount), uint(in.SponsorFiatlogId), models.FiatLogType(in.FiatlogType), uint(in.TxId))
+	if err != nil {
+		return nil, err
+	}
+	logrus.WithField("fiatlog", fl).Info("refund sponsor completed")
+	return &proto.Empty{}, nil
+}
+
 // 根据settle堆栈判断退quota还是balance
-func (s *SettleServer) RefundCost(ctx context.Context, in *proto.RefundCostRequest) (*proto.Empty, error) {
+func (s *SettleServer) RefundApiFee(ctx context.Context, in *proto.RefundApiFeeRequest) (*proto.Empty, error) {
 	costType, err := enums.ParseCostType(in.CostType)
 	if err != nil {
 		return nil, err

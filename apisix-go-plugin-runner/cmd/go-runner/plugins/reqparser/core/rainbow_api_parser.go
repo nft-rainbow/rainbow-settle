@@ -11,9 +11,9 @@ import (
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/nft-rainbow/rainbow-api/models/enums"
 	"github.com/nft-rainbow/rainbow-api/services"
 	"github.com/nft-rainbow/rainbow-api/utils"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 )
 
 var (
@@ -56,8 +56,8 @@ func ParseRainbowApiRequest(r pkgHTTP.Request) (*RainbowApiReqParseResult, error
 	// 此处主要用于解析fullpath
 	rainbowApiEngine.HandleContext(c)
 
-	if getAction(c.Request.Method, c.FullPath()) == enums.COST_TYPE_NORMAL {
-		return &RainbowApiReqParseResult{false, enums.COST_TYPE_NORMAL, 1}, nil
+	if getAction(c.Request.Method, c.FullPath()) == enums.COST_TYPE_RAINBOW_NORMAL {
+		return &RainbowApiReqParseResult{false, enums.COST_TYPE_RAINBOW_NORMAL, 1}, nil
 	}
 
 	body, err := r.Body()
@@ -134,12 +134,12 @@ func getAction(method, fullPath string) enums.CostType {
 	isMint := utils.IsMint(method, fullPath)
 	isDeploy := utils.IsDeploy(method, fullPath)
 	if isMint {
-		return enums.COST_TYPE_MINT
+		return enums.COST_TYPE_RAINBOW_MINT
 	}
 	if isDeploy {
-		return enums.COST_TYPE_DEPLOY
+		return enums.COST_TYPE_RAINBOW_DEPLOY
 	}
-	return enums.COST_TYPE_NORMAL
+	return enums.COST_TYPE_RAINBOW_NORMAL
 }
 
 // func IsMainNet(c *gin.Context) (bool, uint, error) {

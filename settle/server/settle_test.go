@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/nft-rainbow/rainbow-fiat/settle/proto"
+	"github.com/nft-rainbow/rainbow-settle/settle/proto"
 )
 
 func TestSettle(t *testing.T) {

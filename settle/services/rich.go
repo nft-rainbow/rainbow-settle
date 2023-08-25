@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/nft-rainbow/rainbow-fiat/common/models"
-	"github.com/nft-rainbow/rainbow-fiat/common/models/enums"
-	"github.com/nft-rainbow/rainbow-fiat/common/redis"
+	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 )

@@ -1,6 +1,6 @@
 package count
 
-import "github.com/nft-rainbow/rainbow-fiat/common/models/enums"
+import "github.com/nft-rainbow/rainbow-settle/common/models/enums"
 
 var (
 	quotaLimit map[enums.CostType]int

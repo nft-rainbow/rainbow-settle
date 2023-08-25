@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/nft-rainbow/conflux-gin-helper/logger"
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
-	cfg "github.com/nft-rainbow/rainbow-fiat/common/config"
+	cfg "github.com/nft-rainbow/rainbow-settle/common/config"
 )
 
 type ConfigBase struct {
