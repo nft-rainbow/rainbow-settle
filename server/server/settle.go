@@ -31,8 +31,21 @@ func (s *SettleServer) Deposite(ctx context.Context, in *proto.DepositRequest) (
 	}, nil
 }
 
-func (s *SettleServer) GetWxOrder(ctx context.Context, in *proto.WxOrderRequest) (*proto.WxOrder, error) {
-	return nil, nil
+func (s *SettleServer) GetDepositeOrder(ctx context.Context, in *proto.WxOrderRequest) (*proto.DepositOrder, error) {
+	o, err := models.FindDepositOrderById(uint(in.ID))
+	if err != nil {
+		return nil, err
+	}
+	return &proto.DepositOrder{
+		ID:          uint32(o.ID),
+		UserId:      uint32(o.UserId),
+		Amount:      float32(o.Amount.InexactFloat64()),
+		Type:        uint32(o.Type),
+		Status:      uint32(o.Status),
+		Description: o.Description,
+		TradeNo:     o.TradeNo,
+		Meta:        string(o.Meta),
+	}, nil
 }
 
 func (s *SettleServer) BuyGas(ctx context.Context, in *proto.BuySponsorRequest) (*proto.Empty, error) {

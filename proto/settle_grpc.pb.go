@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SettleClient interface {
 	Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*WxOrder, error)
-	GetWxOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*WxOrder, error)
+	GetDepositeOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*DepositOrder, error)
 	BuyGas(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error)
@@ -53,9 +53,9 @@ func (c *settleClient) Deposite(ctx context.Context, in *DepositRequest, opts ..
 	return out, nil
 }
 
-func (c *settleClient) GetWxOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*WxOrder, error) {
-	out := new(WxOrder)
-	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/GetWxOrder", in, out, opts...)
+func (c *settleClient) GetDepositeOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*DepositOrder, error) {
+	out := new(DepositOrder)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/GetDepositeOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (c *settleClient) UpdateCmcDepositNoRelation(ctx context.Context, in *Updat
 // for forward compatibility
 type SettleServer interface {
 	Deposite(context.Context, *DepositRequest) (*WxOrder, error)
-	GetWxOrder(context.Context, *WxOrderRequest) (*WxOrder, error)
+	GetDepositeOrder(context.Context, *WxOrderRequest) (*DepositOrder, error)
 	BuyGas(context.Context, *BuySponsorRequest) (*Empty, error)
 	BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error)
 	RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error)
@@ -178,8 +178,8 @@ type UnimplementedSettleServer struct {
 func (UnimplementedSettleServer) Deposite(context.Context, *DepositRequest) (*WxOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Deposite not implemented")
 }
-func (UnimplementedSettleServer) GetWxOrder(context.Context, *WxOrderRequest) (*WxOrder, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWxOrder not implemented")
+func (UnimplementedSettleServer) GetDepositeOrder(context.Context, *WxOrderRequest) (*DepositOrder, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDepositeOrder not implemented")
 }
 func (UnimplementedSettleServer) BuyGas(context.Context, *BuySponsorRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuyGas not implemented")
@@ -242,20 +242,20 @@ func _Settle_Deposite_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Settle_GetWxOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Settle_GetDepositeOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(WxOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SettleServer).GetWxOrder(ctx, in)
+		return srv.(SettleServer).GetDepositeOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/rainbowsettle.Settle/GetWxOrder",
+		FullMethod: "/rainbowsettle.Settle/GetDepositeOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SettleServer).GetWxOrder(ctx, req.(*WxOrderRequest))
+		return srv.(SettleServer).GetDepositeOrder(ctx, req.(*WxOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -452,8 +452,8 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Settle_Deposite_Handler,
 		},
 		{
-			MethodName: "GetWxOrder",
-			Handler:    _Settle_GetWxOrder_Handler,
+			MethodName: "GetDepositeOrder",
+			Handler:    _Settle_GetDepositeOrder_Handler,
 		},
 		{
 			MethodName: "BuyGas",

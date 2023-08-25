@@ -30,6 +30,17 @@ message WxOrder {
   optional string TradeState = 5;    // `json:"trade_state,omitempty"`
 }
 
+message DepositOrder {
+  uint32 ID = 1;
+  uint32 UserId = 2;
+  float Amount = 3;
+  uint32 Type = 4;
+  uint32 Status = 5;
+  string Description = 6;
+  string TradeNo = 7;
+  string Meta = 8;
+}
+
 message UserID { uint32 UserId = 1; }
 
 message CmbDepositNoDto {
@@ -77,7 +88,7 @@ message Pagenation {
   uint32 Limit = 2;
 }
 
-message WxOrderRequest { string TradeNo = 1; }
+message WxOrderRequest { uint32 ID = 1; }
 
 message RefundApiFeeRequest {
   uint32 UserId = 1;
@@ -112,7 +123,7 @@ message QueryRecentCmbHistoryResponse { repeated ModelsCmbRecord List = 1; }
 
 service Settle {
   rpc Deposite(DepositRequest) returns (WxOrder);
-  rpc GetWxOrder(WxOrderRequest) returns (WxOrder);
+  rpc GetDepositeOrder(WxOrderRequest) returns (DepositOrder);
 
   rpc BuyGas(BuySponsorRequest) returns (Empty);
   rpc BuyStorage(BuySponsorRequest) returns (Empty);
