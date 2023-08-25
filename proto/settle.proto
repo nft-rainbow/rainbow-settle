@@ -32,10 +32,40 @@ message WxOrder {
 
 message UserID { uint32 UserId = 1; }
 
+message CmbDepositNoDto {
+  string Name = 1;
+  string Bank = 2;
+  string CardNo = 3;
+}
+
 message DepositRequest {
   uint32 UserId = 1;
   float Amount = 2;
   string Description = 3;
+}
+
+message ModelsCmbRecord {
+  optional string AccNbr = 1;
+  optional string AutFlg = 2;
+  optional string CcyNbr = 3;
+  optional string CreatedAt = 4;
+  optional string DmaNam = 5;
+  optional string DmaNbr = 6;
+  optional int32 Id = 7;
+  optional string NarInn = 8;
+  optional string RpyAcc = 9;
+  optional string RpyNam = 10;
+  optional float TrxAmt = 11;
+  optional string TrxDat = 12;
+  optional string TrxDir = 13;
+  optional string TrxNbr = 14;
+  optional string TrxTim = 15;
+  optional string TrxTxt = 16;
+}
+
+message Pagenation {
+  uint32 Offset = 1;
+  uint32 Limit = 2;
 }
 
 message WxOrderRequest { string TradeNo = 1; }
@@ -59,35 +89,17 @@ message RefundSponsorRequest {
   uint32 TxId = 3;
 }
 
-// message UpdateUserArrearsQuotaRequest{
-//   uint32 UserId = 1;
-//   float Amount = 2;
-// }
+message CreateCmcDepositNoReqeust {
+  uint32 UserId = 1;
+  CmbDepositNoDto Info = 2;
+}
 
-// message UpdateUserCfxPriceRequest{
-//   uint32 UserId = 1;
-//   float Price = 2;
-// }
+message UpdateCmcDepositNoRelationRequest {
+  uint32 UserId = 1;
+  CmbDepositNoDto Info = 2;
+}
 
-// message CmbDepositNo {
-//   uint32 ID = 1;
-//   uint32 UserId = 2;
-//   string UserName = 3;
-//   string UserBankNo = 4;
-//   string UserBankName = 5;
-//   string CmbNo = 6;
-// }
-
-// message CreateCmbDepositNoRequest {
-//   string Name = 1;
-//   string Bank = 2;
-//   string CardNo = 3;
-//   // type CmbDepositNoDto struct {
-//   //   Name   string `form:"name" json:"name" binding:"required"`
-//   //   Bank   string `form:"bank" json:"bank" binding:"required"`
-//   //   CardNo string `form:"card_no" json:"card_no" binding:"required"`
-//   // }
-// }
+message QueryRecentCmbHistoryResponse { repeated ModelsCmbRecord List = 1; }
 
 service Settle {
   rpc Deposite(DepositRequest) returns (WxOrder);
@@ -97,10 +109,15 @@ service Settle {
   rpc BuyStorage(BuySponsorRequest) returns (Empty);
   rpc RefundSponsor(RefundSponsorRequest) returns (Empty);
 
-  rpc RefundApiFee(RefundApiFeeRequest)returns(Empty);
+  rpc RefundApiFee(RefundApiFeeRequest) returns (Empty);
 
   rpc GetUserBalance(UserID) returns (UserBalance);
   rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
+
+  rpc CreateCmcDepositNo(CreateCmcDepositNoReqeust) returns (Empty);
+  rpc QueryRecentCmbHistory(Pagenation) returns (QueryRecentCmbHistoryResponse);
+  rpc UpdateCmcDepositNoRelation(UpdateCmcDepositNoRelationRequest)
+      returns (Empty);
 
   // rpc UpdateUserArrearsQuota(Empty) returns (Empty);
   // rpc UpdateUserCfxPrice(Empty) returns (Empty);

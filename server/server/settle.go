@@ -7,8 +7,10 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/nft-rainbow/rainbow-settle/proto"
 	"github.com/nft-rainbow/rainbow-settle/server/services"
+	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	confluxpay "github.com/web3-identity/conflux-pay-sdk-go"
 )
 
 type SettleServer struct {
@@ -116,4 +118,60 @@ func (s *SettleServer) GetUserApiQuota(ctx context.Context, in *proto.UserID) (*
 		uqs.Items[_u.CostType.String()] = &u
 	}
 	return uqs, nil
+}
+
+func (s *SettleServer) CreateCmcDepositNo(ctx context.Context, in *proto.CreateCmcDepositNoReqeust) (*proto.Empty, error) {
+	if err := services.CreateCmcDepositNo(uint(in.UserId), parseCmbDepositNo(in.Info)); err != nil {
+		return nil, err
+	}
+	return &proto.Empty{}, nil
+}
+
+func (s *SettleServer) QueryRecentCmbHistory(ctx context.Context, in *proto.Pagenation) (*proto.QueryRecentCmbHistoryResponse, error) {
+	resp, err := services.QueryRecentCmbHistory(int32(in.Limit), int32(in.Offset))
+	if err != nil {
+		return nil, err
+	}
+	return convertCmbHistory(resp), nil
+}
+
+func (s *SettleServer) UpdateCmcDepositNoRelation(ctx context.Context, in *proto.UpdateCmcDepositNoRelationRequest) (*proto.Empty, error) {
+	if err := services.UpdateCmcDepositNoRelation(uint(in.UserId), parseCmbDepositNo(in.Info)); err != nil {
+		return nil, err
+	}
+	return &proto.Empty{}, nil
+}
+
+func convertCmbHistory(records []confluxpay.ModelsCmbRecord) *proto.QueryRecentCmbHistoryResponse {
+	var result proto.QueryRecentCmbHistoryResponse
+
+	result.List = lo.Map(records, func(r confluxpay.ModelsCmbRecord, index int) *proto.ModelsCmbRecord {
+		return &proto.ModelsCmbRecord{
+			AccNbr:    r.AccNbr,
+			AutFlg:    r.AutFlg,
+			CcyNbr:    r.CcyNbr,
+			CreatedAt: r.CreatedAt,
+			DmaNam:    r.DmaNam,
+			DmaNbr:    r.DmaNbr,
+			Id:        r.Id,
+			NarInn:    r.NarInn,
+			RpyAcc:    r.RpyAcc,
+			RpyNam:    r.RpyNam,
+			TrxAmt:    r.TrxAmt,
+			TrxDat:    r.TrxDat,
+			TrxDir:    r.TrxDir,
+			TrxNbr:    r.TrxNbr,
+			TrxTim:    r.TrxTim,
+			TrxTxt:    r.TrxTxt,
+		}
+	})
+	return &result
+}
+
+func parseCmbDepositNo(info *proto.CmbDepositNoDto) services.CmbDepositNoDto {
+	return services.CmbDepositNoDto{
+		Name:   info.Name,
+		Bank:   info.Bank,
+		CardNo: info.CardNo,
+	}
 }

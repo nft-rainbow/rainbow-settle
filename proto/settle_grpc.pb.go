@@ -30,6 +30,9 @@ type SettleClient interface {
 	RefundApiFee(ctx context.Context, in *RefundApiFeeRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
 	GetUserApiQuota(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserApiQuotas, error)
+	CreateCmcDepositNo(ctx context.Context, in *CreateCmcDepositNoReqeust, opts ...grpc.CallOption) (*Empty, error)
+	QueryRecentCmbHistory(ctx context.Context, in *Pagenation, opts ...grpc.CallOption) (*QueryRecentCmbHistoryResponse, error)
+	UpdateCmcDepositNoRelation(ctx context.Context, in *UpdateCmcDepositNoRelationRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type settleClient struct {
@@ -112,6 +115,33 @@ func (c *settleClient) GetUserApiQuota(ctx context.Context, in *UserID, opts ...
 	return out, nil
 }
 
+func (c *settleClient) CreateCmcDepositNo(ctx context.Context, in *CreateCmcDepositNoReqeust, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/CreateCmcDepositNo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) QueryRecentCmbHistory(ctx context.Context, in *Pagenation, opts ...grpc.CallOption) (*QueryRecentCmbHistoryResponse, error) {
+	out := new(QueryRecentCmbHistoryResponse)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/QueryRecentCmbHistory", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) UpdateCmcDepositNoRelation(ctx context.Context, in *UpdateCmcDepositNoRelationRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/UpdateCmcDepositNoRelation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SettleServer is the server API for Settle service.
 // All implementations must embed UnimplementedSettleServer
 // for forward compatibility
@@ -124,6 +154,9 @@ type SettleServer interface {
 	RefundApiFee(context.Context, *RefundApiFeeRequest) (*Empty, error)
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
 	GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error)
+	CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error)
+	QueryRecentCmbHistory(context.Context, *Pagenation) (*QueryRecentCmbHistoryResponse, error)
+	UpdateCmcDepositNoRelation(context.Context, *UpdateCmcDepositNoRelationRequest) (*Empty, error)
 	mustEmbedUnimplementedSettleServer()
 }
 
@@ -154,6 +187,15 @@ func (UnimplementedSettleServer) GetUserBalance(context.Context, *UserID) (*User
 }
 func (UnimplementedSettleServer) GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserApiQuota not implemented")
+}
+func (UnimplementedSettleServer) CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCmcDepositNo not implemented")
+}
+func (UnimplementedSettleServer) QueryRecentCmbHistory(context.Context, *Pagenation) (*QueryRecentCmbHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryRecentCmbHistory not implemented")
+}
+func (UnimplementedSettleServer) UpdateCmcDepositNoRelation(context.Context, *UpdateCmcDepositNoRelationRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCmcDepositNoRelation not implemented")
 }
 func (UnimplementedSettleServer) mustEmbedUnimplementedSettleServer() {}
 
@@ -312,6 +354,60 @@ func _Settle_GetUserApiQuota_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Settle_CreateCmcDepositNo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCmcDepositNoReqeust)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).CreateCmcDepositNo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/CreateCmcDepositNo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).CreateCmcDepositNo(ctx, req.(*CreateCmcDepositNoReqeust))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_QueryRecentCmbHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Pagenation)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).QueryRecentCmbHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/QueryRecentCmbHistory",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).QueryRecentCmbHistory(ctx, req.(*Pagenation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_UpdateCmcDepositNoRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCmcDepositNoRelationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).UpdateCmcDepositNoRelation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/UpdateCmcDepositNoRelation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).UpdateCmcDepositNoRelation(ctx, req.(*UpdateCmcDepositNoRelationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Settle_ServiceDesc is the grpc.ServiceDesc for Settle service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -350,6 +446,18 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserApiQuota",
 			Handler:    _Settle_GetUserApiQuota_Handler,
+		},
+		{
+			MethodName: "CreateCmcDepositNo",
+			Handler:    _Settle_CreateCmcDepositNo_Handler,
+		},
+		{
+			MethodName: "QueryRecentCmbHistory",
+			Handler:    _Settle_QueryRecentCmbHistory_Handler,
+		},
+		{
+			MethodName: "UpdateCmcDepositNoRelation",
+			Handler:    _Settle_UpdateCmcDepositNoRelation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
