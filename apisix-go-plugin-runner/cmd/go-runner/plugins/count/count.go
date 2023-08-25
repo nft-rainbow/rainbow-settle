@@ -7,11 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/auth"
-	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser"
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
+	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	mredis "github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/pkg/errors"
@@ -42,10 +41,10 @@ func (c *Count) ParseConf(in []byte) (conf interface{}, err error) {
 
 func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
 	fn := func() error {
-		userIdStr := r.Header().Get(auth.RAINBOW_USER_ID_HEADER_KEY)
-		costTypeStr := r.Header().Get(reqparser.RAINBOW_COST_TYPE_HEADER_KEY)
-		costCountStr := r.Header().Get(reqparser.RAINBOW_COST_COUNT_HEADER_KEY)
-		reqId := r.Header().Get(reqparser.RAINBOW_REQUEST_ID)
+		userIdStr := r.Header().Get(constants.RAINBOW_USER_ID_HEADER_KEY)
+		costTypeStr := r.Header().Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
+		costCountStr := r.Header().Get(constants.RAINBOW_COST_COUNT_HEADER_KEY)
+		reqId := r.Header().Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 
 		log.Infof("userId: %v, costType: %v, costCount %v", userIdStr, costTypeStr, costCountStr)
 
@@ -113,7 +112,7 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 	// log.Infof("get content-type %s", w.Header().Get("Content-Type"))
 	// w.Header().Set("Content-Type", w.Header().Get("Content-Type"))
 
-	reqId := w.Header().Get(reqparser.RAINBOW_REQUEST_ID)
+	reqId := w.Header().Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 	// log.Infof("get x-rainbow-request-id %s", reqId)
 	if reqId == "" {
 		return

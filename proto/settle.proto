@@ -56,10 +56,7 @@ message BuySponsorRequest {
 message RefundSponsorRequest {
   uint32 UserId = 1;
   float Amount = 2;
-  uint32 SponsorFiatlogId = 3;
-  string Address = 4;
-  uint32 FiatlogType = 5;
-  uint32 TxId = 6;
+  uint32 TxId = 3;
 }
 
 // message UpdateUserArrearsQuotaRequest{

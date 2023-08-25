@@ -7,9 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/auth"
-	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser"
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/testutils"
+	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	mredis "github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/stretchr/testify/assert"
 )
@@ -32,9 +31,9 @@ func TestCountRequestFilter(t *testing.T) {
 
 		var c Count
 		header := testutils.NewHttpHeader()
-		header.Set(auth.RAINBOW_USER_ID_HEADER_KEY, "1")
-		header.Set(reqparser.RAINBOW_COST_TYPE_HEADER_KEY, "mint")
-		header.Set(reqparser.RAINBOW_COST_COUNT_HEADER_KEY, item.Count)
+		header.Set(constants.RAINBOW_USER_ID_HEADER_KEY, "1")
+		header.Set(constants.RAINBOW_COST_TYPE_HEADER_KEY, "mint")
+		header.Set(constants.RAINBOW_COST_COUNT_HEADER_KEY, item.Count)
 
 		r := testutils.HttpRequest{
 			Header_: header,
@@ -65,9 +64,9 @@ func TestCountRequestFilterConsequent(t *testing.T) {
 	var c Count
 	for i, item := range table {
 		header := testutils.NewHttpHeader()
-		header.Set(auth.RAINBOW_USER_ID_HEADER_KEY, "1")
-		header.Set(reqparser.RAINBOW_COST_TYPE_HEADER_KEY, "mint")
-		header.Set(reqparser.RAINBOW_COST_COUNT_HEADER_KEY, item.Count)
+		header.Set(constants.RAINBOW_USER_ID_HEADER_KEY, "1")
+		header.Set(constants.RAINBOW_COST_TYPE_HEADER_KEY, "mint")
+		header.Set(constants.RAINBOW_COST_COUNT_HEADER_KEY, item.Count)
 
 		r := testutils.HttpRequest{
 			Header_: header,

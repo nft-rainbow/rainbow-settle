@@ -60,8 +60,12 @@ func (s *SettleServer) BuyStorage(ctx context.Context, in *proto.BuySponsorReque
 }
 
 func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponsorRequest) (*proto.Empty, error) {
+	fiatlog, err := models.FindSponsorFiatlogByTxid(uint(in.TxId))
+	if err != nil {
+		return nil, err
+	}
 
-	fl, err := services.RefundSponsor(uint(in.UserId), decimal.NewFromFloat32(in.Amount), uint(in.SponsorFiatlogId), models.FiatLogType(in.FiatlogType), uint(in.TxId))
+	fl, err := services.RefundSponsor(uint(in.UserId), fiatlog.Amount, fiatlog.ID, fiatlog.Type, uint(in.TxId))
 	if err != nil {
 		return nil, err
 	}

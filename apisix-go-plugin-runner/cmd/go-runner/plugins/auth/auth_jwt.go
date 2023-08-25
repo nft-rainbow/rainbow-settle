@@ -13,6 +13,7 @@ import (
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -26,10 +27,6 @@ func init() {
 		log.Fatalf("failed to register plugin jwt-auth: %s", err)
 	}
 }
-
-const (
-	RAINBOW_USER_ID_HEADER_KEY = "x-rainbow-user-id"
-)
 
 type JwtAuthConf struct {
 	TokenLookup string `json:"token_lookup"`
@@ -103,7 +100,7 @@ func (c *JwtAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHT
 		if err != nil {
 			return err
 		}
-		r.Header().Set(RAINBOW_USER_ID_HEADER_KEY, userId)
+		r.Header().Set(constants.RAINBOW_USER_ID_HEADER_KEY, userId)
 		return nil
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
 	"github.com/google/uuid"
+	"github.com/nft-rainbow/rainbow-settle/common/constants"
 )
 
 func init() {
@@ -17,12 +18,6 @@ func init() {
 		log.Fatalf("failed to register plugin rainbow_api_parser: %s", err)
 	}
 }
-
-const (
-	RAINBOW_COST_TYPE_HEADER_KEY  = "x-rainbow-cost-type"
-	RAINBOW_COST_COUNT_HEADER_KEY = "x-rainbow-cost-count"
-	RAINBOW_REQUEST_ID            = "x-rainbow-request-id"
-)
 
 // Say is a demo to show how to return data directly instead of proxying
 // it to the upstream.
@@ -52,9 +47,9 @@ func (p *RainbowApiParser) RequestFilter(conf interface{}, w http.ResponseWriter
 		}
 
 		// log.Infof("result %v", result)
-		r.Header().Set(RAINBOW_COST_TYPE_HEADER_KEY, result.CostType.String())
-		r.Header().Set(RAINBOW_COST_COUNT_HEADER_KEY, fmt.Sprintf("%d", result.Count))
-		r.Header().Set(RAINBOW_REQUEST_ID, uuid.New().String())
+		r.Header().Set(constants.RAINBOW_COST_TYPE_HEADER_KEY, result.CostType.String())
+		r.Header().Set(constants.RAINBOW_COST_COUNT_HEADER_KEY, fmt.Sprintf("%d", result.Count))
+		r.Header().Set(constants.RAINBOW_REQUEST_ID_HEADER_KEY, uuid.New().String())
 
 		return nil
 	}

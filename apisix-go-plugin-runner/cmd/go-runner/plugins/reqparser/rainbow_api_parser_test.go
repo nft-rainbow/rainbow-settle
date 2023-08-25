@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/testutils"
+	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +22,7 @@ func TestParseRainbowApiRequest(t *testing.T) {
 		Header_: testutils.NewHttpHeader(),
 	}
 	p.RequestFilter(RainbowApiParserConf{}, w, &r)
-	assert.Equal(t, "normal", r.Header().Get(RAINBOW_COST_TYPE_HEADER_KEY))
+	assert.Equal(t, "normal", r.Header().Get(constants.RAINBOW_COST_TYPE_HEADER_KEY))
 }
 
 func TestCostType(t *testing.T) {
