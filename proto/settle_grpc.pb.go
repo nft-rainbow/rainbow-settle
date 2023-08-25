@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SettleClient interface {
 	Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*WxOrder, error)
-	GetDepositeOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*DepositOrder, error)
+	GetDepositeOrder(ctx context.Context, in *ID, opts ...grpc.CallOption) (*DepositOrder, error)
 	BuyGas(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error)
@@ -53,7 +53,7 @@ func (c *settleClient) Deposite(ctx context.Context, in *DepositRequest, opts ..
 	return out, nil
 }
 
-func (c *settleClient) GetDepositeOrder(ctx context.Context, in *WxOrderRequest, opts ...grpc.CallOption) (*DepositOrder, error) {
+func (c *settleClient) GetDepositeOrder(ctx context.Context, in *ID, opts ...grpc.CallOption) (*DepositOrder, error) {
 	out := new(DepositOrder)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/GetDepositeOrder", in, out, opts...)
 	if err != nil {
@@ -157,7 +157,7 @@ func (c *settleClient) UpdateCmcDepositNoRelation(ctx context.Context, in *Updat
 // for forward compatibility
 type SettleServer interface {
 	Deposite(context.Context, *DepositRequest) (*WxOrder, error)
-	GetDepositeOrder(context.Context, *WxOrderRequest) (*DepositOrder, error)
+	GetDepositeOrder(context.Context, *ID) (*DepositOrder, error)
 	BuyGas(context.Context, *BuySponsorRequest) (*Empty, error)
 	BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error)
 	RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error)
@@ -178,7 +178,7 @@ type UnimplementedSettleServer struct {
 func (UnimplementedSettleServer) Deposite(context.Context, *DepositRequest) (*WxOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Deposite not implemented")
 }
-func (UnimplementedSettleServer) GetDepositeOrder(context.Context, *WxOrderRequest) (*DepositOrder, error) {
+func (UnimplementedSettleServer) GetDepositeOrder(context.Context, *ID) (*DepositOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDepositeOrder not implemented")
 }
 func (UnimplementedSettleServer) BuyGas(context.Context, *BuySponsorRequest) (*Empty, error) {
@@ -243,7 +243,7 @@ func _Settle_Deposite_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _Settle_GetDepositeOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WxOrderRequest)
+	in := new(ID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func _Settle_GetDepositeOrder_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: "/rainbowsettle.Settle/GetDepositeOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SettleServer).GetDepositeOrder(ctx, req.(*WxOrderRequest))
+		return srv.(SettleServer).GetDepositeOrder(ctx, req.(*ID))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -42,6 +42,7 @@ message DepositOrder {
 }
 
 message UserID { uint32 UserId = 1; }
+message ID { uint32 Id = 1; }
 
 message CmbDepositNoDto {
   string Name = 1;
@@ -123,7 +124,7 @@ message QueryRecentCmbHistoryResponse { repeated ModelsCmbRecord List = 1; }
 
 service Settle {
   rpc Deposite(DepositRequest) returns (WxOrder);
-  rpc GetDepositeOrder(WxOrderRequest) returns (DepositOrder);
+  rpc GetDepositeOrder(ID) returns (DepositOrder);
 
   rpc BuyGas(BuySponsorRequest) returns (Empty);
   rpc BuyStorage(BuySponsorRequest) returns (Empty);

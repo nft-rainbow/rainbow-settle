@@ -31,8 +31,8 @@ func (s *SettleServer) Deposite(ctx context.Context, in *proto.DepositRequest) (
 	}, nil
 }
 
-func (s *SettleServer) GetDepositeOrder(ctx context.Context, in *proto.WxOrderRequest) (*proto.DepositOrder, error) {
-	o, err := models.FindDepositOrderById(uint(in.ID))
+func (s *SettleServer) GetDepositeOrder(ctx context.Context, in *proto.ID) (*proto.DepositOrder, error) {
+	o, err := models.FindDepositOrderById(uint(in.Id))
 	if err != nil {
 		return nil, err
 	}
