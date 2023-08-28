@@ -81,13 +81,13 @@ func QueryRecentCmbHistory(limit, offset int32) ([]confluxpay.ModelsCmbRecord, e
 
 func addCmbUnitAccount(name, no string) error {
 	addUnitAccountReq := *confluxpay.NewControllersAddUnitAccountReq(name, no)
-	_, err := apiClient.CmbApi.AddUnitAccount(context.Background()).AddUnitAccountReq(addUnitAccountReq).Execute()
+	_, _, err := apiClient.CmbApi.AddUnitAccount(context.Background()).AddUnitAccountReq(addUnitAccountReq).Execute()
 	return err
 }
 
 func setCmbUnitAccountRelation(chargeNo, unitNo string) error {
 	setUnitAccountRelationReq := *confluxpay.NewControllersSetUnitAccountRelationReq(chargeNo, unitNo)
-	_, err := apiClient.CmbApi.SetUnitAccountRelation(context.Background()).SetUnitAccountRelationReq(setUnitAccountRelationReq).Execute()
+	_, _, err := apiClient.CmbApi.SetUnitAccountRelation(context.Background()).SetUnitAccountRelationReq(setUnitAccountRelationReq).Execute()
 	return err
 }
 

@@ -74,47 +74,6 @@ func ConnectDB(dbConfig config.Mysql) {
 
 	// Migrate the schema
 	err = db.AutoMigrate(
-		// &User{},
-		// &Application{},
-		// &Transaction{},
-		// &TxContext{},
-		// &ChainAccount{},
-		// &Contract{},
-
-		// &Metadata{},
-		// &MetadataAttribute{},
-		// &File{},
-		// &Statistic{},
-		// &Company{},
-
-		// &Plan{},
-		// &Whitelist{},
-		// &PlanMeta{},
-
-		// &MintTask{},
-		// &MintBatchTask{},
-		// &MintItem{},
-
-		// &TransferTask{},
-		// &TransferBatchTask{},
-		// &TransferItem{},
-
-		// &BurnTask{},
-		// &BurnBatchTask{},
-		// &BurnItem{},
-
-		// &Poap{},
-
-		// &AutoSponsorContract{},
-		// &SponsorTask{},
-		// &SponsorLog{},
-
-		// &BalanceAlert{},
-
-		// &VerifyCode{},
-
-		// &Account{},
-
 		&ApiProfile{},
 		&FiatLog{},
 		&FiatLogCache{},
@@ -122,7 +81,6 @@ func ConnectDB(dbConfig config.Mysql) {
 		&UserApiQuota{},
 		&UserSettled{},
 		&DepositOrder{},
-		// &Cost{},
 		&CmbDepositNo{},
 	)
 

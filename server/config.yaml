@@ -10,6 +10,10 @@ mysql:
   user: root
   password: new-password
   db: rainbowtest
+redis:
+  host: localhost
+  port: 6379
+  password: ""
 wechatPay:
   #url: https://app-test.web3verse.space/conflux-pay/v0
   url: http://127.0.0.1:8082/v0
@@ -32,4 +36,5 @@ quotaRules:
     schedule: "@daily"
     quotas:
       confura_normal: 100000
-
+schedules:
+  mergeFiatlog: "@daily"

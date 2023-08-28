@@ -5,16 +5,15 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 
+	"github.com/nft-rainbow/rainbow-settle/common/config"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
 var (
-	rdb    *ExtendClient
-	dbSync sync.Once
+	rdb *ExtendClient
 )
 
 const (
@@ -51,18 +50,17 @@ func (c *ExtendClient) GetIntOrDefault(ctx context.Context, key string) *redis.I
 	return result
 }
 
+func Init(cfg config.Redis) {
+	c := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		Password: cfg.Password, // 密码
+		DB:       0,            // 数据库
+		PoolSize: 20,           // 连接池大小
+	})
+	rdb = &ExtendClient{c}
+}
+
 func DB() *ExtendClient {
-	dbSync.Do(
-		func() {
-			c := redis.NewClient(&redis.Options{
-				Addr:     ":6379",
-				Password: "", // 密码
-				DB:       0,  // 数据库
-				PoolSize: 20, // 连接池大小
-			})
-			rdb = &ExtendClient{c}
-		},
-	)
 	return rdb
 }
 
@@ -214,14 +212,18 @@ func GetValuesByRegexKey(pattern string) (map[string]string, error) {
 	return result, nil
 }
 
-func CheckIsRich(userId uint, costType enums.CostType) bool {
+func CheckIsRich(userId uint, costType enums.CostType) (bool, error) {
 	flagStr, err := DB().Get(context.Background(), RichKey(userId)).Result()
 	if err != nil {
-		return false
+		return false, err
 	}
 	flag, err := strconv.Atoi(flagStr)
 	if err != nil {
-		return false
+		return false, err
 	}
+	return isRich(flag, costType), nil
+}
+
+func isRich(flag int, costType enums.CostType) bool {
 	return (1 << costType & flag) > 0
 }

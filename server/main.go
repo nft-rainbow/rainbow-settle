@@ -7,6 +7,7 @@ import (
 
 	"github.com/nft-rainbow/conflux-gin-helper/logger"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/nft-rainbow/rainbow-settle/proto"
 	"github.com/nft-rainbow/rainbow-settle/server/config"
 	"github.com/nft-rainbow/rainbow-settle/server/server"
@@ -20,6 +21,7 @@ func main() {
 	logrus.WithField("config", config.Get()).Info("config loaded")
 	logger.Init(config.Get().Log, "=============== SETTLE ==================")
 	models.Init(config.Get().Mysql, config.Get().Fee, config.Get().CfxPrice)
+	redis.Init(config.Get().Redis)
 	go startSettleServer()
 	go services.Run()
 	select {}

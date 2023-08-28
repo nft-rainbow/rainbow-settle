@@ -11,9 +11,13 @@ type ConfigBase struct {
 	Log         logger.LogConfig `yaml:"log"`
 	Port        int              `yaml:"port"`
 	Mysql       cfg.Mysql        `yaml:"mysql"`
+	Redis       cfg.Redis        `yaml:"redis"`
 	WechatPay   cfg.WechatPay    `yaml:"wechatPay"`
 	Fee         cfg.Fee          `yaml:"fee"`
 	CfxPrice    float64          `yaml:"cfxPrice"`
+	Schedules   struct {
+		MergeFiatlog string `yaml:"mergeFiatlog"`
+	} `yaml:"schedules"`
 }
 
 type Config struct {

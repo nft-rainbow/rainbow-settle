@@ -39,7 +39,7 @@ func TestUrlParse(t *testing.T) {
 }
 
 func TestParseRainbowApiRequest(t *testing.T) {
-	body, _ := json.Marshal(services.CustomMintDto{
+	body1, _ := json.Marshal(services.CustomMintDto{
 		ContractInfoDtoWithoutType: services.ContractInfoDtoWithoutType{
 			Chain:           "conflux",
 			ContractAddress: "cfx:aamjy3abae3j0ud8ys0npt38ggnunk5r4ps2pg8vcc",
@@ -48,20 +48,56 @@ func TestParseRainbowApiRequest(t *testing.T) {
 			MintToAddress: "cfx:aamjy3abae3j0ud8ys0npt38ggnunk5r4ps2pg8vcc",
 		},
 	})
-	req := testutils.HttpRequest{
+	req1 := testutils.HttpRequest{
 		Method_: http.MethodPost,
 		Path_:   []byte("http://localhost:8080/v1/mints/"),
 		Header_: testutils.NewHttpHeader(),
-		Body_:   body,
+		Body_:   body1,
 	}
 
-	result, err := ParseRainbowApiRequest(&req)
-	assert.NoError(t, err)
+	body2, _ := json.Marshal(services.CustomMintDto{
+		ContractInfoDtoWithoutType: services.ContractInfoDtoWithoutType{
+			Chain:           "conflux_test",
+			ContractAddress: "cfxtest:acfgbf21bj612uth2xekuj5xh8cmgbj56j3fawd5c2",
+		},
+		MintItemDto: services.MintItemDto{
+			MintToAddress: "cfxtest:acfgbf21bj612uth2xekuj5xh8cmgbj56j3fawd5c2",
+		},
+	})
+	req2 := testutils.HttpRequest{
+		Method_: http.MethodPost,
+		Path_:   []byte("http://localhost:8080/v1/mints/"),
+		Header_: testutils.NewHttpHeader(),
+		Body_:   body2,
+	}
 
-	assert.Equal(t, true, result.IsMainnet)
-	assert.Equal(t, 1, result.Count)
-	assert.Equal(t, enums.COST_TYPE_RAINBOW_MINT, result.CostType)
+	table := []struct {
+		Req       testutils.HttpRequest
+		IsMainNet bool
+		Count     int
+		CostType  enums.CostType
+	}{
+		{
+			Req:       req1,
+			IsMainNet: true,
+			Count:     1,
+			CostType:  enums.COST_TYPE_RAINBOW_MINT,
+		},
+		{
+			Req:       req2,
+			IsMainNet: false,
+			Count:     1,
+			CostType:  enums.COST_TYPE_RAINBOW_NORMAL,
+		},
+	}
 
-	// fmt.Println(result.CostType.String())
+	for i, item := range table {
+		result, err := ParseRainbowApiRequest(&item.Req)
+		assert.NoError(t, err)
+
+		assert.Equal(t, item.IsMainNet, result.IsMainnet, i)
+		assert.Equal(t, item.Count, result.Count, i)
+		assert.Equal(t, item.CostType, result.CostType, i)
+	}
 
 }

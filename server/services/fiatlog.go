@@ -5,6 +5,7 @@ import (
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/server/config"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -23,7 +24,7 @@ func LoopMergeFiatlog() {
 	}
 	fn()
 
-	eid, _ = c.AddFunc("@every 10s", fn)
+	eid, _ = c.AddFunc(config.Get().Schedules.MergeFiatlog, fn)
 
 	c.Start()
 }

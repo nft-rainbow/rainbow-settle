@@ -10,8 +10,10 @@ import (
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
+	"github.com/nft-rainbow/rainbow-settle/common/config"
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/nft-rainbow/rainbow-settle/common/redis"
 	mredis "github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/pkg/errors"
 )
@@ -22,6 +24,10 @@ func init() {
 		log.Fatalf("failed to register plugin count: %s", err)
 	}
 	InitQuotaLimit()
+	redis.Init(config.Redis{
+		Host: "redis",
+		Port: 6379,
+	})
 }
 
 type Count struct {
@@ -64,8 +70,12 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		}
 
 		// 如果rich标记为0，返回失败
-		isRich := mredis.CheckIsRich(uint(userId), *costType)
+		isRich, err := mredis.CheckIsRich(uint(userId), *costType)
+		if err != nil {
+			return errors.Wrapf(err, "failed to check rich")
+		}
 		if !isRich {
+			log.Infof("balance not enough when rich flag check, user %d cost type %s  ", userId, costType)
 			return errors.New("balance not enough")
 		}
 
@@ -84,6 +94,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		log.Infof("currentCount %d, currentPendingCount %d, costCount %d", currentCount, currentPendingCount, costCount)
 
 		if int(currentCount)+int(currentPendingCount)+costCount > quotaLimit[*costType] {
+			log.Infof("balance not enough when clac by un-settled count, user %d cost type %s  ", userId, costType)
 			return errors.Errorf("balance not enough")
 		}
 

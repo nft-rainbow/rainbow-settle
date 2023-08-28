@@ -3,18 +3,17 @@ module github.com/nft-rainbow/rainbow-settle/server
 go 1.18
 
 require (
-	github.com/influxdata/influxdb v1.8.3
 	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04
-	github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230824071439-64a722e314d2
+	github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825032716-12ed0997c882
+	github.com/nft-rainbow/rainbow-settle/proto v0.0.0-20230825103155-7a1bb119bf40
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/samber/lo v1.38.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/web3-identity/conflux-pay-sdk-go v0.1.0
+	github.com/web3-identity/conflux-pay-sdk-go v0.1.2
 	golang.org/x/net v0.10.0
-	google.golang.org/grpc v1.55.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/grpc v1.57.0
 	gorm.io/datatypes v1.2.0
 	gorm.io/gorm v1.25.4
 )
@@ -55,7 +54,8 @@ require (
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.1 // indirect

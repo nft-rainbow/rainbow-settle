@@ -8,6 +8,12 @@ type Mysql struct {
 	Db       string `yaml:"db"`
 }
 
+type Redis struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Password string `yaml:"password"`
+}
+
 type WechatPay struct {
 	URL string `yaml:"url"`
 }

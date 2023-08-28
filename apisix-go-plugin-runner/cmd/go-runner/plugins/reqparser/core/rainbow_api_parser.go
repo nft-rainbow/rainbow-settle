@@ -74,57 +74,66 @@ func parseRainbowApiRequestByGin(c *gin.Context) (*RainbowApiReqParseResult, err
 		Count:    1,
 	}
 
+	var err error
+
 	switch c.FullPath() {
 	case "/v1/mints/":
 		var mintMeta services.CustomMintDto
-		err := c.ShouldBindBodyWith(&mintMeta, binding.JSON)
+		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		result.IsMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		return &result, err
+		// return &result, err
 
 	case "/v1/mints/customizable":
 		var mintMeta services.CustomMintDto
-		err := c.ShouldBindBodyWith(&mintMeta, binding.JSON)
+		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		result.IsMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		return &result, err
+		// return &result, err
 
 	case "/v1/mints/customizable/batch":
 		var mintMeta services.CustomMintBatchDto
-		err := c.ShouldBindBodyWith(&mintMeta, binding.JSON)
+		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		result.IsMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		return &result, err
+		// return &result, err
 
 	case "/v1/mints/easy/files":
 		var mintMeta services.EasyMintFileDto
-		err := c.ShouldBind(&mintMeta)
+		err = c.ShouldBind(&mintMeta)
 		result.IsMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		return &result, err
+		// return &result, err
 
 	case "/v1/mints/easy/urls":
 		var mintMeta services.EasyMintMetaPartsDto
-		err := c.ShouldBindBodyWith(&mintMeta, binding.JSON)
+		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		result.IsMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		return &result, err
+		// return &result, err
 
 	case "/dashboard/apps/:id/contracts":
 		fallthrough
 	case "/v1/contracts/":
 		var contractDeployDto services.ContractDeployDto
-		err := c.ShouldBindBodyWith(&contractDeployDto, binding.JSON)
+		err = c.ShouldBindBodyWith(&contractDeployDto, binding.JSON)
 		result.IsMainnet = utils.IsMainnetByName(contractDeployDto.Chain)
-		return &result, err
+		// return &result, err
 
 	case "/v1/transfers/customizable":
 		var transferMeta services.TransferDto
-		err := c.ShouldBindBodyWith(&transferMeta, binding.JSON)
+		err = c.ShouldBindBodyWith(&transferMeta, binding.JSON)
 		result.IsMainnet = utils.IsMainnetByName(transferMeta.Chain)
-		return &result, err
+		// return &result, err
 
 	case "/v1/transfers/customizable/batch":
 		var transferBatchMeta services.TransferBatchDto
-		err := c.ShouldBindBodyWith(&transferBatchMeta, binding.JSON)
+		err = c.ShouldBindBodyWith(&transferBatchMeta, binding.JSON)
 		result.IsMainnet = utils.IsMainnetByName(transferBatchMeta.Chain)
 		result.Count = len(transferBatchMeta.Items)
-		return &result, err
+		// return &result, err
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if !result.IsMainnet {
+		result.CostType = enums.COST_TYPE_RAINBOW_NORMAL
 	}
 
 	return &result, nil

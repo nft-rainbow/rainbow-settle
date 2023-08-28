@@ -106,8 +106,7 @@ message BuySponsorRequest {
 
 message RefundSponsorRequest {
   uint32 UserId = 1;
-  float Amount = 2;
-  uint32 TxId = 3;
+  uint32 TxId = 2;
 }
 
 message CreateCmcDepositNoReqeust {
