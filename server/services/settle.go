@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"sync"
 
 	"time"
 
@@ -14,6 +15,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+)
+
+var (
+	settleLock sync.Mutex
 )
 
 func LoopSettle(interval time.Duration) {
@@ -35,6 +40,9 @@ func LoopSettle(interval time.Duration) {
 //  3. TODO: 发现余额<=0且free quota为0后置标记 USER-COSTTYPE-RICH 为false
 //  4. 写fiat log cache
 func settle() error {
+	settleLock.Lock()
+	defer settleLock.Unlock()
+
 	userBalances := make(map[uint]*models.UserBalance)
 	userApiQuotas := make(map[uint]map[enums.CostType]*models.UserApiQuota)
 	userSettleds := make(map[uint]map[enums.CostType]*models.UserSettled)
@@ -181,12 +189,16 @@ func settle() error {
 }
 
 func RefundApiCost(userId uint, costType enums.CostType, count int) error {
-	us, err := models.GetUserSettledOperator().GetUserSettled(uint(userId))
+	settleLock.Lock()
+	defer settleLock.Unlock()
+
+	uss, err := models.GetUserSettledOperator().GetUserSettled(uint(userId))
 	if err != nil {
 		return err
 	}
+	us := uss[costType]
 
-	data := us[costType].Stack.Data()
+	data := us.Stack.Data()
 	if len(data) == 0 {
 		return errors.New("failed refund due to no cost stack")
 	}
@@ -197,7 +209,7 @@ func RefundApiCost(userId uint, costType enums.CostType, count int) error {
 	for i := l - 1; i >= 0; i-- {
 		remains := count - handledCount
 		if remains == 0 {
-			return nil
+			break
 		}
 
 		matchCount := mathutils.Min[int](int(data[i].Count), remains)
@@ -223,6 +235,6 @@ func RefundApiCost(userId uint, costType enums.CostType, count int) error {
 		}
 		handledCount += matchCount
 	}
-
-	return nil
+	us.Stack = datatypes.NewJSONType(data)
+	return models.GetDB().Save(us).Error
 }

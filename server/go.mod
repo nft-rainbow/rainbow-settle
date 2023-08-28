@@ -3,6 +3,7 @@ module github.com/nft-rainbow/rainbow-settle/server
 go 1.18
 
 require (
+	github.com/influxdata/influxdb v1.11.2
 	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04
 	github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825032716-12ed0997c882
 	github.com/nft-rainbow/rainbow-settle/proto v0.0.0-20230825103155-7a1bb119bf40
@@ -50,10 +51,8 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/exp v0.0.0-20220426173459-3bcf042a4bf5 // indirect
-	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

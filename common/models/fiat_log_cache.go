@@ -21,6 +21,16 @@ type FiatLogCache struct {
 	IsMerged bool `gorm:"default:0" json:"isMerged,omitempty"`
 }
 
+func FindSponsorFiatlogByTxid(txId uint) (*FiatLogCache, error) {
+	var fl FiatLogCache
+	if err := db.Model(&FiatLogCache{}).Where("meta->'$.tx_id'=?", txId).
+		Where("type =? or type=?", FIAT_LOG_TYPE_BUY_GAS, FIAT_LOG_TYPE_BUY_STORAGE).
+		First(&fl).Error; err != nil {
+		return nil, err
+	}
+	return &fl, nil
+}
+
 func MergeToFiatlog(start, end time.Time) error {
 
 	type TmpFiatLog struct {

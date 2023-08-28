@@ -140,9 +140,10 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetCounts map[e
 
 func (u *UserQuotaOperator) Refund(tx *gorm.DB, userId uint, costType enums.CostType, countReset int, countRollover int) (uint, error) {
 
-	if err := tx.Update("count_reset", gorm.Expr("count_reset+?", countReset)).
+	if err := tx.Model(&UserApiQuota{}).Where("cost_type=?", costType).Where("user_id = ?", userId).
+		Update("count_reset", gorm.Expr("count_reset+?", countReset)).
 		Update("count_rollover", gorm.Expr("count_rollover+?", countRollover)).
-		Where("cost_type=?", costType).Where("user_id = ?", userId).Error; err != nil {
+		Error; err != nil {
 		return 0, err
 	}
 

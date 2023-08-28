@@ -26,20 +26,20 @@ const (
 type FiatLogType int
 
 const (
-	FIAT_LOG_TYPE_DEPOSIT FiatLogType = iota + 1
-	FIAT_LOG_TYPE_WITHDRAW
-	FIAT_LOG_TYPE_BUY_GAS
-	FIAT_LOG_TYPE_BUY_STORAGE
-	FIAT_LOG_TYPE_PAY_API_FEE
-	FIAT_LOG_TYPE_CMB_CHARGE // 招行对公充值
-	FIAT_LOG_TYPE_REFUND_API_FEE
-	FIAT_LOG_TYPE_REFUND_SPONSOR
-	FIAT_LOG_TYPE_REFUND_API_QUOTA
-	FIAT_LOG_TYPE_REFUND_RESERV3_2
-	FIAT_LOG_TYPE_REFUND_RESERV3_3
-	FIAT_LOG_TYPE_PAY_API_QUOTA
-	FIAT_LOG_TYPE_RESET_API_QUOTA
-	FIAT_LOG_TYPE_DEPOSITE_API_QUOTA
+	FIAT_LOG_TYPE_DEPOSIT            FiatLogType = iota + 1
+	FIAT_LOG_TYPE_WITHDRAW                       //2
+	FIAT_LOG_TYPE_BUY_GAS                        //3
+	FIAT_LOG_TYPE_BUY_STORAGE                    //4
+	FIAT_LOG_TYPE_PAY_API_FEE                    //5
+	FIAT_LOG_TYPE_CMB_CHARGE                     // 6招行对公充值
+	FIAT_LOG_TYPE_REFUND_API_FEE                 //7
+	FIAT_LOG_TYPE_REFUND_SPONSOR                 //8
+	FIAT_LOG_TYPE_REFUND_API_QUOTA               //9
+	FIAT_LOG_TYPE_REFUND_RESERV3_2               //10
+	FIAT_LOG_TYPE_REFUND_RESERV3_3               //11
+	FIAT_LOG_TYPE_PAY_API_QUOTA                  //12
+	FIAT_LOG_TYPE_RESET_API_QUOTA                //13
+	FIAT_LOG_TYPE_DEPOSITE_API_QUOTA             //14
 )
 
 func (f FiatLogType) PayType() PayType {
@@ -154,16 +154,6 @@ func FindAndCountFiatLogWithDetails(filter FiatlogWithDetailFilter, offset, limi
 
 	err = table.Count(&count).Order("fiat_logs.created_at desc").Offset(offset).Limit(limit).Find(&logs).Error
 	return
-}
-
-func FindSponsorFiatlogByTxid(txId uint) (*FiatLog, error) {
-	var fl FiatLog
-	if err := db.Model(&FiatLog{}).Where("meta->'$.tx_id'=?", txId).
-		Where("type =? or type=?", FIAT_LOG_TYPE_BUY_GAS, FIAT_LOG_TYPE_BUY_STORAGE).
-		First(&fl).Error; err != nil {
-		return nil, err
-	}
-	return &fl, nil
 }
 
 type TimeWindowFilter struct {
