@@ -9,7 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/flatbuffers v22.9.30-0.20221019131441-5792623df42e+incompatible
 	github.com/google/uuid v1.3.1
-	github.com/nft-rainbow/rainbow-api v0.0.0
+	github.com/nft-rainbow/rainbow-api v0.0.0-20230828095140-9ad4e2fb901d
 	github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825091843-8af7c40c65ad
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
@@ -141,6 +141,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.47.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/goleak v1.2.1 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
@@ -166,7 +167,7 @@ require (
 replace (
 	github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.25
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.1 => github.com/miguelmota/go-ethereum-hdwallet v0.0.0-20230703073920-dca85a91a62c
-	github.com/nft-rainbow/rainbow-api v0.0.0 => /Users/dayong/myspace/mywork/rainbow-api
+	// github.com/nft-rainbow/rainbow-api v0.0.0 => /Users/dayong/myspace/mywork/rainbow-api
 	// github.com/thediveo/enumflag@v0.10.1 depends on github.com/spf13/cobra@v0.0.7
 	github.com/spf13/cobra v0.0.7 => github.com/spf13/cobra v1.2.1
 )
