@@ -27,4 +27,5 @@ func Run() {
 	go LoopSetRichFlag()
 	go StartWxOrderPolling()
 	go StartCmbOrderPolling()
+	LoadAllApikeys()
 }

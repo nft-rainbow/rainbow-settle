@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nft-rainbow/rainbow-settle/common/config"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
@@ -21,6 +22,7 @@ const (
 	PREFIX_COUNT_PENDING_KEY = "count-pending-"
 	PREFIX_REQ_KEY           = "req-"
 	PREFIX_RICH              = "rich-"
+	PREFIX_APIKEY            = "apikey-"
 )
 
 type ExtendClient struct {
@@ -82,6 +84,10 @@ func RequestValue(userId, costType, count string) string {
 
 func RichKey(userId uint) string {
 	return fmt.Sprintf("%s%d", PREFIX_RICH, userId)
+}
+
+func ApikeyKey(apikey string) string {
+	return fmt.Sprintf("%s%s", PREFIX_APIKEY, crypto.Keccak256Hash([]byte(apikey)).Hex())
 }
 
 func ParseCountKey(key string) (userId uint, costType enums.CostType, err error) {
@@ -210,6 +216,15 @@ func GetValuesByRegexKey(pattern string) (map[string]string, error) {
 		}
 	}
 	return result, nil
+}
+
+func GetUserIdByApikey(apikey string) (uint, error) {
+	key := ApikeyKey(apikey)
+	val, err := DB().Get(context.Background(), key).Result()
+	if err != nil {
+		return 0, err
+	}
+	return ParseUserId(val)
 }
 
 func CheckIsRich(userId uint, costType enums.CostType) (bool, error) {

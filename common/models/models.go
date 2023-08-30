@@ -74,6 +74,7 @@ func ConnectDB(dbConfig config.Mysql) {
 
 	// Migrate the schema
 	err = db.AutoMigrate(
+		&User{},
 		&ApiProfile{},
 		&FiatLog{},
 		&FiatLogCache{},

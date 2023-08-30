@@ -10,7 +10,6 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/nft-rainbow/rainbow-settle/proto"
 	"github.com/nft-rainbow/rainbow-settle/server/config"
-	"github.com/nft-rainbow/rainbow-settle/server/server"
 	"github.com/nft-rainbow/rainbow-settle/server/services"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -33,7 +32,7 @@ func startSettleServer() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	proto.RegisterSettleServer(s, &server.SettleServer{})
+	proto.RegisterSettleServer(s, &SettleServer{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

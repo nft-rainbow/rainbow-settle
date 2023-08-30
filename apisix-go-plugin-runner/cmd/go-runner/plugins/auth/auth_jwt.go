@@ -96,7 +96,7 @@ func (c *JwtAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHT
 			return nil
 		}
 
-		userId, err := extractUserId(jwtMid, ctx)
+		userId, err := extractUserIdFromJwt(jwtMid, ctx)
 		if err != nil {
 			return err
 		}
@@ -148,7 +148,7 @@ func (j *JwtAuth) getJwtMiddleware(conf JwtAuthConf) (*jwt.GinJWTMiddleware, err
 }
 
 // TODO: support rainbow-dashboard
-func extractUserId(jwtMid *jwt.GinJWTMiddleware, ctx *gin.Context) (string, error) {
+func extractUserIdFromJwt(jwtMid *jwt.GinJWTMiddleware, ctx *gin.Context) (string, error) {
 	claims, err := jwtMid.GetClaimsFromJWT(ctx)
 	if err != nil {
 		return "", err
