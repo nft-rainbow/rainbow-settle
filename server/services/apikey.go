@@ -11,23 +11,24 @@ import (
 )
 
 func LoadAllApikeys() {
-	type ApiKey struct {
+	type AppInfo struct {
 		UserId uint64 `json:"user_id"`
+		AppId  uint64 `json:"app_id"`
 		ApiKey string `json:"api_key"`
 	}
-	var apikeys []*ApiKey
-	if err := models.GetDB().Table("applications").Where("api_key is not null").Find(&apikeys).Error; err != nil {
+	var appInfos []*AppInfo
+	if err := models.GetDB().Table("applications").Where("api_key is not null").Find(&appInfos).Error; err != nil {
 		panic(err)
 	}
 
-	if len(apikeys) == 0 {
+	if len(appInfos) == 0 {
 		return
 	}
 
 	var vals []string
-	lo.ForEach(apikeys, func(a *ApiKey, i int) {
+	lo.ForEach(appInfos, func(a *AppInfo, i int) {
 		vals = append(vals, fmt.Sprintf("apikey-%s", crypto.Keccak256Hash([]byte(a.ApiKey)).Hex()))
-		vals = append(vals, fmt.Sprintf("%d", a.UserId))
+		vals = append(vals, fmt.Sprintf("%d-%d", a.UserId, a.AppId))
 	})
 
 	if _, err := redis.DB().MSet(context.Background(), vals).Result(); err != nil {

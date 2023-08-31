@@ -22,7 +22,7 @@ import (
 func init() {
 	err := plugin.RegisterPlugin(&ApikeyAuth{})
 	if err != nil {
-		log.Fatalf("failed to register plugin jwt-auth: %s", err)
+		log.Fatalf("failed to register plugin apikey-auth: %s", err)
 	}
 }
 
@@ -80,11 +80,12 @@ func (c *ApikeyAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pk
 			return err
 		}
 
-		userId, err := redis.GetUserIdByApikey(apikey)
+		userId, appId, err := redis.GetUserInfoByApikey(apikey)
 		if err != nil {
 			return err
 		}
 		r.Header().Set(constants.RAINBOW_USER_ID_HEADER_KEY, fmt.Sprintf("%d", userId))
+		r.Header().Set(constants.RAINBOW_APP_ID_HEADER_KEY, fmt.Sprintf("%d", appId))
 		return nil
 	}
 

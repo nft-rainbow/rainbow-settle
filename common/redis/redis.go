@@ -78,8 +78,8 @@ func RequestKey(reqId string) string {
 	return fmt.Sprintf("%s%s", PREFIX_REQ_KEY, reqId)
 }
 
-func RequestValue(userId, costType, count string) string {
-	return fmt.Sprintf("%s-%s-%s", userId, costType, count)
+func RequestValue(userId, appId, costType, count string) string {
+	return fmt.Sprintf("%s-%s-%s-%s", userId, appId, costType, count)
 }
 
 func RichKey(userId uint) string {
@@ -88,6 +88,11 @@ func RichKey(userId uint) string {
 
 func ApikeyKey(apikey string) string {
 	return fmt.Sprintf("%s%s", PREFIX_APIKEY, crypto.Keccak256Hash([]byte(apikey)).Hex())
+}
+
+// value of user related apikey
+func ApikeyValue(userId, appId uint) string {
+	return fmt.Sprintf("%d%d", userId, appId)
 }
 
 func ParseCountKey(key string) (userId uint, costType enums.CostType, err error) {
@@ -125,7 +130,7 @@ func parseCountKeyByPrefix(key string, prefix string) (userId uint, costType enu
 	return
 }
 
-func ParseRequestValue(val string) (userId uint, costType enums.CostType, count int, err error) {
+func ParseRequestValue(val string) (userId uint, appId uint, costType enums.CostType, count int, err error) {
 	err = func() error {
 		items := strings.Split(val, "-")
 		if len(items) != 3 {
@@ -137,12 +142,17 @@ func ParseRequestValue(val string) (userId uint, costType enums.CostType, count 
 			return err
 		}
 
-		costType, err = ParseCostType(items[1])
+		appId, err = ParseAppId(items[1])
 		if err != nil {
 			return err
 		}
 
-		count, err = ParseCount(items[2])
+		costType, err = ParseCostType(items[2])
+		if err != nil {
+			return err
+		}
+
+		count, err = ParseCount(items[3])
 		if err != nil {
 			return err
 		}
@@ -153,12 +163,37 @@ func ParseRequestValue(val string) (userId uint, costType enums.CostType, count 
 	return
 }
 
+func ParseApikeyValue(userInfo string) (userId uint, appId uint, err error) {
+	items := strings.Split(userInfo, "-")
+	if len(items) != 2 {
+		return 0, 0, errors.Errorf("user info format error")
+	}
+	userId, err = ParseUserId(items[0])
+	if err != nil {
+		return 0, 0, err
+	}
+
+	appId, err = ParseAppId(items[1])
+	if err != nil {
+		return 0, 0, err
+	}
+	return userId, appId, nil
+}
+
 func ParseUserId(userId string) (uint, error) {
 	_userId, err := strconv.Atoi(userId)
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to parse user id %s", userId)
 	}
 	return uint(_userId), nil
+}
+
+func ParseAppId(appId string) (uint, error) {
+	_appId, err := strconv.Atoi(appId)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to parse app id %s", appId)
+	}
+	return uint(_appId), nil
 }
 
 func ParseCostType(costType string) (enums.CostType, error) {
@@ -218,13 +253,14 @@ func GetValuesByRegexKey(pattern string) (map[string]string, error) {
 	return result, nil
 }
 
-func GetUserIdByApikey(apikey string) (uint, error) {
+func GetUserInfoByApikey(apikey string) (uint, uint, error) {
 	key := ApikeyKey(apikey)
 	val, err := DB().Get(context.Background(), key).Result()
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return ParseUserId(val)
+
+	return ParseApikeyValue(val)
 }
 
 func CheckIsRich(userId uint, costType enums.CostType) (bool, error) {

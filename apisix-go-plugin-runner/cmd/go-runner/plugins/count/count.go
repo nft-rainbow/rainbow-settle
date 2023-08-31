@@ -48,6 +48,7 @@ func (c *Count) ParseConf(in []byte) (conf interface{}, err error) {
 func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
 	fn := func() error {
 		userIdStr := r.Header().Get(constants.RAINBOW_USER_ID_HEADER_KEY)
+		appIdStr := r.Header().Get(constants.RAINBOW_APP_ID_HEADER_KEY)
 		costTypeStr := r.Header().Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
 		costCountStr := r.Header().Get(constants.RAINBOW_COST_COUNT_HEADER_KEY)
 		reqId := r.Header().Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
@@ -103,7 +104,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 			return errors.Wrapf(err, "failed to increase pending cost count")
 		}
 
-		reqKey, reqVal := mredis.RequestKey(reqId), mredis.RequestValue(userIdStr, costTypeStr, costCountStr)
+		reqKey, reqVal := mredis.RequestKey(reqId), mredis.RequestValue(userIdStr, appIdStr, costTypeStr, costCountStr)
 		if _, err = mredis.DB().Set(context.Background(), reqKey, reqVal, time.Minute*10).Result(); err != nil {
 			return errors.Wrapf(err, "failed to cache request")
 		}
@@ -143,7 +144,7 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 		return
 	}
 
-	userId, costType, count, err := mredis.ParseRequestValue(val)
+	userId, _, costType, count, err := mredis.ParseRequestValue(val)
 	if err != nil {
 		log.Errorf("failed to parse req %d val %s: %s", w.ID(), val, err)
 		return

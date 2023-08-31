@@ -96,11 +96,12 @@ func (c *JwtAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHT
 			return nil
 		}
 
-		userId, err := extractUserIdFromJwt(jwtMid, ctx)
+		userId, appId, err := extractUserInfoFromJwt(jwtMid, ctx)
 		if err != nil {
 			return err
 		}
 		r.Header().Set(constants.RAINBOW_USER_ID_HEADER_KEY, userId)
+		r.Header().Set(constants.RAINBOW_APP_ID_HEADER_KEY, appId)
 		return nil
 	}
 
@@ -148,11 +149,11 @@ func (j *JwtAuth) getJwtMiddleware(conf JwtAuthConf) (*jwt.GinJWTMiddleware, err
 }
 
 // TODO: support rainbow-dashboard
-func extractUserIdFromJwt(jwtMid *jwt.GinJWTMiddleware, ctx *gin.Context) (string, error) {
+func extractUserInfoFromJwt(jwtMid *jwt.GinJWTMiddleware, ctx *gin.Context) (string, string, error) {
 	claims, err := jwtMid.GetClaimsFromJWT(ctx)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	log.Infof("claims: %v", claims)
-	return fmt.Sprintf("%v", claims["AppUserId"]), nil
+	return fmt.Sprintf("%v", claims["AppUserId"]), fmt.Sprintf("%v", claims["id"]), nil
 }
