@@ -14,7 +14,6 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
-	mredis "github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/pkg/errors"
 )
 
@@ -71,7 +70,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		}
 
 		// 如果rich标记为0，返回失败
-		isRich, err := mredis.CheckIsRich(uint(userId), *costType)
+		isRich, err := redis.CheckIsRich(uint(userId), *costType)
 		if err != nil {
 			return errors.Wrapf(err, "failed to check rich")
 		}
@@ -81,14 +80,14 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		}
 
 		// 如果超过 quotalimit，返回失败
-		pengdingCountKey := mredis.UserPendingCountKey(userIdStr, costTypeStr)
-		countKey := mredis.UserCountKey(userIdStr, costTypeStr)
+		pengdingCountKey := redis.UserPendingCountKey(userIdStr, costTypeStr)
+		countKey := redis.UserCountKey(userIdStr, costTypeStr)
 
-		currentPendingCount, err := mredis.DB().GetIntOrDefault(context.Background(), pengdingCountKey).Result()
+		currentPendingCount, err := redis.DB().GetIntOrDefault(context.Background(), pengdingCountKey).Result()
 		if err != nil {
 			return errors.Wrapf(err, "failed to get pending cost count")
 		}
-		currentCount, err := mredis.DB().GetIntOrDefault(context.Background(), countKey).Result()
+		currentCount, err := redis.DB().GetIntOrDefault(context.Background(), countKey).Result()
 		if err != nil {
 			return errors.Wrapf(err, "failed to get cost count")
 		}
@@ -99,13 +98,13 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 			return errors.Errorf("balance not enough")
 		}
 
-		_, err = mredis.DB().IncrBy(context.Background(), pengdingCountKey, int64(costCount)).Result()
+		_, err = redis.DB().IncrBy(context.Background(), pengdingCountKey, int64(costCount)).Result()
 		if err != nil {
 			return errors.Wrapf(err, "failed to increase pending cost count")
 		}
 
-		reqKey, reqVal := mredis.RequestKey(reqId), mredis.RequestValue(userIdStr, appIdStr, costTypeStr, costCountStr)
-		if _, err = mredis.DB().Set(context.Background(), reqKey, reqVal, time.Minute*10).Result(); err != nil {
+		reqKey, reqVal := redis.RequestKey(reqId), redis.RequestValue(userIdStr, appIdStr, costTypeStr, costCountStr)
+		if _, err = redis.DB().Set(context.Background(), reqKey, reqVal, time.Minute*10).Result(); err != nil {
 			return errors.Wrapf(err, "failed to cache request")
 		}
 
@@ -130,31 +129,31 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 		return
 	}
 
-	reqKey := mredis.RequestKey(reqId)
+	reqKey := redis.RequestKey(reqId)
 	defer func() {
-		_, err := mredis.DB().Del(context.Background(), reqKey).Result()
+		_, err := redis.DB().Del(context.Background(), reqKey).Result()
 		if err != nil {
 			log.Errorf("failed to del key %d: %s", reqKey, err)
 		}
 	}()
 
-	val, err := mredis.DB().Get(context.Background(), reqKey).Result()
+	val, err := redis.DB().Get(context.Background(), reqKey).Result()
 	if err != nil {
 		log.Errorf("failed to get req %d val: %s", w.ID(), err)
 		return
 	}
 
-	userId, _, costType, count, err := mredis.ParseRequestValue(val)
+	userId, _, costType, count, err := redis.ParseRequestValue(val)
 	if err != nil {
 		log.Errorf("failed to parse req %d val %s: %s", w.ID(), val, err)
 		return
 	}
 
-	pengdingCountKey := mredis.UserPendingCountKey(fmt.Sprintf("%d", userId), costType.String())
-	countKey := mredis.UserCountKey(fmt.Sprintf("%d", userId), costType.String())
+	pengdingCountKey := redis.UserPendingCountKey(fmt.Sprintf("%d", userId), costType.String())
+	countKey := redis.UserCountKey(fmt.Sprintf("%d", userId), costType.String())
 
 	// 无论成功失败都减去pending count
-	_, err = mredis.DB().DecrBy(context.Background(), pengdingCountKey, int64(count)).Result()
+	_, err = redis.DB().DecrBy(context.Background(), pengdingCountKey, int64(count)).Result()
 	if err != nil {
 		log.Errorf("failed to decrease pending cost count of req %d: %s", w.ID(), err)
 		return
@@ -162,7 +161,7 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 
 	// 请求成功，改变pending count 为 count
 	if w.StatusCode() >= http.StatusOK && w.StatusCode() < http.StatusMultipleChoices {
-		_, err = mredis.DB().IncrBy(context.Background(), countKey, int64(count)).Result()
+		_, err = redis.DB().IncrBy(context.Background(), countKey, int64(count)).Result()
 		if err != nil {
 			log.Errorf("failed to increase cost count of req %d: %s", w.ID(), err)
 			return
