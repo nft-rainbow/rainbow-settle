@@ -23,7 +23,7 @@ type ReqParseResult struct {
 type DefaultParserPlugin struct {
 }
 
-func DefaultRequestFilter(o Parser, conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
+func DefaultRequestFilter(o Parser, w http.ResponseWriter, r pkgHTTP.Request) {
 	fn := func() error {
 		result, err := o.ParseRequest(r)
 		if err != nil {

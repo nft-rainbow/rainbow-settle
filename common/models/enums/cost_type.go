@@ -14,8 +14,10 @@ const (
 	COST_TYPE_RAINBOW_NORMAL
 	COST_TYPE_RAINBOW_MINT
 	COST_TYPE_RAINBOW_DEPLOY
-	COST_TYPE_CONFURA_NOMRAL = 10
-	COST_TYPE_SCAN_NORMAL    = 20
+	COST_TYPE_CONFURA_MAIN_NOMRAL = 10
+	COST_TYPE_CONFURA_TEST_NOMRAL = 15
+	COST_TYPE_SCAN_MAIN_NORMAL    = 20
+	COST_TYPE_SCAN_TEST_NORMAL    = 25
 )
 
 func GetCostType(isTestnet bool, method string, path string) CostType {
@@ -41,12 +43,14 @@ var (
 
 func init() {
 	CostTypeValue2StrMap = map[CostType]string{
-		COST_TYPE_RAINBOW_FREE:   "rainbow_free",
-		COST_TYPE_RAINBOW_NORMAL: "rainbow_normal",
-		COST_TYPE_RAINBOW_MINT:   "rainbow_mint",
-		COST_TYPE_RAINBOW_DEPLOY: "rainbow_deploy",
-		COST_TYPE_CONFURA_NOMRAL: "confura_normal",
-		COST_TYPE_SCAN_NORMAL:    "scan_normal",
+		COST_TYPE_RAINBOW_FREE:        "rainbow_free",
+		COST_TYPE_RAINBOW_NORMAL:      "rainbow_normal",
+		COST_TYPE_RAINBOW_MINT:        "rainbow_mint",
+		COST_TYPE_RAINBOW_DEPLOY:      "rainbow_deploy",
+		COST_TYPE_CONFURA_MAIN_NOMRAL: "confura_main_normal",
+		COST_TYPE_CONFURA_TEST_NOMRAL: "confura_test_normal",
+		COST_TYPE_SCAN_MAIN_NORMAL:    "scan_main_normal",
+		COST_TYPE_SCAN_TEST_NORMAL:    "scan_test_normal",
 	}
 
 	CostTypeStr2ValueMap = make(map[string]CostType)

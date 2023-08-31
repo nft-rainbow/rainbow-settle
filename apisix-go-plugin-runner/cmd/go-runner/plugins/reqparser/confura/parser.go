@@ -9,19 +9,30 @@ import (
 	"github.com/openweb3/go-rpc-provider"
 )
 
-type ConfuraOp struct {
+type ConfuraRequestOp struct {
+	IsMainnet bool
 }
 
-func (o *ConfuraOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseResult, error) {
+func (o *ConfuraRequestOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseResult, error) {
 	body, err := r.Body()
 	if err != nil {
 		return nil, err
 	}
 
+	result := &types.ReqParseResult{
+		CostType: enums.COST_TYPE_CONFURA_MAIN_NOMRAL,
+		Count:    1,
+	}
+
+	if !o.IsMainnet {
+		result.CostType = enums.COST_TYPE_CONFURA_TEST_NOMRAL
+	}
+
 	var ms []rpc.JsonRpcMessage
 	err = json.Unmarshal(body, &ms)
 	if err == nil {
-		return &types.ReqParseResult{enums.COST_TYPE_CONFURA_NOMRAL, len(ms)}, nil
+		result.Count = len(ms)
+		return result, nil
 	}
 
 	var m rpc.JsonRpcMessage
@@ -29,5 +40,5 @@ func (o *ConfuraOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseResult, erro
 	if err != nil {
 		return nil, err
 	}
-	return &types.ReqParseResult{enums.COST_TYPE_CONFURA_NOMRAL, 1}, nil
+	return result, nil
 }

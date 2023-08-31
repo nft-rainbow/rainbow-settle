@@ -40,5 +40,5 @@ func (p *RainbowApiParser) ParseConf(in []byte) (interface{}, error) {
 }
 
 func (p *RainbowApiParser) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
-	types.DefaultRequestFilter(&o, conf, w, r)
+	types.DefaultRequestFilter(&o, w, r)
 }
