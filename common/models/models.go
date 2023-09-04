@@ -76,11 +76,17 @@ func ConnectDB(dbConfig config.Mysql) {
 	err = db.AutoMigrate(
 		&User{},
 		&ApiProfile{},
+		&BillPlan{},
+		&BillPlanDetail{},
+		&DataBundle{},
+		&DataBundleDetail{},
 		&FiatLog{},
 		&FiatLogCache{},
 		&UserBalance{},
 		&UserApiQuota{},
 		&UserSettled{},
+		&UserBillPlan{},
+		&UserDataBundle{},
 		&DepositOrder{},
 		&CmbDepositNo{},
 	)

@@ -92,11 +92,11 @@ func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costT
 	return tx.Save(&unexists).Error
 }
 
-func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetCounts map[enums.CostType]int, nextResetTime time.Time) error {
+func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[enums.CostType]int, nextResetTime time.Time) error {
 	err := func() error {
 		var matched []*UserApiQuota
 		if err := tx.Table("user_api_quota").
-			Where("cost_type in ?", utils.GetMapKeys(resetCounts)).
+			Where("cost_type in ?", utils.GetMapKeys(resetQuotas)).
 			Where("user_id in ?", userIds).
 			Where("next_reset_count_time<?", nextResetTime).Find(&matched).Error; err != nil {
 			return err
@@ -106,7 +106,7 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetCounts map[e
 		}
 
 		for _, uaq := range matched {
-			uaq.CountReset = resetCounts[uaq.CostType]
+			uaq.CountReset = resetQuotas[uaq.CostType]
 			uaq.NextResetCountTime = nextResetTime
 		}
 		if err := tx.Save(&matched).Error; err != nil {
@@ -115,7 +115,7 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetCounts map[e
 
 		var flcs []*FiatLogCache
 		for _, uaq := range matched {
-			meta, _ := json.Marshal(map[string]interface{}{"cost_type": uaq.CostType, "count": resetCounts[uaq.CostType]})
+			meta, _ := json.Marshal(map[string]interface{}{"cost_type": uaq.CostType, "count": resetQuotas[uaq.CostType]})
 			flcs = append(flcs, &FiatLogCache{
 				FiatLogCore: FiatLogCore{
 					UserId:  uaq.UserId,
@@ -134,7 +134,7 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetCounts map[e
 		return nil
 	}()
 
-	logrus.WithError(err).WithField("user ids", userIds).WithField("reset counts", resetCounts).WithField("next reset time", nextResetTime).Info("reset users api quota")
+	logrus.WithError(err).WithField("user ids", userIds).WithField("reset quotas", resetQuotas).WithField("next reset time", nextResetTime).Info("reset users api quota")
 	return err
 }
 
