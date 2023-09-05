@@ -171,6 +171,7 @@ func (u *UserQuotaOperator) DepositDataBundle(tx *gorm.DB, udb *UserDataBundle) 
 			return err
 		}
 
+		udb.IsConsumed = true
 		if err := tx.Save(&udb).Error; err != nil {
 			return err
 		}

@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nft-rainbow/conflux-gin-helper/middlewares"
 	"github.com/nft-rainbow/rainbow-settle/server/config"
+	"github.com/nft-rainbow/rainbow-settle/server/restapi/controllers"
 )
 
 func initGin() *gin.Engine {
@@ -29,9 +30,10 @@ func initGin() *gin.Engine {
 	return engine
 }
 
-func Start() {
+func Run() {
 
 	app := initGin()
+	controllers.SetupRouter(app)
 
 	// dashboard.SetupRoutes(app)
 	// routers.SetupOpenAPIRoutes(app)

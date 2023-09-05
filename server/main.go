@@ -10,6 +10,7 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/nft-rainbow/rainbow-settle/proto"
 	"github.com/nft-rainbow/rainbow-settle/server/config"
+	"github.com/nft-rainbow/rainbow-settle/server/restapi"
 	"github.com/nft-rainbow/rainbow-settle/server/services"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -22,6 +23,7 @@ func main() {
 	models.Init(config.Get().Mysql, config.Get().Fee, config.Get().CfxPrice)
 	redis.Init(config.Get().Redis)
 	go startSettleServer()
+	go restapi.Run()
 	go services.Run()
 	select {}
 }

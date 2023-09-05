@@ -44,7 +44,7 @@ func BuyDataBundler(userId uint, dataBundleId uint) (uint, error) {
 	if err != nil {
 		return 0, err
 	}
-	udb, err := models.CreateUserDataBundle(userId, dataBundleId)
+	udb, err := models.CreateUserDataBundleAndConsume(userId, dataBundleId)
 	if err != nil {
 		return 0, err
 	}

@@ -7,11 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type OnDataBundleCreatHandler func(*gorm.DB, *UserDataBundle) error
+// type OnDataBundleCreatHandler func(*gorm.DB, *UserDataBundle) error
 
-var (
-	onDataBundlerCreateHandler OnDataBundleCreatHandler
-)
+// var (
+// 	onDataBundlerCreateHandler OnDataBundleCreatHandler
+// )
 
 type UserDataBundle struct {
 	BaseModel
@@ -21,7 +21,7 @@ type UserDataBundle struct {
 	IsConsumed   bool      `json:"is_consumed"`
 }
 
-func CreateUserDataBundle(userId, dataBundleId uint) (*UserDataBundle, error) {
+func CreateUserDataBundleAndConsume(userId, dataBundleId uint) (*UserDataBundle, error) {
 	udb := &UserDataBundle{
 		UserId:       userId,
 		DataBundleId: dataBundleId,
@@ -32,11 +32,15 @@ func CreateUserDataBundle(userId, dataBundleId uint) (*UserDataBundle, error) {
 		if err := tx.Create(&udb).Error; err != nil {
 			return err
 		}
-		if onDataBundlerCreateHandler != nil {
-			if err := onDataBundlerCreateHandler(tx, udb); err != nil {
-				return err
-			}
+		// if onDataBundlerCreateHandler != nil {
+		// 	if err := onDataBundlerCreateHandler(tx, udb); err != nil {
+		// 		return err
+		// 	}
+		// }
+		if err := GetUserQuotaOperator().DepositDataBundle(tx, udb); err != nil {
+			return err
 		}
+
 		utils.Retry(10, time.Second, func() error { return tx.Save(&udb).Error })
 		return nil
 	})
@@ -47,6 +51,6 @@ func CreateUserDataBundle(userId, dataBundleId uint) (*UserDataBundle, error) {
 	return udb, nil
 }
 
-func SetOnDataBundlerCreateHandler(handler OnDataBundleCreatHandler) {
-	onDataBundlerCreateHandler = handler
-}
+// func SetOnDataBundlerCreateHandler(handler OnDataBundleCreatHandler) {
+// 	onDataBundlerCreateHandler = handler
+// }
