@@ -6,15 +6,18 @@ import (
 )
 
 type ConfigBase struct {
-	Environment string           `yaml:"environment"`
-	Log         logger.LogConfig `yaml:"log"`
-	Port        int              `yaml:"port"`
-	Mysql       cfg.Mysql        `yaml:"mysql"`
-	Redis       cfg.Redis        `yaml:"redis"`
-	WechatPay   cfg.WechatPay    `yaml:"wechatPay"`
-	Fee         cfg.Fee          `yaml:"fee"`
-	CfxPrice    float64          `yaml:"cfxPrice"`
-	Schedules   struct {
+	Environment string `yaml:"environment"`
+	Port        struct {
+		Grpc    int `yaml:"grpc"`
+		RestApi int `yaml:"rest_api"`
+	} `yaml:"port"`
+	Log       logger.LogConfig `yaml:"log"`
+	Mysql     cfg.Mysql        `yaml:"mysql"`
+	Redis     cfg.Redis        `yaml:"redis"`
+	WechatPay cfg.WechatPay    `yaml:"wechatPay"`
+	Fee       cfg.Fee          `yaml:"fee"`
+	CfxPrice  float64          `yaml:"cfxPrice"`
+	Schedules struct {
 		MergeFiatlog string `yaml:"mergeFiatlog"`
 	} `yaml:"schedules"`
 }

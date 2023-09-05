@@ -17,3 +17,11 @@ func GetDataBundleById(id uint) (*DataBundle, error) {
 	}
 	return d, nil
 }
+
+func GetAllDataBundles() ([]*DataBundle, error) {
+	var ds []*DataBundle
+	if err := GetDB().Model(&DataBundle{}).Preload("DataBundleDetails").Find(&ds).Error; err != nil {
+		return nil, err
+	}
+	return ds, nil
+}

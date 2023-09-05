@@ -27,24 +27,6 @@ func BuyStorage(userId uint, amount decimal.Decimal, txId uint, address string, 
 	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_BUY_STORAGE, models.FiatMetaBuySponsor{address, txId, price})
 }
 
-func RefundSponsor(userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType models.FiatLogType, txId uint) (uint, error) {
-	return RefundSponsorWithTx(models.GetDB(), userId, amount, sponsorFiatlogId, sponsorFiatlogType, txId)
-}
-
-func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType models.FiatLogType, txId uint) (uint, error) {
-	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_SPONSOR, models.FiatMetaRefundSponsor{sponsorFiatlogId, sponsorFiatlogType, txId, "tx failed"})
-}
-
-func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
-	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_API_FEE, models.FiatMetaRefundApiFee{costType, int(count)}, false)
-}
-
-func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
-	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFee{costType, int(count)}, false)
-}
-
 func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (uint, error) {
 	plan, err := models.GetBillPlanById(planId)
 	if err != nil {
@@ -67,6 +49,24 @@ func BuyDataBundler(userId uint, dataBundleId uint) (uint, error) {
 		return 0, err
 	}
 	return updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.ID})
+}
+
+func RefundSponsor(userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType models.FiatLogType, txId uint) (uint, error) {
+	return RefundSponsorWithTx(models.GetDB(), userId, amount, sponsorFiatlogId, sponsorFiatlogType, txId)
+}
+
+func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType models.FiatLogType, txId uint) (uint, error) {
+	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_SPONSOR, models.FiatMetaRefundSponsor{sponsorFiatlogId, sponsorFiatlogType, txId, "tx failed"})
+}
+
+func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
+	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
+	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_API_FEE, models.FiatMetaRefundApiFee{costType, int(count)}, false)
+}
+
+func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
+	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
+	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFee{costType, int(count)}, false)
 }
 
 func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {

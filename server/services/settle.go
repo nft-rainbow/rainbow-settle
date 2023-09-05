@@ -76,7 +76,7 @@ func settle() error {
 		}
 
 		if userApiQuotas[userId] == nil {
-			uq, err := userQuotaOperater.GetUserQuotas(userId)
+			uq, err := userQuotaOperater.GetUserQuotasMap(userId)
 			if err != nil {
 				logrus.WithError(err).WithField("user id", userId).Info("failed to get user quotas")
 				continue

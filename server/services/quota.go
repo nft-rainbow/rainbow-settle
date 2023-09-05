@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
+	"github.com/nft-rainbow/conflux-gin-helper/utils/cronutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -74,7 +75,7 @@ func ResetQuotas() error {
 
 	for plan, userIds := range plan2UserIds {
 		quotas := plan.GetQuotas()
-		nextSchedule, err := utils.NextScheduleTime(plan.RefreshQuotaSchedule.ToCronSchedule())
+		nextSchedule, err := cronutils.NextScheduleTime(plan.RefreshQuotaSchedule.ToCronSchedule())
 		if err != nil {
 			return err
 		}

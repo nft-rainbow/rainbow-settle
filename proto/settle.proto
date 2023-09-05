@@ -119,6 +119,32 @@ message UpdateCmcDepositNoRelationRequest {
   CmbDepositNoDto Info = 2;
 }
 
+message BuyDataBundleRequest {
+  uint32 UserId = 1;
+  uint32 DataBundleId = 2;
+}
+
+message UserDataBundle {
+  uint32 ID = 1;
+  uint32 UserId = 2;
+  uint32 DataBundleId = 3;
+  string BoughtTime = 4;
+}
+
+message BuyBillPlanRequest {
+  uint32 UserId = 1;
+  uint32 PlanId = 2;
+  bool IsAutoRenewal = 3;
+}
+
+message UerBillPlan {
+  uint32 ID = 1;
+  uint32 UserId = 2;
+  uint32 PlanId = 3;
+  string BoughtTime = 4;
+  bool IsAutoRenewal = 5;
+}
+
 message QueryRecentCmbHistoryResponse { repeated ModelsCmbRecord List = 1; }
 
 service Settle {
@@ -127,12 +153,14 @@ service Settle {
 
   rpc BuyGas(BuySponsorRequest) returns (Empty);
   rpc BuyStorage(BuySponsorRequest) returns (Empty);
-  rpc RefundSponsor(RefundSponsorRequest) returns (Empty);
+  rpc BuyDataBundle(BuyDataBundleRequest) returns (Empty);
+  rpc BuyBillPlan(BuyBillPlanRequest) returns (Empty);
 
+  rpc RefundSponsor(RefundSponsorRequest) returns (Empty);
   rpc RefundApiFee(RefundApiFeeRequest) returns (Empty);
 
   rpc GetUserBalance(UserID) returns (UserBalance);
-  rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
+  // rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
 
   rpc CreateCmcDepositNo(CreateCmcDepositNoReqeust) returns (Empty);
   rpc GetCmcDepositNo(UserID) returns (CmbDepositNo);
@@ -149,3 +177,10 @@ service Settle {
   // rpc GetCmbRecentDeposits(UserID) returns (UserBalance);
   // rpc GetCmbDepositMeta(UserID) returns (UserBalance);
 }
+
+// 查询
+// getApiProfile
+// getUserApiQuota
+// getUserBillPlans
+// getUserDataBundles
+// getUserBalance

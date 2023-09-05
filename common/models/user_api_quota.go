@@ -2,9 +2,11 @@ package models
 
 import (
 	"encoding/json"
+	"math"
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
+	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -47,17 +49,25 @@ func GetUserQuotaOperator() *UserQuotaOperator {
 type UserQuotaOperator struct {
 }
 
-func (*UserQuotaOperator) GetUserQuotas(userId uint) (map[enums.CostType]*UserApiQuota, error) {
-	var quotas []*UserApiQuota
-	if err := GetDB().Where("user_id = ?", userId).Find(&quotas).Error; err != nil {
+func (u *UserQuotaOperator) GetUserQuotasMap(userId uint) (map[enums.CostType]*UserApiQuota, error) {
+	uqs, err := u.GetUserQuotas(userId, 0, math.MaxInt32)
+	if err != nil {
 		return nil, err
 	}
 
-	result := make(map[enums.CostType]*UserApiQuota)
-	for _, q := range quotas {
-		result[q.CostType] = q
+	uqsMap := lo.SliceToMap(uqs.Items, func(v *UserApiQuota) (enums.CostType, *UserApiQuota) {
+		return v.CostType, v
+	})
+	return uqsMap, nil
+}
+
+func (*UserQuotaOperator) GetUserQuotas(userId uint, offset int, limit int) (*ginutils.List[*UserApiQuota], error) {
+	var quotas []*UserApiQuota
+	if err := GetDB().Where("user_id = ?", userId).Offset(offset).Limit(limit).Find(&quotas).Error; err != nil {
+		return nil, err
 	}
-	return result, nil
+
+	return &ginutils.List[*UserApiQuota]{Count: 1, Items: quotas}, nil
 }
 
 func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costTypes []enums.CostType) error {

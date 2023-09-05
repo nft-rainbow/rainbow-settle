@@ -37,19 +37,30 @@ func CreateUserBillPlan(userId, planId uint, isAutoRenew bool) (*UserBillPlan, e
 	return up, nil
 }
 
+func GetUserEffectivePlans(userId uint) (map[PlanServer]*BillPlan, error) {
+	plans, err := findUsersEffectivePlan([]uint{userId})
+	if err != nil {
+		return nil, err
+	}
+	return plans[userId], nil
+}
+
 // 获取 用户 priority 最高的 plan, 如果没有，设置default
 func FindAllUsersEffectivePlan() (map[uint]map[PlanServer]*BillPlan, error) {
+	allUserIds, err := GetAllUserIds()
+	if err != nil {
+		return nil, err
+	}
+	return findUsersEffectivePlan(allUserIds)
+}
+
+func findUsersEffectivePlan(userIds []uint) (map[uint]map[PlanServer]*BillPlan, error) {
 	// select user_bill_plans.user_id, max(plans.priority) from user_bill_plans left join plans on user_bill_plans.plan_id=plans.id where user_bill_plans.expire_time>now() group by user_bill_plans.user_id
 
 	// userid => plan.priority
 	// plan.priority => plan
 
 	allPlans, err := GetAllPlans()
-	if err != nil {
-		return nil, err
-	}
-
-	allUserIds, err := GetAllUserIds()
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +77,7 @@ func FindAllUsersEffectivePlan() (map[uint]map[PlanServer]*BillPlan, error) {
 
 	allPlansMap := lo.SliceToMap(allPlans, func(p *BillPlan) (uint, *BillPlan) { return p.ID, p })
 	userPlans := make(map[uint]map[PlanServer]*BillPlan)
-	for _, userId := range allUserIds {
+	for _, userId := range userIds {
 		userPlans[userId] = make(map[PlanServer]*BillPlan)
 		// set default plans
 		for _, plan := range defaultPlans {

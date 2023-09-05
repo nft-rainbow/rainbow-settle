@@ -74,6 +74,24 @@ func (s *SettleServer) BuyStorage(ctx context.Context, in *proto.BuySponsorReque
 	return &proto.Empty{}, nil
 }
 
+func (s *SettleServer) BuyDataBundle(ctx context.Context, in *proto.BuyDataBundleRequest) (*proto.Empty, error) {
+	fl, err := services.BuyDataBundler(uint(in.UserId), uint(in.DataBundleId))
+	if err != nil {
+		return nil, err
+	}
+	logrus.WithField("fiatlog", fl).Info("buy data bundle completed")
+	return &proto.Empty{}, nil
+}
+
+func (s *SettleServer) BuyBillPlan(ctx context.Context, in *proto.BuyBillPlanRequest) (*proto.Empty, error) {
+	fl, err := services.BuyBillPlan(uint(in.UserId), uint(in.PlanId), in.IsAutoRenewal)
+	if err != nil {
+		return nil, err
+	}
+	logrus.WithField("fiatlog", fl).Info("buy bill plan completed")
+	return &proto.Empty{}, nil
+}
+
 func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponsorRequest) (*proto.Empty, error) {
 	fiatlog, err := models.FindSponsorFiatlogByTxid(uint(in.TxId))
 	if err != nil {
@@ -112,26 +130,26 @@ func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID) (*p
 	}, nil
 }
 
-func (s *SettleServer) GetUserApiQuota(ctx context.Context, in *proto.UserID) (*proto.UserApiQuotas, error) {
-	_uqs, err := services.GetUserQuotaOperator().GetUserQuotas(uint(in.UserId))
-	if err != nil {
-		return nil, err
-	}
+// func (s *SettleServer) GetUserApiQuota(ctx context.Context, in *proto.UserID) (*proto.UserApiQuotas, error) {
+// 	_uqs, err := services.GetUserQuotaOperator().GetUserQuotasMap(uint(in.UserId))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	uqs := &proto.UserApiQuotas{}
-	uqs.Items = make(map[string]*proto.UserApiQuota)
-	for _, _u := range _uqs {
+// 	uqs := &proto.UserApiQuotas{}
+// 	uqs.Items = make(map[string]*proto.UserApiQuota)
+// 	for _, _u := range _uqs {
 
-		u := proto.UserApiQuota{
-			UserID:        uint32(_u.UserId),
-			CostType:      _u.CostType.String(),
-			CountReset:    uint32(_u.CountReset),
-			CountRollover: uint32(_u.CountRollover),
-		}
-		uqs.Items[_u.CostType.String()] = &u
-	}
-	return uqs, nil
-}
+// 		u := proto.UserApiQuota{
+// 			UserID:        uint32(_u.UserId),
+// 			CostType:      _u.CostType.String(),
+// 			CountReset:    uint32(_u.CountReset),
+// 			CountRollover: uint32(_u.CountRollover),
+// 		}
+// 		uqs.Items[_u.CostType.String()] = &u
+// 	}
+// 	return uqs, nil
+// }
 
 func (s *SettleServer) CreateCmcDepositNo(ctx context.Context, in *proto.CreateCmcDepositNoReqeust) (*proto.Empty, error) {
 	if err := services.CreateCmcDepositNo(uint(in.UserId), parseCmbDepositNo(in.Info)); err != nil {

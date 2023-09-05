@@ -26,10 +26,11 @@ type SettleClient interface {
 	GetDepositeOrder(ctx context.Context, in *ID, opts ...grpc.CallOption) (*DepositOrder, error)
 	BuyGas(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
+	BuyDataBundle(ctx context.Context, in *BuyDataBundleRequest, opts ...grpc.CallOption) (*Empty, error)
+	BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*Empty, error)
 	RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	RefundApiFee(ctx context.Context, in *RefundApiFeeRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
-	GetUserApiQuota(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserApiQuotas, error)
 	CreateCmcDepositNo(ctx context.Context, in *CreateCmcDepositNoReqeust, opts ...grpc.CallOption) (*Empty, error)
 	GetCmcDepositNo(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*CmbDepositNo, error)
 	QueryRecentCmbHistory(ctx context.Context, in *Pagenation, opts ...grpc.CallOption) (*QueryRecentCmbHistoryResponse, error)
@@ -80,6 +81,24 @@ func (c *settleClient) BuyStorage(ctx context.Context, in *BuySponsorRequest, op
 	return out, nil
 }
 
+func (c *settleClient) BuyDataBundle(ctx context.Context, in *BuyDataBundleRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/BuyDataBundle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/BuyBillPlan", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *settleClient) RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/RefundSponsor", in, out, opts...)
@@ -101,15 +120,6 @@ func (c *settleClient) RefundApiFee(ctx context.Context, in *RefundApiFeeRequest
 func (c *settleClient) GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error) {
 	out := new(UserBalance)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/GetUserBalance", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *settleClient) GetUserApiQuota(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserApiQuotas, error) {
-	out := new(UserApiQuotas)
-	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/GetUserApiQuota", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -160,10 +170,11 @@ type SettleServer interface {
 	GetDepositeOrder(context.Context, *ID) (*DepositOrder, error)
 	BuyGas(context.Context, *BuySponsorRequest) (*Empty, error)
 	BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error)
+	BuyDataBundle(context.Context, *BuyDataBundleRequest) (*Empty, error)
+	BuyBillPlan(context.Context, *BuyBillPlanRequest) (*Empty, error)
 	RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error)
 	RefundApiFee(context.Context, *RefundApiFeeRequest) (*Empty, error)
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
-	GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error)
 	CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error)
 	GetCmcDepositNo(context.Context, *UserID) (*CmbDepositNo, error)
 	QueryRecentCmbHistory(context.Context, *Pagenation) (*QueryRecentCmbHistoryResponse, error)
@@ -187,6 +198,12 @@ func (UnimplementedSettleServer) BuyGas(context.Context, *BuySponsorRequest) (*E
 func (UnimplementedSettleServer) BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuyStorage not implemented")
 }
+func (UnimplementedSettleServer) BuyDataBundle(context.Context, *BuyDataBundleRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BuyDataBundle not implemented")
+}
+func (UnimplementedSettleServer) BuyBillPlan(context.Context, *BuyBillPlanRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BuyBillPlan not implemented")
+}
 func (UnimplementedSettleServer) RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefundSponsor not implemented")
 }
@@ -195,9 +212,6 @@ func (UnimplementedSettleServer) RefundApiFee(context.Context, *RefundApiFeeRequ
 }
 func (UnimplementedSettleServer) GetUserBalance(context.Context, *UserID) (*UserBalance, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserBalance not implemented")
-}
-func (UnimplementedSettleServer) GetUserApiQuota(context.Context, *UserID) (*UserApiQuotas, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserApiQuota not implemented")
 }
 func (UnimplementedSettleServer) CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCmcDepositNo not implemented")
@@ -296,6 +310,42 @@ func _Settle_BuyStorage_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Settle_BuyDataBundle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuyDataBundleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).BuyDataBundle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/BuyDataBundle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).BuyDataBundle(ctx, req.(*BuyDataBundleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_BuyBillPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuyBillPlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).BuyBillPlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/BuyBillPlan",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).BuyBillPlan(ctx, req.(*BuyBillPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Settle_RefundSponsor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RefundSponsorRequest)
 	if err := dec(in); err != nil {
@@ -346,24 +396,6 @@ func _Settle_GetUserBalance_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SettleServer).GetUserBalance(ctx, req.(*UserID))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Settle_GetUserApiQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserID)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SettleServer).GetUserApiQuota(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/rainbowsettle.Settle/GetUserApiQuota",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SettleServer).GetUserApiQuota(ctx, req.(*UserID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -464,6 +496,14 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Settle_BuyStorage_Handler,
 		},
 		{
+			MethodName: "BuyDataBundle",
+			Handler:    _Settle_BuyDataBundle_Handler,
+		},
+		{
+			MethodName: "BuyBillPlan",
+			Handler:    _Settle_BuyBillPlan_Handler,
+		},
+		{
 			MethodName: "RefundSponsor",
 			Handler:    _Settle_RefundSponsor_Handler,
 		},
@@ -474,10 +514,6 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserBalance",
 			Handler:    _Settle_GetUserBalance_Handler,
-		},
-		{
-			MethodName: "GetUserApiQuota",
-			Handler:    _Settle_GetUserApiQuota_Handler,
 		},
 		{
 			MethodName: "CreateCmcDepositNo",
