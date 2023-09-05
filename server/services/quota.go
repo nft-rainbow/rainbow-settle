@@ -25,7 +25,7 @@ func LoopResetQuota() {
 	// }
 
 	fn := func() {
-		utils.Retry(10, time.Second*5, func() error { return ResetQuotas() })
+		utils.Retry(10, time.Second*5, ResetQuotas)
 	}
 	fn()
 	c.AddFunc("@daily", fn)

@@ -251,7 +251,7 @@ func (u *UserQuotaOperator) Refund(tx *gorm.DB, userId uint, costType enums.Cost
 		return 0, err
 	}
 
-	meta, _ := json.Marshal(map[string]interface{}{"cost_type": costType, "count": countReset})
+	meta, _ := json.Marshal(FiatMetaRefundApiQuota{costType, countReset})
 	fl := FiatLogCache{
 		FiatLogCore: FiatLogCore{
 			UserId:  userId,
@@ -275,7 +275,7 @@ func (u *UserQuotaOperator) Pay(tx *gorm.DB, userId uint, costType enums.CostTyp
 		return 0, err
 	}
 
-	meta, _ := json.Marshal(map[string]interface{}{"cost_type": costType, "count": countReset})
+	meta, _ := json.Marshal(FiatMetaPayApiQuota{costType, countReset})
 	fl := FiatLogCache{
 		FiatLogCore: FiatLogCore{
 			UserId:  userId,

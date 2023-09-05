@@ -5,6 +5,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type Quota struct {
+	CostType enums.CostType `json:"cost_type"`
+	Count    int            `json:"count"`
+}
 type FiatMetaDeposit struct {
 	DepositOrderId uint `json:"deposit_order_id"`
 }
@@ -25,17 +29,13 @@ type FiatMetaBuyDatabundle struct {
 	UserDataBundleId uint `json:"user_data_bundle_id"`
 }
 
-type Quota struct {
-	CostType enums.CostType `json:"cost_type"`
-	Count    int            `json:"count"`
-}
-
-type FiatMetaPayApiFee Quota
-type FiatMetaResetQuota Quota
 type FiatMetaDepositDataBundle struct {
 	FiatMetaBuyDatabundle
 	Quota
 }
+
+type FiatMetaPayApiFee Quota
+type FiatMetaPayApiQuota Quota
 
 type FiatMetaRefundSponsor struct {
 	RefundForFiatlogId   uint        `json:"refund_for_fiatlog_id"`
@@ -45,3 +45,6 @@ type FiatMetaRefundSponsor struct {
 }
 
 type FiatMetaRefundApiFee Quota
+type FiatMetaRefundApiQuota Quota
+
+type FiatMetaResetQuota Quota
