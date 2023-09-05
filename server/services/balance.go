@@ -37,12 +37,36 @@ func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, spons
 
 func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_API_FEE, models.FiatMetaRefundApiFee{costType, count}, false)
+	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_API_FEE, models.FiatMetaRefundApiFee{costType, int(count)}, false)
 }
 
 func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFee{costType, count}, false)
+	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFee{costType, int(count)}, false)
+}
+
+func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (uint, error) {
+	plan, err := models.GetBillPlanById(planId)
+	if err != nil {
+		return 0, err
+	}
+	up, err := models.CreateUserBillPlan(userId, planId, isAutoRenewal)
+	if err != nil {
+		return 0, err
+	}
+	return updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_BILLPLAN, models.FiatMetaBuyBillplan{up.PlanId, up.ID})
+}
+
+func BuyDataBundler(userId uint, dataBundleId uint) (uint, error) {
+	plan, err := models.GetDataBundleById(dataBundleId)
+	if err != nil {
+		return 0, err
+	}
+	udb, err := models.CreateUserDataBundle(userId, dataBundleId)
+	if err != nil {
+		return 0, err
+	}
+	return updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.ID})
 }
 
 func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {

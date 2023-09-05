@@ -26,20 +26,22 @@ const (
 type FiatLogType int
 
 const (
-	FIAT_LOG_TYPE_DEPOSIT            FiatLogType = iota + 1
-	FIAT_LOG_TYPE_WITHDRAW                       //2
-	FIAT_LOG_TYPE_BUY_GAS                        //3
-	FIAT_LOG_TYPE_BUY_STORAGE                    //4
-	FIAT_LOG_TYPE_PAY_API_FEE                    //5
-	FIAT_LOG_TYPE_CMB_CHARGE                     // 6招行对公充值
-	FIAT_LOG_TYPE_REFUND_API_FEE                 //7
-	FIAT_LOG_TYPE_REFUND_SPONSOR                 //8
-	FIAT_LOG_TYPE_REFUND_API_QUOTA               //9
-	FIAT_LOG_TYPE_REFUND_RESERV3_2               //10
-	FIAT_LOG_TYPE_REFUND_RESERV3_3               //11
-	FIAT_LOG_TYPE_PAY_API_QUOTA                  //12
-	FIAT_LOG_TYPE_RESET_API_QUOTA                //13
-	FIAT_LOG_TYPE_DEPOSITE_API_QUOTA             //14
+	FIAT_LOG_TYPE_DEPOSIT             FiatLogType = iota + 1
+	FIAT_LOG_TYPE_WITHDRAW                        //2
+	FIAT_LOG_TYPE_BUY_GAS                         //3
+	FIAT_LOG_TYPE_BUY_STORAGE                     //4
+	FIAT_LOG_TYPE_PAY_API_FEE                     //5
+	FIAT_LOG_TYPE_CMB_CHARGE                      // 6招行对公充值
+	FIAT_LOG_TYPE_REFUND_API_FEE                  //7
+	FIAT_LOG_TYPE_REFUND_SPONSOR                  //8
+	FIAT_LOG_TYPE_REFUND_API_QUOTA                //9
+	FIAT_LOG_TYPE_REFUND_RESERV3_2                //10
+	FIAT_LOG_TYPE_REFUND_RESERV3_3                //11
+	FIAT_LOG_TYPE_PAY_API_QUOTA                   //12
+	FIAT_LOG_TYPE_RESET_API_QUOTA                 //13
+	FIAT_LOG_TYPE_DEPOSITE_DATABUNDLE             //14
+	FIAT_LOG_TYPE_BUY_BILLPLAN
+	FIAT_LOG_TYPE_BUY_DATABUNDLE
 )
 
 func (f FiatLogType) PayType() PayType {

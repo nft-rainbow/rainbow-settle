@@ -6,6 +6,7 @@ import (
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -93,6 +94,7 @@ func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costT
 }
 
 func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[enums.CostType]int, nextResetTime time.Time) error {
+	var flcs []*FiatLogCache
 	err := func() error {
 		var matched []*UserApiQuota
 		if err := tx.Table("user_api_quota").
@@ -113,9 +115,8 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 			return err
 		}
 
-		var flcs []*FiatLogCache
 		for _, uaq := range matched {
-			meta, _ := json.Marshal(map[string]interface{}{"cost_type": uaq.CostType, "count": resetQuotas[uaq.CostType]})
+			meta, _ := json.Marshal(FiatMetaResetQuota{uaq.CostType, resetQuotas[uaq.CostType]})
 			flcs = append(flcs, &FiatLogCache{
 				FiatLogCore: FiatLogCore{
 					UserId:  uaq.UserId,
@@ -130,12 +131,115 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 			return err
 		}
 
-		logrus.WithField("len", len(matched)).Info("reset api quota completed")
+		// logrus.WithField("len", len(matched)).Info("reset api quota completed")
 		return nil
 	}()
 
-	logrus.WithError(err).WithField("user ids", userIds).WithField("reset quotas", resetQuotas).WithField("next reset time", nextResetTime).Info("reset users api quota")
+	logrus.WithError(err).WithField("fiat log chace ids", GetIds(flcs)).WithField("user ids", userIds).WithField("reset quotas", resetQuotas).WithField("next reset time", nextResetTime).Info("reset users api quota completed")
 	return err
+}
+
+func (u *UserQuotaOperator) DepositDataBundle(tx *gorm.DB, udb *UserDataBundle) error {
+
+	var flcs []*FiatLogCache
+	err := func() error {
+		if udb.IsConsumed {
+			return nil
+		}
+
+		dataBundle, err := GetDataBundleById(udb.DataBundleId)
+		if err != nil {
+			return err
+		}
+
+		rolloverQuotas := lo.SliceToMap(dataBundle.DataBundleDetails, func(d *DataBundleDetail) (enums.CostType, int) {
+			return d.CostType, d.Count
+		})
+
+		quotas, err := u.depositRollover(tx, udb.UserId, rolloverQuotas)
+		if err != nil {
+			return err
+		}
+
+		if err := tx.Save(&udb).Error; err != nil {
+			return err
+		}
+
+		metaDataBundle := FiatMetaBuyDatabundle{udb.DataBundleId, udb.ID}
+		for _, v := range quotas {
+			meta, _ := json.Marshal(FiatMetaDepositDataBundle{metaDataBundle, *v})
+			flcs = append(flcs, &FiatLogCache{
+				FiatLogCore: FiatLogCore{
+					UserId:  udb.UserId,
+					Type:    FIAT_LOG_TYPE_DEPOSITE_DATABUNDLE,
+					Meta:    meta,
+					OrderNO: RandomOrderNO(),
+				},
+			})
+		}
+
+		if err := tx.Save(&flcs).Error; err != nil {
+			return err
+		}
+		return nil
+	}()
+
+	logrus.WithError(err).WithField("user data bundle", udb).WithField("fiat log cache ids", GetIds(flcs)).Info("deposit data bundle completed")
+	return nil
+}
+
+func (u *UserQuotaOperator) depositRollover(tx *gorm.DB, userId uint, rolloverQuotas map[enums.CostType]int) ([]*Quota, error) {
+	var costCounts []*Quota
+	err := func() error {
+		var matched []*UserApiQuota
+		if err := tx.Table("user_api_quota").
+			Where("cost_type in ?", utils.GetMapKeys(rolloverQuotas)).
+			Where("user_id = ?", userId).
+			Find(&matched).Error; err != nil {
+			return err
+		}
+		// if len(matched) == 0 {
+		// 	return nil
+		// }
+
+		for _, uaq := range matched {
+			// uaq.CountReset = rolloverQuotas[uaq.CostType]
+			err := tx.Table("user_api_quota").
+				Where("cost_type = ? and user_id = ?", uaq.CostType, uaq.UserId).
+				Update("count_rollover", gorm.Expr("count_rollover+?", rolloverQuotas[uaq.CostType])).Error
+
+			if err != nil {
+				return err
+			}
+		}
+		// if err := tx.Save(&matched).Error; err != nil {
+		// 	return err
+		// }
+
+		// var flcs []*FiatLogCache
+
+		for _, uaq := range matched {
+			// meta, _ := json.Marshal(FiatMetaDepositRollover{uaq.CostType, rolloverQuotas[uaq.CostType]})
+			// flcs = append(flcs, &FiatLogCache{
+			// 	FiatLogCore: FiatLogCore{
+			// 		UserId:  uaq.UserId,
+			// 		Type:    FIAT_LOG_TYPE_RESET_API_QUOTA,
+			// 		Meta:    meta,
+			// 		OrderNO: RandomOrderNO(),
+			// 	},
+			// })
+			costCounts = append(costCounts, &Quota{uaq.CostType, rolloverQuotas[uaq.CostType]})
+		}
+		// if err := tx.Save(&flcs).Error; err != nil {
+		// 	return err
+		// }
+
+		// logrus.WithField("len", len(matched)).Info("reset api quota completed")
+		return nil
+	}()
+
+	logrus.WithError(err).WithField("user id", userId).WithField("reset quotas", rolloverQuotas).Info("deposite user rollover quota completed")
+	return costCounts, err
 }
 
 func (u *UserQuotaOperator) Refund(tx *gorm.DB, userId uint, costType enums.CostType, countReset int, countRollover int) (uint, error) {

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
@@ -15,6 +17,26 @@ func (p PeroidType) ToCronSchedule() string {
 		PEROID_TYPE_YEAR:  "@yearly",
 	}
 	return coll[p]
+}
+
+func (p PeroidType) EndTime(beginTime time.Time) time.Time {
+	// coll := map[PeroidType]time.Time{
+	// 	PEROID_TYPE_DAY:   time.Date(0, 0, 1, 0, 0, 0, 0, time.Local),
+	// 	PEROID_TYPE_MONTH: time.Date(0, 1, 0, 0, 0, 0, 0, time.Local),
+	// 	PEROID_TYPE_YEAR:  time.Date(1, 0, 0, 0, 0, 0, 0, time.Local),
+	// }
+	// return beginTime.AddDate(coll[p].Year(), int(coll[p].Month()), coll[p].Day())
+
+	y, m, d := beginTime.Date()
+	switch p {
+	case PEROID_TYPE_DAY:
+		return beginTime.AddDate(0, 0, 1)
+	case PEROID_TYPE_MONTH:
+		return time.Date(y, m+1, d, 0, 0, 0, 0, time.Local)
+	case PEROID_TYPE_YEAR:
+		return time.Date(y+1, 1, d, 0, 0, 0, 0, time.Local)
+	}
+	return beginTime
 }
 
 const (
@@ -50,7 +72,7 @@ func (p *BillPlan) GetQuotas() map[enums.CostType]int {
 	})
 }
 
-func FindPlan(id uint) (*BillPlan, error) {
+func GetBillPlanById(id uint) (*BillPlan, error) {
 	var p *BillPlan
 	if err := GetDB().Model(&BillPlan{}).Preload("BillPlanDetails").First(id, &p).Error; err != nil {
 		return nil, err

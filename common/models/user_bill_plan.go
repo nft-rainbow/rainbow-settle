@@ -18,6 +18,25 @@ type UserBillPlan struct {
 	IsAutoRenewal bool      `json:"is_auto_renewal"`
 }
 
+func CreateUserBillPlan(userId, planId uint, isAutoRenew bool) (*UserBillPlan, error) {
+	plan, err := GetBillPlanById(planId)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	up := &UserBillPlan{
+		UserId:        userId,
+		PlanId:        planId,
+		BoughtTime:    now,
+		ExpireTime:    plan.EffectivePeroid.EndTime(now),
+		IsAutoRenewal: isAutoRenew,
+	}
+	if err := GetDB().Create(&up).Error; err != nil {
+		return nil, err
+	}
+	return up, nil
+}
+
 // 获取 用户 priority 最高的 plan, 如果没有，设置default
 func FindAllUsersEffectivePlan() (map[uint]map[PlanServer]*BillPlan, error) {
 	// select user_bill_plans.user_id, max(plans.priority) from user_bill_plans left join plans on user_bill_plans.plan_id=plans.id where user_bill_plans.expire_time>now() group by user_bill_plans.user_id

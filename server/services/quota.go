@@ -7,6 +7,7 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 // 1. find users highest priority plan
@@ -83,4 +84,8 @@ func ResetQuotas() error {
 	}
 
 	return nil
+}
+
+func ConsumeDataBundle(tx *gorm.DB, udb *models.UserDataBundle) error {
+	return userQuotaOperater.DepositDataBundle(tx, udb)
 }

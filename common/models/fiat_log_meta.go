@@ -15,6 +15,28 @@ type FiatMetaBuySponsor struct {
 	Price   decimal.Decimal `json:"price"`
 }
 
+type FiatMetaBuyBillplan struct {
+	PlanId         uint `json:"plan_id"`
+	UserBillPlanId uint `json:"user_bill_plan_id"`
+}
+
+type FiatMetaBuyDatabundle struct {
+	DataBundleId     uint `json:"data_bundle_id"`
+	UserDataBundleId uint `json:"user_data_bundle_id"`
+}
+
+type Quota struct {
+	CostType enums.CostType `json:"cost_type"`
+	Count    int            `json:"count"`
+}
+
+type FiatMetaPayApiFee Quota
+type FiatMetaResetQuota Quota
+type FiatMetaDepositDataBundle struct {
+	FiatMetaBuyDatabundle
+	Quota
+}
+
 type FiatMetaRefundSponsor struct {
 	RefundForFiatlogId   uint        `json:"refund_for_fiatlog_id"`
 	RefundForFiatlogType FiatLogType `json:"refund_for_fiatlog_type"`
@@ -22,9 +44,4 @@ type FiatMetaRefundSponsor struct {
 	Reason               string      `json:"reason"`
 }
 
-type FiatMetaRefundApiFee struct {
-	CostType enums.CostType `json:"cost_type"`
-	Count    uint           `json:"count"`
-}
-
-type FiatMetaPayApiFee FiatMetaRefundApiFee
+type FiatMetaRefundApiFee Quota
