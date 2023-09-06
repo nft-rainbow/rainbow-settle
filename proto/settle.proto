@@ -120,7 +120,7 @@ message UpdateCmcDepositNoRelationRequest {
 }
 
 message BuyDataBundleRequest {
-  uint32 UserId = 1;
+  uint32 UserId = 1; 
   uint32 DataBundleId = 2;
 }
 
@@ -153,8 +153,8 @@ service Settle {
 
   rpc BuyGas(BuySponsorRequest) returns (Empty);
   rpc BuyStorage(BuySponsorRequest) returns (Empty);
-  rpc BuyDataBundle(BuyDataBundleRequest) returns (Empty);
-  rpc BuyBillPlan(BuyBillPlanRequest) returns (Empty);
+  rpc BuyDataBundle(BuyDataBundleRequest) returns (UserDataBundle);
+  rpc BuyBillPlan(BuyBillPlanRequest) returns (UerBillPlan);
 
   rpc RefundSponsor(RefundSponsorRequest) returns (Empty);
   rpc RefundApiFee(RefundApiFeeRequest) returns (Empty);

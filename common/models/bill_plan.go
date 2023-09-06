@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
@@ -70,6 +71,20 @@ func (p *BillPlan) GetQuotas() map[enums.CostType]int {
 	return lo.SliceToMap(p.BillPlanDetails, func(d *BillPlanDetail) (enums.CostType, int) {
 		return d.CostType, d.Count
 	})
+}
+
+type BillPlanFilter struct {
+	ID     uint       `form:"id" json:"id"`
+	Server PlanServer `form:"server" json:"server"`
+}
+
+func QueryBillPlan(filter *BillPlanFilter, offset, limit int) (*ginutils.List[*BillPlan], error) {
+	var aps []*BillPlan
+	var count int64
+	if err := GetDB().Model(&BillPlan{}).Where(&filter).Count(&count).Offset(offset).Limit(limit).Find(&aps).Error; err != nil {
+		return nil, err
+	}
+	return &ginutils.List[*BillPlan]{Items: aps, Count: count}, nil
 }
 
 func GetBillPlanById(id uint) (*BillPlan, error) {

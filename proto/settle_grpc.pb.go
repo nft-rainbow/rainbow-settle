@@ -26,8 +26,8 @@ type SettleClient interface {
 	GetDepositeOrder(ctx context.Context, in *ID, opts ...grpc.CallOption) (*DepositOrder, error)
 	BuyGas(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
-	BuyDataBundle(ctx context.Context, in *BuyDataBundleRequest, opts ...grpc.CallOption) (*Empty, error)
-	BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*Empty, error)
+	BuyDataBundle(ctx context.Context, in *BuyDataBundleRequest, opts ...grpc.CallOption) (*UserDataBundle, error)
+	BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*UerBillPlan, error)
 	RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	RefundApiFee(ctx context.Context, in *RefundApiFeeRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
@@ -81,8 +81,8 @@ func (c *settleClient) BuyStorage(ctx context.Context, in *BuySponsorRequest, op
 	return out, nil
 }
 
-func (c *settleClient) BuyDataBundle(ctx context.Context, in *BuyDataBundleRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *settleClient) BuyDataBundle(ctx context.Context, in *BuyDataBundleRequest, opts ...grpc.CallOption) (*UserDataBundle, error) {
+	out := new(UserDataBundle)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/BuyDataBundle", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -90,8 +90,8 @@ func (c *settleClient) BuyDataBundle(ctx context.Context, in *BuyDataBundleReque
 	return out, nil
 }
 
-func (c *settleClient) BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *settleClient) BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*UerBillPlan, error) {
+	out := new(UerBillPlan)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/BuyBillPlan", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -170,8 +170,8 @@ type SettleServer interface {
 	GetDepositeOrder(context.Context, *ID) (*DepositOrder, error)
 	BuyGas(context.Context, *BuySponsorRequest) (*Empty, error)
 	BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error)
-	BuyDataBundle(context.Context, *BuyDataBundleRequest) (*Empty, error)
-	BuyBillPlan(context.Context, *BuyBillPlanRequest) (*Empty, error)
+	BuyDataBundle(context.Context, *BuyDataBundleRequest) (*UserDataBundle, error)
+	BuyBillPlan(context.Context, *BuyBillPlanRequest) (*UerBillPlan, error)
 	RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error)
 	RefundApiFee(context.Context, *RefundApiFeeRequest) (*Empty, error)
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
@@ -198,10 +198,10 @@ func (UnimplementedSettleServer) BuyGas(context.Context, *BuySponsorRequest) (*E
 func (UnimplementedSettleServer) BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuyStorage not implemented")
 }
-func (UnimplementedSettleServer) BuyDataBundle(context.Context, *BuyDataBundleRequest) (*Empty, error) {
+func (UnimplementedSettleServer) BuyDataBundle(context.Context, *BuyDataBundleRequest) (*UserDataBundle, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuyDataBundle not implemented")
 }
-func (UnimplementedSettleServer) BuyBillPlan(context.Context, *BuyBillPlanRequest) (*Empty, error) {
+func (UnimplementedSettleServer) BuyBillPlan(context.Context, *BuyBillPlanRequest) (*UerBillPlan, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuyBillPlan not implemented")
 }
 func (UnimplementedSettleServer) RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error) {

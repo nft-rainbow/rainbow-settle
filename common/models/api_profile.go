@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
+	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/shopspring/decimal"
 )
@@ -13,6 +14,11 @@ type ApiProfile struct {
 	ServerType     enums.ServerType `json:"server_type"`
 	ServerTypeName string           `json:"server_type_name"`
 	Price          decimal.Decimal  `gorm:"type:decimal(20,5)" json:"price"`
+}
+
+type ApiProfileFilter struct {
+	CostType   enums.CostType   `form:"cost_type" json:"cost_type"`
+	ServerType enums.ServerType `form:"server_type" json:"server_type"`
 }
 
 var (
@@ -42,6 +48,15 @@ func InitApiProfile() {
 	}
 }
 
+func QueryApiProfile(filter *ApiProfileFilter, offset, limit int) (*ginutils.List[*ApiProfile], error) {
+	var aps []*ApiProfile
+	var count int64
+	if err := GetDB().Model(&ApiProfile{}).Where(&filter).Count(&count).Offset(offset).Limit(limit).Find(&aps).Error; err != nil {
+		return nil, err
+	}
+	return &ginutils.List[*ApiProfile]{Items: aps, Count: count}, nil
+}
+
 func GetApiProfiles() (map[enums.CostType]*ApiProfile, error) {
 	profiles := []*ApiProfile{}
 	if err := GetDB().Find(&profiles).Error; err != nil {
@@ -63,8 +78,8 @@ func GetAllCostTypes() ([]enums.CostType, error) {
 	return utils.GetMapKeys(aps), nil
 }
 
-func ListApiFees() ([]ApiProfile, error) {
-	var aps []ApiProfile
+func ListApiFees() ([]*ApiProfile, error) {
+	var aps []*ApiProfile
 	if err := GetDB().Find(&aps).Error; err != nil {
 		return nil, err
 	}

@@ -74,22 +74,33 @@ func (s *SettleServer) BuyStorage(ctx context.Context, in *proto.BuySponsorReque
 	return &proto.Empty{}, nil
 }
 
-func (s *SettleServer) BuyDataBundle(ctx context.Context, in *proto.BuyDataBundleRequest) (*proto.Empty, error) {
-	fl, err := services.BuyDataBundler(uint(in.UserId), uint(in.DataBundleId))
+func (s *SettleServer) BuyDataBundle(ctx context.Context, in *proto.BuyDataBundleRequest) (*proto.UserDataBundle, error) {
+	fl, udb, err := services.BuyDataBundler(uint(in.UserId), uint(in.DataBundleId))
 	if err != nil {
 		return nil, err
 	}
-	logrus.WithField("fiatlog", fl).Info("buy data bundle completed")
-	return &proto.Empty{}, nil
+	logrus.WithField("fiatlog", fl).WithField("udb_id", udb.ID).Info("buy data bundle completed")
+	return &proto.UserDataBundle{
+		ID:           uint32(udb.ID),
+		UserId:       uint32(udb.UserId),
+		DataBundleId: uint32(udb.DataBundleId),
+		BoughtTime:   udb.BoughtTime.String(),
+	}, nil
 }
 
-func (s *SettleServer) BuyBillPlan(ctx context.Context, in *proto.BuyBillPlanRequest) (*proto.Empty, error) {
-	fl, err := services.BuyBillPlan(uint(in.UserId), uint(in.PlanId), in.IsAutoRenewal)
+func (s *SettleServer) BuyBillPlan(ctx context.Context, in *proto.BuyBillPlanRequest) (*proto.UerBillPlan, error) {
+	fl, ubp, err := services.BuyBillPlan(uint(in.UserId), uint(in.PlanId), in.IsAutoRenewal)
 	if err != nil {
 		return nil, err
 	}
-	logrus.WithField("fiatlog", fl).Info("buy bill plan completed")
-	return &proto.Empty{}, nil
+	logrus.WithField("fiatlog", fl).WithField("ubp_id", ubp.ID).Info("buy bill plan completed")
+	return &proto.UerBillPlan{
+		ID:            uint32(ubp.ID),
+		UserId:        uint32(ubp.UserId),
+		PlanId:        uint32(ubp.PlanId),
+		BoughtTime:    ubp.BoughtTime.String(),
+		IsAutoRenewal: ubp.IsAutoRenewal,
+	}, nil
 }
 
 func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponsorRequest) (*proto.Empty, error) {

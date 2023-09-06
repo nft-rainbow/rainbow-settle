@@ -27,28 +27,37 @@ func BuyStorage(userId uint, amount decimal.Decimal, txId uint, address string, 
 	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_BUY_STORAGE, models.FiatMetaBuySponsor{address, txId, price})
 }
 
-func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (uint, error) {
+func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, userBillPlan *models.UserBillPlan, err error) {
 	plan, err := models.GetBillPlanById(planId)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 	up, err := models.CreateUserBillPlan(userId, planId, isAutoRenewal)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
-	return updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_BILLPLAN, models.FiatMetaBuyBillplan{up.PlanId, up.ID})
+	fl, err := updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_BILLPLAN, models.FiatMetaBuyBillplan{up.PlanId, up.ID})
+	if err != nil {
+		return 0, nil, err
+	}
+	return fl, up, nil
 }
 
-func BuyDataBundler(userId uint, dataBundleId uint) (uint, error) {
+func BuyDataBundler(userId uint, dataBundleId uint) (fiatlogId uint, userDataBundle *models.UserDataBundle, err error) {
 	plan, err := models.GetDataBundleById(dataBundleId)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 	udb, err := models.CreateUserDataBundleAndConsume(userId, dataBundleId)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
-	return updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.ID})
+	fl, err := updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.ID})
+	if err != nil {
+		return 0, nil, err
+	}
+
+	return fl, udb, nil
 }
 
 func RefundSponsor(userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType models.FiatLogType, txId uint) (uint, error) {
