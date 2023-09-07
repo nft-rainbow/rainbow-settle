@@ -14,10 +14,14 @@ const (
 	COST_TYPE_RAINBOW_NORMAL
 	COST_TYPE_RAINBOW_MINT
 	COST_TYPE_RAINBOW_DEPLOY
-	COST_TYPE_CONFURA_MAIN_NOMRAL = 10
-	COST_TYPE_CONFURA_TEST_NOMRAL = 15
-	COST_TYPE_SCAN_MAIN_NORMAL    = 20
-	COST_TYPE_SCAN_TEST_NORMAL    = 25
+	COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL = 10
+	COST_TYPE_CONFURA_MAIN_ESPACE_NOMRAL = 11
+	COST_TYPE_CONFURA_TEST_CSPACE_NOMRAL = 15
+	COST_TYPE_CONFURA_TEST_ESPACE_NOMRAL = 16
+	COST_TYPE_SCAN_MAIN_CSPACE_NORMAL    = 20
+	COST_TYPE_SCAN_MAIN_ESPACE_NORMAL    = 21
+	COST_TYPE_SCAN_TEST_CSPACE_NORMAL    = 25
+	COST_TYPE_SCAN_TEST_ESPACE_NORMAL    = 26
 )
 
 func GetCostType(isTestnet bool, method string, path string) CostType {
@@ -43,14 +47,18 @@ var (
 
 func init() {
 	CostTypeValue2StrMap = map[CostType]string{
-		COST_TYPE_RAINBOW_FREE:        "rainbow_free",
-		COST_TYPE_RAINBOW_NORMAL:      "rainbow_normal",
-		COST_TYPE_RAINBOW_MINT:        "rainbow_mint",
-		COST_TYPE_RAINBOW_DEPLOY:      "rainbow_deploy",
-		COST_TYPE_CONFURA_MAIN_NOMRAL: "confura_main_normal",
-		COST_TYPE_CONFURA_TEST_NOMRAL: "confura_test_normal",
-		COST_TYPE_SCAN_MAIN_NORMAL:    "scan_main_normal",
-		COST_TYPE_SCAN_TEST_NORMAL:    "scan_test_normal",
+		COST_TYPE_RAINBOW_FREE:               "rainbow_free",
+		COST_TYPE_RAINBOW_NORMAL:             "rainbow_normal",
+		COST_TYPE_RAINBOW_MINT:               "rainbow_mint",
+		COST_TYPE_RAINBOW_DEPLOY:             "rainbow_deploy",
+		COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL: "confura_main_cspace_normal",
+		COST_TYPE_CONFURA_MAIN_ESPACE_NOMRAL: "confura_main_espace_normal",
+		COST_TYPE_CONFURA_TEST_CSPACE_NOMRAL: "confura_test_cspace_normal",
+		COST_TYPE_CONFURA_TEST_ESPACE_NOMRAL: "confura_test_espace_normal",
+		COST_TYPE_SCAN_MAIN_CSPACE_NORMAL:    "scan_main_cspace_normal",
+		COST_TYPE_SCAN_MAIN_ESPACE_NORMAL:    "scan_main_espace_normal",
+		COST_TYPE_SCAN_TEST_CSPACE_NORMAL:    "scan_test_cspace_normal",
+		COST_TYPE_SCAN_TEST_ESPACE_NORMAL:    "scan_test_espace_normal",
 	}
 
 	CostTypeStr2ValueMap = make(map[string]CostType)

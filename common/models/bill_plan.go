@@ -103,6 +103,15 @@ func GetAllPlans() ([]*BillPlan, error) {
 	return plans, nil
 }
 
+func GetAllPlansMap() (map[uint]*BillPlan, error) {
+	allPlans, err := GetAllPlans()
+	if err != nil {
+		return nil, err
+	}
+	allPlansMap := lo.SliceToMap(allPlans, func(p *BillPlan) (uint, *BillPlan) { return p.ID, p })
+	return allPlansMap, nil
+}
+
 func GetDefaultPlans() (map[PlanServer]*BillPlan, error) {
 	var plans []*BillPlan
 	if err := GetDB().Model(&BillPlan{}).Preload("BillPlanDetails").Where("name like \"default_%\"").Find(&plans).Error; err != nil {

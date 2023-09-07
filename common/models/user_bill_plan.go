@@ -1,8 +1,6 @@
 package models
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/samber/lo"
@@ -11,13 +9,15 @@ import (
 // 用户套餐：用户ID，套餐ID，购买时间（生效时间），是否自动续费
 type UserBillPlan struct {
 	BaseModel
-	UserId        uint      `json:"user"`
+	UserId        uint      `json:"user_id"`
+	ServerType    uint      `json:"server_type"`
 	PlanId        uint      `json:"plan_id"`
 	BoughtTime    time.Time `json:"bought_time"`
 	ExpireTime    time.Time `json:"expire_time"`
 	IsAutoRenewal bool      `json:"is_auto_renewal"`
 }
 
+// 购买新套餐时，直接覆盖现有套餐
 func CreateUserBillPlan(userId, planId uint, isAutoRenew bool) (*UserBillPlan, error) {
 	plan, err := GetBillPlanById(planId)
 	if err != nil {
@@ -60,7 +60,7 @@ func findUsersEffectivePlan(userIds []uint) (map[uint]map[PlanServer]*BillPlan, 
 	// userid => plan.priority
 	// plan.priority => plan
 
-	allPlans, err := GetAllPlans()
+	allPlansMap, err := GetAllPlansMap()
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +70,11 @@ func findUsersEffectivePlan(userIds []uint) (map[uint]map[PlanServer]*BillPlan, 
 		return nil, err
 	}
 
-	ups, err := getUserPlanIds()
+	ups, err := getUserUnExpiredPlans()
 	if err != nil {
 		return nil, err
 	}
 
-	allPlansMap := lo.SliceToMap(allPlans, func(p *BillPlan) (uint, *BillPlan) { return p.ID, p })
 	userPlans := make(map[uint]map[PlanServer]*BillPlan)
 	for _, userId := range userIds {
 		userPlans[userId] = make(map[PlanServer]*BillPlan)
@@ -86,8 +85,8 @@ func findUsersEffectivePlan(userIds []uint) (map[uint]map[PlanServer]*BillPlan, 
 
 		// set max priority plans
 
-		for _, planId := range ups[userId] {
-			plan := allPlansMap[planId]
+		for _, userPlan := range ups[userId] {
+			plan := allPlansMap[userPlan.PlanId]
 			if userPlans[userId][plan.Server].Priority < plan.Priority {
 				userPlans[userId][plan.Server] = plan
 			}
@@ -128,24 +127,76 @@ func findUsersEffectivePlan(userIds []uint) (map[uint]map[PlanServer]*BillPlan, 
 	// return user2Plan, nil
 }
 
-func getUserPlanIds() (map[uint][]uint, error) {
-	type UserPlans struct {
-		UserId  uint   `json:"user_id"`
-		PlanIds string `json:"plan_ids"`
-	}
-
-	var _ups []*UserPlans
-	err := GetDB().Model(&UserBillPlan{}).Joins("left join bill_plans on user_bill_plans.plan_id = bill_plans.id").
-		Where("user_bill_plans.expire_time>?", time.Now()).
-		Group("user_bill_plans.user_id").
-		Select("user_bill_plans.user_id,GROUP_CONCAT(user_bill_plans.plan_id) as plan_ids").Scan(&_ups).Error
+func FindAllUserNeedRenewPlans() (map[uint]map[PlanServer]*BillPlan, error) {
+	allUserIds, err := GetAllUserIds()
 	if err != nil {
 		return nil, err
 	}
-	ups := lo.SliceToMap(_ups, func(p *UserPlans) (uint, []uint) {
-		var planIds []uint
-		json.Unmarshal([]byte(fmt.Sprintf("[%s]", p.PlanIds)), &planIds)
-		return p.UserId, planIds
+	return findUserNeedRenewPlans(allUserIds)
+}
+
+// 找用户所有plan，标记renew的优先级最高的且优先级大于当前生效的
+func findUserNeedRenewPlans(userIds []uint) (map[uint]map[PlanServer]*BillPlan, error) {
+	allUps, err := getUserAllPlans()
+	if err != nil {
+		return nil, err
+	}
+
+	allPlansMap, err := GetAllPlansMap()
+	if err != nil {
+		return nil, err
+	}
+
+	allUeps, err := FindAllUsersEffectivePlan()
+	if err != nil {
+		return nil, err
+	}
+
+	userNeedRenews := make(map[uint]map[PlanServer]*BillPlan)
+	for _, userId := range userIds {
+		userNeedRenews[userId] = make(map[PlanServer]*BillPlan)
+		// set max priority plans
+		for _, userPlan := range allUps[userId] {
+			plan := allPlansMap[userPlan.PlanId]
+			// 不续费的跳过，优先级低于正生效的跳过
+			if !userPlan.IsAutoRenewal || plan.Priority < allUeps[userId][plan.Server].Priority {
+				continue
+			}
+
+			curPlan := userNeedRenews[userId][plan.Server]
+			if curPlan == nil || curPlan.Priority < plan.Priority {
+				userNeedRenews[userId][plan.Server] = plan
+			}
+		}
+	}
+	return userNeedRenews, nil
+
+}
+
+func getUserAllPlans() (map[uint][]*UserBillPlan, error) {
+	var _ubps []*UserBillPlan
+	err := GetDB().Model(&UserBillPlan{}).Find(&_ubps).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return groupUserPlanByUserId(_ubps), nil
+}
+
+func getUserUnExpiredPlans() (map[uint][]*UserBillPlan, error) {
+	var _ubps []*UserBillPlan
+	err := GetDB().Model(&UserBillPlan{}).
+		Where("expire_time>?", time.Now()).
+		Find(&_ubps).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return groupUserPlanByUserId(_ubps), nil
+}
+
+func groupUserPlanByUserId(input []*UserBillPlan) map[uint][]*UserBillPlan {
+	return lo.GroupBy(input, func(v *UserBillPlan) uint {
+		return v.PlanId
 	})
-	return ups, nil
 }

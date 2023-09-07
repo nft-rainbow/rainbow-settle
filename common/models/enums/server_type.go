@@ -9,10 +9,10 @@ type ServerType uint
 
 const (
 	SERVER_TYPE_RAINBOW ServerType = iota + 1
-	SERVER_TYPE_CONFURA_MAIN
-	SERVER_TYPE_CONFURA_TEST
-	SERVER_TYPE_SCAN_MAIN
-	SERVER_TYPE_SCAN_TEST
+	SERVER_TYPE_CONFURA_CSPACE
+	SERVER_TYPE_CONFURA_ESPACE
+	SERVER_TYPE_SCAN_CSPACE
+	SERVER_TYPE_SCAN_ESPACE
 )
 
 var (
@@ -26,11 +26,11 @@ var (
 
 func init() {
 	ServerTypeValue2StrMap = map[ServerType]string{
-		SERVER_TYPE_RAINBOW:      "rainbow",
-		SERVER_TYPE_CONFURA_MAIN: "confura_main",
-		SERVER_TYPE_CONFURA_TEST: "confura_test",
-		SERVER_TYPE_SCAN_MAIN:    "scan_main",
-		SERVER_TYPE_SCAN_TEST:    "scan_test",
+		SERVER_TYPE_RAINBOW:        "rainbow",
+		SERVER_TYPE_CONFURA_CSPACE: "confura_main_cspace",
+		SERVER_TYPE_CONFURA_ESPACE: "confura_test_espace",
+		SERVER_TYPE_SCAN_CSPACE:    "scan_main_cspace",
+		SERVER_TYPE_SCAN_ESPACE:    "scan_main_espace",
 	}
 
 	ServerTypeStr2ValueMap = make(map[string]ServerType)
