@@ -120,7 +120,7 @@ message UpdateCmcDepositNoRelationRequest {
 }
 
 message BuyDataBundleRequest {
-  uint32 UserId = 1; 
+  uint32 UserId = 1;
   uint32 DataBundleId = 2;
 }
 
@@ -145,6 +145,12 @@ message UerBillPlan {
   bool IsAutoRenewal = 5;
 }
 
+message UpdateUpdateBillPlanRenewRequest {
+  uint32 UserId = 1;
+  uint32 ServerType = 2;
+  bool IsAutoRenewal = 3;
+}
+
 message QueryRecentCmbHistoryResponse { repeated ModelsCmbRecord List = 1; }
 
 service Settle {
@@ -155,6 +161,7 @@ service Settle {
   rpc BuyStorage(BuySponsorRequest) returns (Empty);
   rpc BuyDataBundle(BuyDataBundleRequest) returns (UserDataBundle);
   rpc BuyBillPlan(BuyBillPlanRequest) returns (UerBillPlan);
+  rpc UpdateBillPlanRenew(UpdateUpdateBillPlanRenewRequest) returns (UerBillPlan);
 
   rpc RefundSponsor(RefundSponsorRequest) returns (Empty);
   rpc RefundApiFee(RefundApiFeeRequest) returns (Empty);

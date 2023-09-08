@@ -92,6 +92,20 @@ func (u *UserBillPlanOperator) RegisterOnChangedEvent(handler OnUserBillPlanChan
 // 	return tx.Save(&unexists).Error
 // }
 
+type UserBillPlanFilter struct {
+	UserId     uint             `json:"user_id"`
+	ServerType enums.ServerType `json:"server_type"`
+	PlanId     uint             `json:"plan_id"`
+}
+
+func (u *UserBillPlanOperator) First(filter *UserBillPlanFilter) (*UserBillPlan, error) {
+	var userPlan UserBillPlan
+	if err := GetDB().Where(&filter).First(&userPlan).Error; err != nil {
+		return nil, err
+	}
+	return &userPlan, nil
+}
+
 // 购买新套餐时，直接覆盖现有套餐
 func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAutoRenew bool) (*UserBillPlan, error) {
 	var userPlan UserBillPlan

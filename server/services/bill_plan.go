@@ -21,12 +21,13 @@ func LoopRunPlan() {
 }
 
 func RunPlan() {
-	utils.Retry(10, time.Second*5, func() error {
+	err := utils.Retry(10, time.Second*5, func() error {
 		if err := RenewPlans(); err != nil {
 			return err
 		}
 		return ResetQuotas()
 	})
+	logrus.WithError(err).Info("run plan completed")
 }
 
 func RenewPlans() error {

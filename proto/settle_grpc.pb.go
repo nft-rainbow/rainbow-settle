@@ -28,6 +28,7 @@ type SettleClient interface {
 	BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	BuyDataBundle(ctx context.Context, in *BuyDataBundleRequest, opts ...grpc.CallOption) (*UserDataBundle, error)
 	BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*UerBillPlan, error)
+	UpdateBillPlanRenew(ctx context.Context, in *UpdateUpdateBillPlanRenewRequest, opts ...grpc.CallOption) (*UerBillPlan, error)
 	RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	RefundApiFee(ctx context.Context, in *RefundApiFeeRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
@@ -93,6 +94,15 @@ func (c *settleClient) BuyDataBundle(ctx context.Context, in *BuyDataBundleReque
 func (c *settleClient) BuyBillPlan(ctx context.Context, in *BuyBillPlanRequest, opts ...grpc.CallOption) (*UerBillPlan, error) {
 	out := new(UerBillPlan)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/BuyBillPlan", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) UpdateBillPlanRenew(ctx context.Context, in *UpdateUpdateBillPlanRenewRequest, opts ...grpc.CallOption) (*UerBillPlan, error) {
+	out := new(UerBillPlan)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/UpdateBillPlanRenew", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +182,7 @@ type SettleServer interface {
 	BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error)
 	BuyDataBundle(context.Context, *BuyDataBundleRequest) (*UserDataBundle, error)
 	BuyBillPlan(context.Context, *BuyBillPlanRequest) (*UerBillPlan, error)
+	UpdateBillPlanRenew(context.Context, *UpdateUpdateBillPlanRenewRequest) (*UerBillPlan, error)
 	RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error)
 	RefundApiFee(context.Context, *RefundApiFeeRequest) (*Empty, error)
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
@@ -203,6 +214,9 @@ func (UnimplementedSettleServer) BuyDataBundle(context.Context, *BuyDataBundleRe
 }
 func (UnimplementedSettleServer) BuyBillPlan(context.Context, *BuyBillPlanRequest) (*UerBillPlan, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuyBillPlan not implemented")
+}
+func (UnimplementedSettleServer) UpdateBillPlanRenew(context.Context, *UpdateUpdateBillPlanRenewRequest) (*UerBillPlan, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBillPlanRenew not implemented")
 }
 func (UnimplementedSettleServer) RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefundSponsor not implemented")
@@ -342,6 +356,24 @@ func _Settle_BuyBillPlan_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SettleServer).BuyBillPlan(ctx, req.(*BuyBillPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_UpdateBillPlanRenew_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUpdateBillPlanRenewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).UpdateBillPlanRenew(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/UpdateBillPlanRenew",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).UpdateBillPlanRenew(ctx, req.(*UpdateUpdateBillPlanRenewRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -502,6 +534,10 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BuyBillPlan",
 			Handler:    _Settle_BuyBillPlan_Handler,
+		},
+		{
+			MethodName: "UpdateBillPlanRenew",
+			Handler:    _Settle_UpdateBillPlanRenew_Handler,
 		},
 		{
 			MethodName: "RefundSponsor",

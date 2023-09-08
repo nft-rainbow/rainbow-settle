@@ -94,13 +94,23 @@ func (s *SettleServer) BuyBillPlan(ctx context.Context, in *proto.BuyBillPlanReq
 		return nil, err
 	}
 	logrus.WithField("fiatlog", fl).WithField("ubp_id", ubp.ID).Info("buy bill plan completed")
-	return &proto.UerBillPlan{
-		ID:            uint32(ubp.ID),
-		UserId:        uint32(ubp.UserId),
-		PlanId:        uint32(ubp.PlanId),
-		BoughtTime:    ubp.BoughtTime.String(),
-		IsAutoRenewal: ubp.IsAutoRenewal,
-	}, nil
+	return newProtoUerBillPlan(ubp), nil
+}
+
+func (s *SettleServer) UpdateBillPlanRenew(ctx context.Context, in *proto.UpdateUpdateBillPlanRenewRequest) (*proto.UerBillPlan, error) {
+	if err := models.GetUserBillPlanOperator().UpdateRenew(uint(in.UserId), enums.ServerType(in.ServerType), in.IsAutoRenewal); err != nil {
+		return nil, err
+	}
+
+	userPlan, err := models.GetUserBillPlanOperator().First(&models.UserBillPlanFilter{
+		UserId:     uint(in.UserId),
+		ServerType: enums.ServerType(in.ServerType),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return newProtoUerBillPlan(userPlan), nil
 }
 
 func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponsorRequest) (*proto.Empty, error) {
@@ -234,5 +244,15 @@ func parseCmbDepositNo(info *proto.CmbDepositNoDto) services.CmbDepositNoDto {
 		Name:   info.Name,
 		Bank:   info.Bank,
 		CardNo: info.CardNo,
+	}
+}
+
+func newProtoUerBillPlan(userPlan *models.UserBillPlan) *proto.UerBillPlan {
+	return &proto.UerBillPlan{
+		ID:            uint32(userPlan.ID),
+		UserId:        uint32(userPlan.UserId),
+		PlanId:        uint32(userPlan.PlanId),
+		BoughtTime:    userPlan.BoughtTime.String(),
+		IsAutoRenewal: userPlan.IsAutoRenewal,
 	}
 }
