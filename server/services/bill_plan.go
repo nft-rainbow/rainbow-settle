@@ -14,14 +14,15 @@ import (
 func LoopRunPlan() {
 	c := cron.New()
 
-	fn := func() {
-		utils.Retry(10, time.Second*5, RenewPlans)
-		utils.Retry(10, time.Second*5, ResetQuotas)
-	}
-	fn()
-	c.AddFunc("@daily", fn)
+	RunPlan()
+	c.AddFunc("@daily", RunPlan)
 
 	c.Start()
+}
+
+func RunPlan() {
+	utils.Retry(10, time.Second*5, RenewPlans)
+	utils.Retry(10, time.Second*5, ResetQuotas)
 }
 
 func RenewPlans() error {
