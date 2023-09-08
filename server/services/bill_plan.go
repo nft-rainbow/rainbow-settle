@@ -21,8 +21,12 @@ func LoopRunPlan() {
 }
 
 func RunPlan() {
-	utils.Retry(10, time.Second*5, RenewPlans)
-	utils.Retry(10, time.Second*5, ResetQuotas)
+	utils.Retry(10, time.Second*5, func() error {
+		if err := RenewPlans(); err != nil {
+			return err
+		}
+		return ResetQuotas()
+	})
 }
 
 func RenewPlans() error {
