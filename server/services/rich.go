@@ -43,6 +43,8 @@ func refreshRichFlag() error {
 	userCostStates := lo.GroupBy(tmps, func(v *UserCostState) uint {
 		return v.UserId
 	})
+
+	// logrus.WithField("user cost states", userCostStates).Trace("debug for refresh rich flag")
 	for userId, costStates := range userCostStates {
 		flag := 0
 		for _, cs := range costStates {

@@ -29,10 +29,10 @@ var (
 func init() {
 	ServerTypeValue2StrMap = map[ServerType]string{
 		SERVER_TYPE_RAINBOW:        "rainbow",
-		SERVER_TYPE_CONFURA_CSPACE: "confura_main_cspace",
-		SERVER_TYPE_CONFURA_ESPACE: "confura_test_espace",
-		SERVER_TYPE_SCAN_CSPACE:    "scan_main_cspace",
-		SERVER_TYPE_SCAN_ESPACE:    "scan_main_espace",
+		SERVER_TYPE_CONFURA_CSPACE: "confura_cspace",
+		SERVER_TYPE_CONFURA_ESPACE: "confura_espace",
+		SERVER_TYPE_SCAN_CSPACE:    "scan_cspace",
+		SERVER_TYPE_SCAN_ESPACE:    "scan_espace",
 	}
 
 	ServerTypeStr2ValueMap = make(map[string]ServerType)

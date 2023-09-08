@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils/cronutils"
@@ -50,7 +51,7 @@ const (
 // 包月/年套餐：名称，生效时长，qps，价格
 type BillPlan struct {
 	BaseModel
-	Name                 string            `json:"name"`
+	Name                 string            `gorm:"unique" json:"name"`
 	EffectivePeroid      PeroidType        `json:"effective_peroid"` // 月，年
 	RefreshQuotaSchedule PeroidType        `json:"reset_duration"`   // 日，月，年
 	Qps                  int               `json:"qps"`
@@ -70,6 +71,28 @@ func (p *BillPlan) NextRefreshQuotaTime() (time.Time, error) {
 	return cronutils.NextScheduleTime(p.RefreshQuotaSchedule.ToCronSchedule())
 }
 
+// 检查是否包含所有server的默认plan
+func InitBillPlan() {
+	plans, err := GetAllPlans()
+	if err != nil {
+		panic(err)
+	}
+
+	name2Plan := lo.SliceToMap(plans, func(item *BillPlan) (string, *BillPlan) {
+		return item.Name, item
+	})
+
+	for _, server := range enums.GetAllServerTypes() {
+		p, ok := name2Plan[fmt.Sprintf("default_%s", server)]
+		if !ok {
+			panic("missing default plan of server: " + server.String())
+		}
+		if p.Server != server {
+			panic(fmt.Sprintf("unmatched server, expect %s got %s ", server, p.Server))
+		}
+	}
+}
+
 type BillPlanFilter struct {
 	ID     uint             `form:"id" json:"id"`
 	Server enums.ServerType `form:"server" json:"server"`
@@ -86,7 +109,7 @@ func QueryBillPlan(filter *BillPlanFilter, offset, limit int) (*ginutils.List[*B
 
 func GetBillPlanById(id uint) (*BillPlan, error) {
 	var p *BillPlan
-	if err := GetDB().Model(&BillPlan{}).Preload("BillPlanDetails").First(id, &p).Error; err != nil {
+	if err := GetDB().Model(&BillPlan{}).Preload("BillPlanDetails").First(&p, id).Error; err != nil {
 		return nil, err
 	}
 	return p, nil

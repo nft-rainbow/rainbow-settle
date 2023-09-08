@@ -8,7 +8,7 @@ import (
 // 流量包
 type DataBundle struct {
 	BaseModel
-	Name              string              `json:"name"`
+	Name              string              `gorm:"unique" json:"name"`
 	Price             decimal.Decimal     `json:"price"`
 	DataBundleDetails []*DataBundleDetail `json:"data_bundle_details"`
 }
@@ -28,7 +28,7 @@ func QueryDataBundle(filter *DataBundleFilter, offset, limit int) (*ginutils.Lis
 
 func GetDataBundleById(id uint) (*DataBundle, error) {
 	var d *DataBundle
-	if err := GetDB().Model(&DataBundle{}).Preload("DataBundleDetails").First(id, &d).Error; err != nil {
+	if err := GetDB().Model(&DataBundle{}).Preload("DataBundleDetails").First(&d, id).Error; err != nil {
 		return nil, err
 	}
 	return d, nil

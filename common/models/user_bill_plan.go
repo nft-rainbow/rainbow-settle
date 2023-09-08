@@ -12,8 +12,8 @@ import (
 // 用户套餐：用户ID，套餐ID，购买时间（生效时间），是否自动续费
 type UserBillPlan struct {
 	BaseModel
-	UserId        uint             `json:"user_id"`
-	ServerType    enums.ServerType `json:"server_type"`
+	UserId        uint             `gorm:"index:idx_userid_servertype" json:"user_id"`
+	ServerType    enums.ServerType `gorm:"index:idx_userid_servertype" json:"server_type"`
 	PlanId        uint             `json:"plan_id"`
 	BoughtTime    time.Time        `json:"bought_time"`
 	ExpireTime    time.Time        `json:"expire_time"`

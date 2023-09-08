@@ -91,7 +91,7 @@ func resetQuotaByPlan(plan *models.BillPlan, userIds []uint) error {
 }
 
 func ResetQuotaOnPlanUpdated(old, new *models.UserBillPlan) {
-	utils.Retry(10, time.Second, func() error {
+	err := utils.Retry(10, time.Second, func() error {
 		allPlansMap, err := models.GetAllPlansMap()
 		if err != nil {
 			return err
@@ -106,4 +106,5 @@ func ResetQuotaOnPlanUpdated(old, new *models.UserBillPlan) {
 		}
 		return nil
 	})
+	logrus.WithError(err).WithField("old", old).WithField("new", new).Info("reset quota on plan updated")
 }
