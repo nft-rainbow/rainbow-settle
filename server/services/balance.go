@@ -32,7 +32,7 @@ func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, 
 	if err != nil {
 		return 0, nil, err
 	}
-	up, err := models.CreateUserBillPlan(userId, planId, isAutoRenewal)
+	up, err := models.GetUserBillPlanOperator().UpdateUserBillPlan(userId, planId, isAutoRenewal)
 	if err != nil {
 		return 0, nil, err
 	}

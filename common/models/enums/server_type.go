@@ -3,6 +3,8 @@ package enums
 import (
 	"errors"
 	"fmt"
+
+	"github.com/samber/lo"
 )
 
 type ServerType uint
@@ -66,4 +68,8 @@ func ParseServerType(str string) (*ServerType, error) {
 		return nil, fmt.Errorf("unknown server type %v", str)
 	}
 	return &v, nil
+}
+
+func GetAllServerTypes() []ServerType {
+	return lo.Values(ServerTypeStr2ValueMap)
 }

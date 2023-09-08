@@ -31,7 +31,7 @@ func getUserWorkingBillPlans(c *gin.Context) {
 		ginutils.RenderRespError(c, err, http.StatusBadRequest)
 		return
 	}
-	ueps, err := models.GetUserEffectivePlans(userId)
+	ueps, err := models.GetUserBillPlanOperator().GetUserEffectivePlans(userId)
 	if err != nil {
 		ginutils.RenderRespError(c, err, http.StatusInternalServerError)
 		return

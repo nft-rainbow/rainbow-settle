@@ -20,12 +20,12 @@ func (o *ConfuraRequestOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseResul
 	}
 
 	result := &types.ReqParseResult{
-		CostType: enums.COST_TYPE_CONFURA_MAIN_NOMRAL,
+		CostType: enums.COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL,
 		Count:    1,
 	}
 
 	if !o.IsMainnet {
-		result.CostType = enums.COST_TYPE_CONFURA_TEST_NOMRAL
+		result.CostType = enums.COST_TYPE_CONFURA_TEST_CSPACE_NOMRAL
 	}
 
 	var ms []rpc.JsonRpcMessage

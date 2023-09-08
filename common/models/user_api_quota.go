@@ -103,14 +103,23 @@ func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costT
 	return tx.Save(&unexists).Error
 }
 
-func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[enums.CostType]int, nextResetTime time.Time) error {
+// force为 true 则即使 此时在nextResetTime之前 也会强制更新（当升级套餐时需要force reset）
+func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[enums.CostType]int, nextResetTime time.Time, force bool) error {
 	var flcs []*FiatLogCache
 	err := func() error {
 		var matched []*UserApiQuota
-		if err := tx.Table("user_api_quota").
+
+		where := tx.
 			Where("cost_type in ?", utils.GetMapKeys(resetQuotas)).
-			Where("user_id in ?", userIds).
-			Where("next_reset_count_time<?", nextResetTime).Find(&matched).Error; err != nil {
+			Where("user_id in ?", userIds)
+
+		if !force {
+			where = where.Where("next_reset_count_time<?", nextResetTime)
+		}
+
+		if err := tx.Table("user_api_quota").
+			Where(where).
+			Find(&matched).Error; err != nil {
 			return err
 		}
 		if len(matched) == 0 {

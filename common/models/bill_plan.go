@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/nft-rainbow/conflux-gin-helper/utils/cronutils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/samber/lo"
@@ -46,14 +47,6 @@ const (
 	PEROID_TYPE_YEAR
 )
 
-type PlanServer int
-
-const (
-	PLAN_SERVER_RAINBOW = iota + 1
-	PLAN_SERVER_CONFURA
-	PLAN_SERVER_SCAN
-)
-
 // 包月/年套餐：名称，生效时长，qps，价格
 type BillPlan struct {
 	BaseModel
@@ -62,7 +55,7 @@ type BillPlan struct {
 	RefreshQuotaSchedule PeroidType        `json:"reset_duration"`   // 日，月，年
 	Qps                  int               `json:"qps"`
 	Price                decimal.Decimal   `json:"price"`
-	Server               PlanServer        `json:"server"`
+	Server               enums.ServerType  `json:"server"`
 	Priority             int               `json:"priority"` // 同一plan server下plan都是互斥的，哪个生效由priority决定，如企业版>普通版
 	BillPlanDetails      []*BillPlanDetail `json:"bill_plan_details"`
 }
@@ -73,9 +66,13 @@ func (p *BillPlan) GetQuotas() map[enums.CostType]int {
 	})
 }
 
+func (p *BillPlan) NextRefreshQuotaTime() (time.Time, error) {
+	return cronutils.NextScheduleTime(p.RefreshQuotaSchedule.ToCronSchedule())
+}
+
 type BillPlanFilter struct {
-	ID     uint       `form:"id" json:"id"`
-	Server PlanServer `form:"server" json:"server"`
+	ID     uint             `form:"id" json:"id"`
+	Server enums.ServerType `form:"server" json:"server"`
 }
 
 func QueryBillPlan(filter *BillPlanFilter, offset, limit int) (*ginutils.List[*BillPlan], error) {
@@ -112,13 +109,13 @@ func GetAllPlansMap() (map[uint]*BillPlan, error) {
 	return allPlansMap, nil
 }
 
-func GetDefaultPlans() (map[PlanServer]*BillPlan, error) {
+func GetDefaultPlans() (map[enums.ServerType]*BillPlan, error) {
 	var plans []*BillPlan
 	if err := GetDB().Model(&BillPlan{}).Preload("BillPlanDetails").Where("name like \"default_%\"").Find(&plans).Error; err != nil {
 		return nil, err
 	}
 
-	result := lo.SliceToMap(plans, func(p *BillPlan) (PlanServer, *BillPlan) {
+	result := lo.SliceToMap(plans, func(p *BillPlan) (enums.ServerType, *BillPlan) {
 		return p.Server, p
 	})
 	return result, nil
