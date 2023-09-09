@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/pingcap/errors"
 	"github.com/samber/lo"
 )
 
@@ -42,6 +43,9 @@ func getUserWorkingBillPlans(c *gin.Context) {
 
 func getUserIdByQuery(c *gin.Context) (uint, error) {
 	userIdStr := c.Query("user_id")
+	if userIdStr == "" {
+		return 0, errors.New("missing user_id in query")
+	}
 	userId, err := strconv.Atoi(userIdStr)
 	return uint(userId), err
 }

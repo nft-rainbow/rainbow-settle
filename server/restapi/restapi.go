@@ -19,7 +19,6 @@ func initGin() *gin.Engine {
 	engine.Use(gin.Logger())
 	engine.Use(middlewares.Logger(nil))
 	engine.Use(middlewares.Recovery())
-	engine.Use(middlewares.RateLimitMiddleware)
 	engine.Use(middlewares.Pagination())
 
 	return engine

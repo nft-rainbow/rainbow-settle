@@ -63,11 +63,12 @@ func (u *UserQuotaOperator) GetUserQuotasMap(userId uint) (map[enums.CostType]*U
 
 func (*UserQuotaOperator) GetUserQuotas(userId uint, offset int, limit int) (*ginutils.List[*UserApiQuota], error) {
 	var quotas []*UserApiQuota
-	if err := GetDB().Where("user_id = ?", userId).Offset(offset).Limit(limit).Find(&quotas).Error; err != nil {
+	var count int64
+	if err := GetDB().Model(&UserApiQuota{}).Where("user_id = ?", userId).Count(&count).Offset(offset).Limit(limit).Find(&quotas).Error; err != nil {
 		return nil, err
 	}
 
-	return &ginutils.List[*UserApiQuota]{Count: 1, Items: quotas}, nil
+	return &ginutils.List[*UserApiQuota]{Count: count, Items: quotas}, nil
 }
 
 func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costTypes []enums.CostType) error {

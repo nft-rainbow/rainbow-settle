@@ -11,7 +11,7 @@ func SetupRouter(c *gin.Engine) {
 		// common.GET("bill-plan/list", getAllBillPlans)
 		common.GET("bill-plan", queryBillPlan)
 		// common.GET("data-bundler/list", getAllDataBundles)
-		common.GET("data-bundler", queryDataBundle)
+		common.GET("data-bundle", queryDataBundle)
 	}
 
 	user := v0.Group("user")
