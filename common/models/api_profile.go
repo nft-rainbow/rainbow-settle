@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
@@ -44,6 +46,9 @@ func InitApiProfile() {
 	}
 
 	GetApiPrice = func(costType enums.CostType) decimal.Decimal {
+		if _, ok := apiProfiles[costType]; !ok {
+			panic(fmt.Sprintf("not found api price of %d", int(costType)))
+		}
 		return apiProfiles[costType].Price
 	}
 }
