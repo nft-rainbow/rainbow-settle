@@ -7,7 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.20
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04
+	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230910134153-65f220439ecb
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.1.0
 	github.com/samber/lo v1.38.1
@@ -76,4 +76,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04 => /Users/dayong/myspace/mywork/conflux-gin-helper
+// replace github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04 => /Users/dayong/myspace/mywork/conflux-gin-helper
