@@ -101,7 +101,7 @@ type BillPlanFilter struct {
 func QueryBillPlan(filter *BillPlanFilter, offset, limit int) (*ginutils.List[*BillPlan], error) {
 	var aps []*BillPlan
 	var count int64
-	if err := GetDB().Model(&BillPlan{}).Where(&filter).Count(&count).Offset(offset).Limit(limit).Find(&aps).Error; err != nil {
+	if err := GetDB().Model(&BillPlan{}).Where(&filter).Count(&count).Preload("BillPlanDetails").Offset(offset).Limit(limit).Find(&aps).Error; err != nil {
 		return nil, err
 	}
 	return &ginutils.List[*BillPlan]{Items: aps, Count: count}, nil
