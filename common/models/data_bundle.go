@@ -1,7 +1,11 @@
 package models
 
 import (
+	"encoding/json"
+	"errors"
+
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/shopspring/decimal"
 )
 
@@ -11,6 +15,29 @@ type DataBundle struct {
 	Name              string              `gorm:"unique" json:"name"`
 	Price             decimal.Decimal     `json:"price"`
 	DataBundleDetails []*DataBundleDetail `json:"data_bundle_details"`
+}
+
+func (u *DataBundle) MarshalJSON() ([]byte, error) {
+	server, err := u.Server()
+	if err != nil {
+		return nil, err
+	}
+	type alias struct {
+		DataBundle
+		Server enums.ServerType `json:"server"`
+	}
+	return json.Marshal(alias{*u, server})
+}
+
+func (u *DataBundle) Server() (enums.ServerType, error) {
+	if len(u.DataBundleDetails) == 0 {
+		return 0, errors.New("no data bundle details")
+	}
+	profiles, err := GetApiProfiles()
+	if err != nil {
+		return 0, err
+	}
+	return profiles[u.DataBundleDetails[0].CostType].ServerType, nil
 }
 
 type DataBundleFilter struct {

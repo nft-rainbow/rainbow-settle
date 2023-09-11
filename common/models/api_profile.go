@@ -12,10 +12,10 @@ import (
 type ApiProfile struct {
 	BaseModel
 	CostType       enums.CostType   `gorm:"unique" json:"cost_type"`
-	CostTypeName   string           `json:"cost_type_name"`
+	CostTypeName   string           `json:"-"`
 	ServerType     enums.ServerType `json:"server_type"`
-	ServerTypeName string           `json:"server_type_name"`
-	Price          decimal.Decimal  `gorm:"type:decimal(20,5)" json:"price"`
+	ServerTypeName string           `json:"-"`
+	Price          decimal.Decimal  `gorm:"type:decimal(10,6)" json:"price"`
 }
 
 type ApiProfileFilter struct {

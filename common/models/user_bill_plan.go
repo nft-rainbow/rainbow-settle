@@ -5,6 +5,7 @@ import (
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
@@ -108,38 +109,47 @@ func (u *UserBillPlanOperator) First(filter *UserBillPlanFilter) (*UserBillPlan,
 
 // 购买新套餐时，直接覆盖现有套餐
 func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAutoRenew bool) (*UserBillPlan, error) {
-	var userPlan UserBillPlan
-	var old *UserBillPlan
+
+	var oldUserPlan, newUserPlan *UserBillPlan
 	err := GetDB().Transaction(func(tx *gorm.DB) error {
-		plan, err := GetBillPlanById(planId)
+		newPlan, err := GetBillPlanById(planId)
 		if err != nil {
 			return err
 		}
 
-		if err := tx.Where("user_id=? and server_type=?", userId, plan.Server).First(&userPlan).Error; err != nil {
-			if gormutils.IsRecordNotFoundError(err) {
-				userPlan.UserId = userId
-				userPlan.ServerType = plan.Server
-			} else {
+		if err := tx.Where("user_id=? and server_type=?", userId, newPlan.Server).First(&oldUserPlan).Error; err != nil {
+			oldUserPlan = nil
+			if !gormutils.IsRecordNotFoundError(err) {
 				return err
 			}
-		} else {
-			_old := userPlan
-			old = &_old
+		}
+
+		if oldUserPlan != nil {
+			oldPlan, err := GetBillPlanById(oldUserPlan.PlanId)
+			if err != nil {
+				return err
+			}
+			if oldPlan.Priority == newPlan.Priority {
+				return errors.New("the plan is using currently")
+			}
 		}
 
 		now := time.Now()
-		userPlan.PlanId = planId
-		userPlan.BoughtTime = now
-		userPlan.ExpireTime = plan.EffectivePeroid.EndTime(now)
-		userPlan.IsAutoRenewal = isAutoRenew
+		newUserPlan = &UserBillPlan{
+			UserId:        userId,
+			ServerType:    newPlan.Server,
+			PlanId:        planId,
+			BoughtTime:    now,
+			ExpireTime:    newPlan.EffectivePeroid.EndTime(now),
+			IsAutoRenewal: isAutoRenew,
+		}
 
-		if err := tx.Save(&userPlan).Error; err != nil {
+		if err := tx.Save(&newUserPlan).Error; err != nil {
 			return err
 		}
 
 		for _, h := range u.onChanged {
-			h(old, &userPlan)
+			h(oldUserPlan, newUserPlan)
 		}
 
 		return nil
@@ -148,7 +158,7 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAu
 	if err != nil {
 		return nil, err
 	}
-	return &userPlan, nil
+	return newUserPlan, nil
 }
 
 func (u *UserBillPlanOperator) UpdateRenew(userId uint, serverType enums.ServerType, isAutoRenew bool) error {
