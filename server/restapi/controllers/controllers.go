@@ -3,7 +3,7 @@ package controllers
 import "github.com/gin-gonic/gin"
 
 func SetupRouter(c *gin.Engine) {
-	v0 := c.Group("v0")
+	v0 := c.Group("settle/v0")
 	common := v0.Group("common")
 	{
 		// common.GET("api-profile/list", getApiProfiles)
