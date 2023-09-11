@@ -20,7 +20,7 @@ type DataBundleFilter struct {
 func QueryDataBundle(filter *DataBundleFilter, offset, limit int) (*ginutils.List[*DataBundle], error) {
 	var aps []*DataBundle
 	var count int64
-	if err := GetDB().Model(&DataBundle{}).Where(&filter).Count(&count).Offset(offset).Limit(limit).Find(&aps).Error; err != nil {
+	if err := GetDB().Model(&DataBundle{}).Where(&filter).Count(&count).Preload("DataBundleDetails").Offset(offset).Limit(limit).Find(&aps).Error; err != nil {
 		return nil, err
 	}
 	return &ginutils.List[*DataBundle]{Items: aps, Count: count}, nil
