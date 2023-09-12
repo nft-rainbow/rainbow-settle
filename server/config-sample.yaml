@@ -1,5 +1,7 @@
 environment: development
-port: 8090
+port: 
+  grpc: 8090
+  restApi: 8091
 log:
   level: trace # trace,debug,info,warn,error,fatal,panic
   folder: .log
@@ -23,18 +25,5 @@ fee:
   userDefaultFreeMintQuota: 100
   userDefaultFreeDeployQuota: 5
 cfxPrice: 0.8 # unit 元
-
-# default quota reset rules
-quotaRules: 
-  - name: rainbow
-    schedule: "@monthly"
-    quotas:
-      rainbow_normal: 50000
-      rainbow_mint: 100
-      rainbow_deploy: 2
-  - name: confura
-    schedule: "@daily"
-    quotas:
-      confura_normal: 100000
 schedules:
   mergeFiatlog: "@daily"

@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	userBillPlanOperator UserBillPlanOperator
+)
+
 // 用户套餐：用户ID，套餐ID，购买时间（生效时间），是否自动续费
 type UserBillPlan struct {
 	BaseModel
@@ -19,79 +23,51 @@ type UserBillPlan struct {
 	BoughtTime    time.Time        `json:"bought_time"`
 	ExpireTime    time.Time        `json:"expire_time"`
 	IsAutoRenewal bool             `json:"is_auto_renewal"`
+	Plan          *BillPlan        `gorm:"-" json:"plan"`
 }
 
-// func InitUserUserBillPlan() {
-// 	userIds := MustGetAllUserIds()
-// 	serverTypes := enums.GetAllServerTypes()
+func (p *UserBillPlan) PopulatePlan() error {
+	plan, err := GetBillPlanById(p.PlanId)
+	if err != nil {
+		return err
+	}
+	p.Plan = plan
+	return nil
+}
 
-// 	if err := GetUserBillPlanOperator().CreateIfNotExists(GetDB(), userIds, serverTypes); err != nil {
-// 		panic(err)
-// 	}
-// }
+func (u *UserBillPlan) AfterFind(tx *gorm.DB) (err error) {
+	if u.Plan == nil {
+		return u.PopulatePlan()
+	}
+	return
+}
 
-var (
-	userBillPlanOperator UserBillPlanOperator
-)
+type UserBillPlanMap map[uint]map[enums.ServerType]*UserBillPlan
+
+func (u *UserBillPlanMap) PopulatePlans() error {
+	for _, server2UserPlan := range *u {
+		for _, userPlan := range server2UserPlan {
+			if err := userPlan.PopulatePlan(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type UserBillPlanOperator struct {
+	onChanged []OnUserBillPlanChangedHandler
+}
 
 func GetUserBillPlanOperator() *UserBillPlanOperator {
 	return &userBillPlanOperator
 }
 
 type OnUserBillPlanChangedHandler func(old, new *UserBillPlan)
-type UserBillPlanOperator struct {
-	onChanged []OnUserBillPlanChangedHandler
-}
 
 func (u *UserBillPlanOperator) RegisterOnChangedEvent(handler OnUserBillPlanChangedHandler) {
 	u.onChanged = append(u.onChanged, handler)
 }
-
-// // @deprecateds
-// func (u *UserBillPlanOperator) createIfNotExists(tx *gorm.DB, userIds []uint, serverTypes []enums.ServerType) error {
-// 	var userPlans []*UserBillPlan
-// 	if err := tx.Where("user_id in ?", userIds).Where("server_type in ?", serverTypes).Find(&userPlans).Error; err != nil {
-// 		return err
-// 	}
-
-// 	exists := make(map[uint]map[enums.ServerType]*UserBillPlan)
-// 	for _, q := range userPlans {
-// 		if _, ok := exists[q.UserId]; !ok {
-// 			exists[q.UserId] = make(map[enums.ServerType]*UserBillPlan)
-// 		}
-// 		exists[q.UserId][q.ServerType] = q
-// 	}
-
-// 	defaultPlans, err := GetDefaultPlans()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	var unexists []*UserBillPlan
-// 	for _, userId := range userIds {
-// 		for _, serverType := range serverTypes {
-// 			if _, ok := exists[userId][serverType]; !ok {
-// 				unexists = append(unexists, &UserBillPlan{
-// 					UserId:        userId,
-// 					ServerType:    serverType,
-// 					PlanId:        defaultPlans[serverType].ID,
-// 					BoughtTime:    time.Now(),
-// 					ExpireTime:    defaultPlans[serverType].EffectivePeroid.EndTime(time.Now()),
-// 					IsAutoRenewal: true,
-// 				})
-// 			}
-// 		}
-// 	}
-// 	if len(unexists) == 0 {
-// 		return nil
-// 	}
-
-// 	for _, h := range u.onChanged {
-// 		h(unexists)
-// 	}
-
-// 	return tx.Save(&unexists).Error
-// }
 
 type UserBillPlanFilter struct {
 	UserId     uint             `json:"user_id"`
@@ -171,7 +147,7 @@ func (u *UserBillPlanOperator) UpdateRenew(userId uint, serverType enums.ServerT
 }
 
 // 获取 用户 priority 最高的 plan, 如果没有，设置default
-func (u *UserBillPlanOperator) FindAllUsersEffectivePlan() (map[uint]map[enums.ServerType]*BillPlan, error) {
+func (u *UserBillPlanOperator) FindAllUsersEffectivePlan() (UserBillPlanMap, error) {
 	allUserIds, err := GetAllUserIds()
 	if err != nil {
 		return nil, err
@@ -179,7 +155,7 @@ func (u *UserBillPlanOperator) FindAllUsersEffectivePlan() (map[uint]map[enums.S
 	return u.FindUsersEffectivePlans(allUserIds)
 }
 
-func (u *UserBillPlanOperator) GetUserEffectivePlans(userId uint) (map[enums.ServerType]*BillPlan, error) {
+func (u *UserBillPlanOperator) GetUserEffectivePlans(userId uint) (map[enums.ServerType]*UserBillPlan, error) {
 	plans, err := u.FindUsersEffectivePlans([]uint{userId})
 	if err != nil {
 		return nil, err
@@ -187,12 +163,7 @@ func (u *UserBillPlanOperator) GetUserEffectivePlans(userId uint) (map[enums.Ser
 	return plans[userId], nil
 }
 
-func (u *UserBillPlanOperator) FindAllUserNeedRenewPlans() (map[uint]map[enums.ServerType]*BillPlan, error) {
-	allPlansMap, err := GetAllPlansMap()
-	if err != nil {
-		return nil, err
-	}
-
+func (u *UserBillPlanOperator) FindAllUserNeedRenewPlans() (UserBillPlanMap, error) {
 	allUserIds, err := GetAllUserIds()
 	if err != nil {
 		return nil, err
@@ -201,134 +172,19 @@ func (u *UserBillPlanOperator) FindAllUserNeedRenewPlans() (map[uint]map[enums.S
 	if err != nil {
 		return nil, err
 	}
-
-	result := make(map[uint]map[enums.ServerType]*BillPlan)
-	for userId, userPlans := range allUserPlans {
-		result[userId] = make(map[enums.ServerType]*BillPlan)
-		for serverType, userPlan := range userPlans {
-			result[userId][serverType] = allPlansMap[userPlan.PlanId]
-		}
-	}
-	return result, nil
+	return allUserPlans, nil
 }
 
-func (u *UserBillPlanOperator) FindUsersEffectivePlans(userIds []uint) (map[uint]map[enums.ServerType]*BillPlan, error) {
-	allPlansMap, err := GetAllPlansMap()
+func (u *UserBillPlanOperator) FindUsersEffectivePlans(userIds []uint) (UserBillPlanMap, error) {
+	userUnexpirePlans, err := u.getUserUnExpiredPlans(userIds, true)
 	if err != nil {
 		return nil, err
 	}
 
-	defaultPlans, err := GetDefaultPlans()
-	if err != nil {
-		return nil, err
-	}
-
-	userUnexpirePlans, err := u.getUserUnExpiredPlans(userIds)
-	if err != nil {
-		return nil, err
-	}
-
-	allServerTypes := enums.GetAllServerTypes()
-
-	result := make(map[uint]map[enums.ServerType]*BillPlan)
-	for _, userId := range userIds {
-		result[userId] = make(map[enums.ServerType]*BillPlan)
-		if userUnexpirePlans[userId] == nil {
-			userUnexpirePlans[userId] = make(map[enums.ServerType]*UserBillPlan)
-		}
-
-		for _, servetType := range allServerTypes {
-			userPlan := userUnexpirePlans[userId][servetType]
-			if userPlan != nil {
-				result[userId][servetType] = allPlansMap[userPlan.ID]
-				continue
-			}
-			result[userId][servetType] = defaultPlans[servetType]
-		}
-	}
-	return result, nil
+	return userUnexpirePlans, nil
 }
 
-// func findUsersEffectivePlan(userIds []uint) (map[uint]map[enums.ServerType]*BillPlan, error) {
-// 	// select user_bill_plans.user_id, max(plans.priority) from user_bill_plans left join plans on user_bill_plans.plan_id=plans.id where user_bill_plans.expire_time>now() group by user_bill_plans.user_id
-
-// 	// userid => plan.priority
-// 	// plan.priority => plan
-
-// 	allPlansMap, err := GetAllPlansMap()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	defaultPlans, err := GetDefaultPlans()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	ups, err := getUserUnExpiredPlans()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	userPlans := make(map[uint]map[enums.ServerType]*BillPlan)
-// 	for _, userId := range userIds {
-// 		userPlans[userId] = make(map[enums.ServerType]*BillPlan)
-// 		// set default plans
-// 		for _, plan := range defaultPlans {
-// 			userPlans[userId][plan.Server] = plan
-// 		}
-
-// 		// set max priority plans
-
-// 		for _, userPlan := range ups[userId] {
-// 			plan := allPlansMap[userPlan.PlanId]
-// 			if userPlans[userId][plan.Server].Priority < plan.Priority {
-// 				userPlans[userId][plan.Server] = plan
-// 			}
-// 		}
-// 	}
-// 	return userPlans, nil
-// }
-
-// // 找用户所有plan，标记renew的优先级最高的且优先级大于当前生效的
-// func findUserNeedRenewPlans(userIds []uint) (map[uint]map[enums.ServerType]*BillPlan, error) {
-// 	allUps, err := getUserAllPlans()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	allPlansMap, err := GetAllPlansMap()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	allUeps, err := FindAllUsersEffectivePlan()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	userNeedRenews := make(map[uint]map[enums.ServerType]*BillPlan)
-// 	for _, userId := range userIds {
-// 		userNeedRenews[userId] = make(map[enums.ServerType]*BillPlan)
-// 		// set max priority plans
-// 		for _, userPlan := range allUps[userId] {
-// 			plan := allPlansMap[userPlan.PlanId]
-// 			// 不续费的跳过，优先级低于正生效的跳过
-// 			if !userPlan.IsAutoRenewal || plan.Priority < allUeps[userId][plan.Server].Priority {
-// 				continue
-// 			}
-
-// 			curPlan := userNeedRenews[userId][plan.Server]
-// 			if curPlan == nil || curPlan.Priority < plan.Priority {
-// 				userNeedRenews[userId][plan.Server] = plan
-// 			}
-// 		}
-// 	}
-// 	return userNeedRenews, nil
-
-// }
-
-func (u *UserBillPlanOperator) getUserPlansNeedRenew(userIds []uint) (map[uint]map[enums.ServerType]*UserBillPlan, error) {
+func (u *UserBillPlanOperator) getUserPlansNeedRenew(userIds []uint) (UserBillPlanMap, error) {
 	var _ubps []*UserBillPlan
 	err := GetDB().Model(&UserBillPlan{}).
 		Where("user_id in ?", userIds).
@@ -339,20 +195,11 @@ func (u *UserBillPlanOperator) getUserPlansNeedRenew(userIds []uint) (map[uint]m
 		return nil, err
 	}
 
-	return groupUserPlanByUserId(_ubps), nil
+	grouped := groupUserPlanByUserId(_ubps)
+	return grouped, nil
 }
 
-// func getUserAllPlans(userIds []uint) (map[uint]map[enums.ServerType]*UserBillPlan, error) {
-// 	var _ubps []*UserBillPlan
-// 	err := GetDB().Model(&UserBillPlan{}).Where("user_id in ?", userIds).Find(&_ubps).Error
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return groupUserPlanByUserId(_ubps), nil
-// }
-
-func (u *UserBillPlanOperator) getUserUnExpiredPlans(userIds []uint) (map[uint]map[enums.ServerType]*UserBillPlan, error) {
+func (u *UserBillPlanOperator) getUserUnExpiredPlans(userIds []uint, isUseDefaultIfEmpty bool) (UserBillPlanMap, error) {
 	var _ubps []*UserBillPlan
 	err := GetDB().Model(&UserBillPlan{}).
 		Where("user_id in ?", userIds).
@@ -362,12 +209,40 @@ func (u *UserBillPlanOperator) getUserUnExpiredPlans(userIds []uint) (map[uint]m
 		return nil, err
 	}
 
-	return groupUserPlanByUserId(_ubps), nil
+	defaultPlans, err := GetDefaultPlans()
+	if err != nil {
+		return nil, err
+	}
+
+	grouped := groupUserPlanByUserId(_ubps)
+	if !isUseDefaultIfEmpty {
+		return grouped, nil
+	}
+
+	serverTypes := enums.GetAllServerTypes()
+	for _, userId := range userIds {
+		if grouped[userId] == nil {
+			grouped[userId] = make(map[enums.ServerType]*UserBillPlan)
+		}
+		for _, serverType := range serverTypes {
+			if grouped[userId][serverType] == nil {
+				grouped[userId][serverType] = &UserBillPlan{
+					UserId:     userId,
+					ServerType: serverType,
+					PlanId:     defaultPlans[serverType].ID,
+					Plan:       defaultPlans[serverType],
+					ExpireTime: time.Now().AddDate(10, 0, 0),
+				}
+			}
+
+		}
+	}
+	return grouped, nil
 }
 
-func groupUserPlanByUserId(input []*UserBillPlan) map[uint]map[enums.ServerType]*UserBillPlan {
+func groupUserPlanByUserId(input []*UserBillPlan) UserBillPlanMap {
 	user2Bplans := lo.GroupBy(input, func(v *UserBillPlan) uint {
-		return v.PlanId
+		return v.UserId
 	})
 
 	result := make(map[uint]map[enums.ServerType]*UserBillPlan)

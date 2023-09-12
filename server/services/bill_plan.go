@@ -36,14 +36,14 @@ func RenewPlans() error {
 		return err
 	}
 
-	for userId, server2Plan := range needRenews {
-		for _, plan := range server2Plan {
+	for userId, server2Userplan := range needRenews {
+		for _, userPlan := range server2Userplan {
 			utils.Retry(10, time.Second, func() error {
-				fl, _, err := BuyBillPlan(userId, plan.ID, true)
+				fl, _, err := BuyBillPlan(userId, userPlan.PlanId, true)
 				if err != nil {
 					return err
 				}
-				logrus.WithField("user id", userId).WithField("plan", plan.ID).WithField("fiat log id", fl).Info("renewing plan completed")
+				logrus.WithField("user id", userId).WithField("plan", userPlan.PlanId).WithField("fiat log id", fl).Info("renewing plan completed")
 				return nil
 			})
 		}
@@ -52,7 +52,7 @@ func RenewPlans() error {
 }
 
 // 1. find users highest priority plan
-// 2. set users without plan for default plan (default_rainbow,default_confura,default_scan)
+// 2. set users without plan for default plan
 func ResetQuotas() error {
 	logrus.Info("reset default quotas")
 	userPlans, err := models.GetUserBillPlanOperator().FindAllUsersEffectivePlan()
@@ -62,14 +62,18 @@ func ResetQuotas() error {
 	}
 
 	// to plan => userids
-	plan2UserIds := make(map[*models.BillPlan][]uint)
+	planId2UserIds := make(map[uint][]uint)
 	for userId, v := range userPlans {
-		for _, plan := range v {
-			plan2UserIds[plan] = append(plan2UserIds[plan], userId)
+		for _, userPlan := range v {
+			planId2UserIds[userPlan.PlanId] = append(planId2UserIds[userPlan.PlanId], userId)
 		}
 	}
 
-	for plan, userIds := range plan2UserIds {
+	for planId, userIds := range planId2UserIds {
+		plan, err := models.GetBillPlanById(planId)
+		if err != nil {
+			return err
+		}
 		if err := resetQuotaByPlan(plan, userIds); err != nil {
 			return err
 		}

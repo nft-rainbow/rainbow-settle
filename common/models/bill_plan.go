@@ -57,7 +57,8 @@ type BillPlan struct {
 	Qps                  int               `json:"qps"`
 	Price                decimal.Decimal   `json:"price"`
 	Server               enums.ServerType  `json:"server"`
-	Priority             int               `json:"priority"` // 同一plan server下plan都是互斥的，哪个生效由priority决定，如企业版>普通版
+	Priority             int               `json:"priority"`   // 同一plan server下plan都是互斥的，哪个生效由priority决定，如企业版>普通版
+	IsDefault            bool              `json:"is_default"` // default 表示默认套餐，在未购买套餐时使用
 	BillPlanDetails      []*BillPlanDetail `json:"bill_plan_details"`
 }
 
@@ -78,17 +79,14 @@ func InitBillPlan() {
 		panic(err)
 	}
 
-	name2Plan := lo.SliceToMap(plans, func(item *BillPlan) (string, *BillPlan) {
-		return item.Name, item
+	default2Plan := lo.SliceToMap(plans, func(item *BillPlan) (string, *BillPlan) {
+		return fmt.Sprintf("%s-%v", item.Server, item.IsDefault), item
 	})
 
 	for _, server := range enums.GetAllServerTypes() {
-		p, ok := name2Plan[fmt.Sprintf("default_%s", server)]
+		_, ok := default2Plan[fmt.Sprintf("%s-true", server)]
 		if !ok {
 			panic("missing default plan of server: " + server.String())
-		}
-		if p.Server != server {
-			panic(fmt.Sprintf("unmatched server, expect %s got %s ", server, p.Server))
 		}
 	}
 }
@@ -134,7 +132,7 @@ func GetAllPlansMap() (map[uint]*BillPlan, error) {
 
 func GetDefaultPlans() (map[enums.ServerType]*BillPlan, error) {
 	var plans []*BillPlan
-	if err := GetDB().Model(&BillPlan{}).Preload("BillPlanDetails").Where("name like \"default_%\"").Find(&plans).Error; err != nil {
+	if err := GetDB().Model(&BillPlan{}).Preload("BillPlanDetails").Where("is_default=true").Find(&plans).Error; err != nil {
 		return nil, err
 	}
 

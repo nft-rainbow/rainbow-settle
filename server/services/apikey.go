@@ -13,7 +13,7 @@ import (
 func LoadAllApikeys() {
 	type AppInfo struct {
 		UserId uint64 `json:"user_id"`
-		AppId  uint64 `json:"app_id"`
+		ID     uint64 `json:"id"`
 		ApiKey string `json:"api_key"`
 	}
 	var appInfos []*AppInfo
@@ -27,8 +27,10 @@ func LoadAllApikeys() {
 
 	var vals []string
 	lo.ForEach(appInfos, func(a *AppInfo, i int) {
-		vals = append(vals, fmt.Sprintf("apikey-%s", crypto.Keccak256Hash([]byte(a.ApiKey)).Hex()))
-		vals = append(vals, fmt.Sprintf("%d-%d", a.UserId, a.AppId))
+		vals = append(vals,
+			fmt.Sprintf("apikey-%s", crypto.Keccak256Hash([]byte(a.ApiKey)).Hex()), //key
+			fmt.Sprintf("%d-%d", a.UserId, a.ID),                                   //value
+		)
 	})
 
 	if _, err := redis.DB().MSet(context.Background(), vals).Result(); err != nil {
