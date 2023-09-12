@@ -51,7 +51,7 @@ const (
 // 包月/年套餐：名称，生效时长，qps，价格
 type BillPlan struct {
 	BaseModel
-	Name                 string            `gorm:"unique" json:"name"`
+	Name                 string            `gorm:"type:varchar(64)" json:"name"`
 	EffectivePeroid      PeroidType        `json:"effective_peroid"` // 月，年
 	RefreshQuotaSchedule PeroidType        `json:"reset_duration"`   // 日，月，年
 	Qps                  int               `json:"qps"`
