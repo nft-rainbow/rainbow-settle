@@ -155,12 +155,19 @@ func (u *UserBillPlanOperator) FindAllUsersEffectivePlan() (UserBillPlanMap, err
 	return u.FindUsersEffectivePlans(allUserIds)
 }
 
-func (u *UserBillPlanOperator) GetUserEffectivePlans(userId uint) (map[enums.ServerType]*UserBillPlan, error) {
-	plans, err := u.FindUsersEffectivePlans([]uint{userId})
+func (u *UserBillPlanOperator) GetUserEffectivePlans(userId uint, isContainRainbow bool) (map[enums.ServerType]*UserBillPlan, error) {
+	allUserPlans, err := u.FindUsersEffectivePlans([]uint{userId})
 	if err != nil {
 		return nil, err
 	}
-	return plans[userId], nil
+
+	plans := allUserPlans[userId]
+
+	if !isContainRainbow {
+		delete(plans, enums.SERVER_TYPE_RAINBOW)
+	}
+
+	return plans, nil
 }
 
 func (u *UserBillPlanOperator) FindAllUserNeedRenewPlans() (UserBillPlanMap, error) {
