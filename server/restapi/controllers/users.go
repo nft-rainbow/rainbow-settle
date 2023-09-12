@@ -26,13 +26,19 @@ func getUserApiQuotas(c *gin.Context) {
 	ginutils.RenderRespOK(c, uaqs)
 }
 
+type UserWorkingBillPlanReq struct {
+	UserId           uint `form:"user_id"`
+	IsContainRainbow bool `form:"is_contain_rainbow"`
+}
+
 func getUserWorkingBillPlans(c *gin.Context) {
-	userId, err := getUserIdByQuery(c)
-	if err != nil {
+	var req UserWorkingBillPlanReq
+	if err := c.ShouldBindQuery(&req); err != nil {
 		ginutils.RenderRespError(c, err, http.StatusBadRequest)
 		return
 	}
-	ueps, err := models.GetUserBillPlanOperator().GetUserEffectivePlans(userId)
+
+	ueps, err := models.GetUserBillPlanOperator().GetUserEffectivePlans(req.UserId, req.IsContainRainbow)
 	if err != nil {
 		ginutils.RenderRespError(c, err, http.StatusInternalServerError)
 		return
