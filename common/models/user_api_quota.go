@@ -173,7 +173,7 @@ func (u *UserQuotaOperator) DepositDataBundle(tx *gorm.DB, udb *UserDataBundle) 
 		}
 
 		rolloverQuotas := lo.SliceToMap(dataBundle.DataBundleDetails, func(d *DataBundleDetail) (enums.CostType, int) {
-			return d.CostType, d.Count
+			return d.CostType, d.Count * int(udb.Count)
 		})
 
 		quotas, err := u.depositRollover(tx, udb.UserId, rolloverQuotas)
@@ -186,9 +186,9 @@ func (u *UserQuotaOperator) DepositDataBundle(tx *gorm.DB, udb *UserDataBundle) 
 			return err
 		}
 
-		metaDataBundle := FiatMetaBuyDatabundle{udb.DataBundleId, udb.ID}
+		metaBuy := FiatMetaBuyDatabundle{udb.DataBundleId, udb.Count, udb.ID}
 		for _, v := range quotas {
-			meta, _ := json.Marshal(FiatMetaDepositDataBundle{metaDataBundle, *v})
+			meta, _ := json.Marshal(FiatMetaDepositDataBundle{metaBuy, *v})
 			flcs = append(flcs, &FiatLogCache{
 				FiatLogCore: FiatLogCore{
 					UserId:  udb.UserId,

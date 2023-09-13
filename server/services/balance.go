@@ -43,16 +43,16 @@ func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, 
 	return fl, up, nil
 }
 
-func BuyDataBundler(userId uint, dataBundleId uint) (fiatlogId uint, userDataBundle *models.UserDataBundle, err error) {
+func BuyDataBundle(userId uint, dataBundleId uint, count uint) (fiatlogId uint, userDataBundle *models.UserDataBundle, err error) {
 	plan, err := models.GetDataBundleById(dataBundleId)
 	if err != nil {
 		return 0, nil, err
 	}
-	udb, err := models.CreateUserDataBundleAndConsume(userId, dataBundleId)
+	udb, err := models.CreateUserDataBundleAndConsume(userId, dataBundleId, count)
 	if err != nil {
 		return 0, nil, err
 	}
-	fl, err := updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.ID})
+	fl, err := updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.Count, udb.ID})
 	if err != nil {
 		return 0, nil, err
 	}

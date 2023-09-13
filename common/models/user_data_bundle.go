@@ -7,24 +7,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// type OnDataBundleCreatHandler func(*gorm.DB, *UserDataBundle) error
-
-// var (
-// 	onDataBundlerCreateHandler OnDataBundleCreatHandler
-// )
-
 type UserDataBundle struct {
 	BaseModel
 	UserId       uint      `json:"user"`
 	DataBundleId uint      `json:"data_bundle_id"`
+	Count        uint      `json:"count"`
 	BoughtTime   time.Time `json:"bought_time"`
 	IsConsumed   bool      `json:"is_consumed"`
 }
 
-func CreateUserDataBundleAndConsume(userId, dataBundleId uint) (*UserDataBundle, error) {
+func CreateUserDataBundleAndConsume(userId, dataBundleId, count uint) (*UserDataBundle, error) {
 	udb := &UserDataBundle{
 		UserId:       userId,
 		DataBundleId: dataBundleId,
+		Count:        count,
 		BoughtTime:   time.Now(),
 	}
 
@@ -32,11 +28,6 @@ func CreateUserDataBundleAndConsume(userId, dataBundleId uint) (*UserDataBundle,
 		if err := tx.Create(&udb).Error; err != nil {
 			return err
 		}
-		// if onDataBundlerCreateHandler != nil {
-		// 	if err := onDataBundlerCreateHandler(tx, udb); err != nil {
-		// 		return err
-		// 	}
-		// }
 		if err := GetUserQuotaOperator().DepositDataBundle(tx, udb); err != nil {
 			return err
 		}

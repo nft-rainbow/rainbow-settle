@@ -75,7 +75,7 @@ func (s *SettleServer) BuyStorage(ctx context.Context, in *proto.BuySponsorReque
 }
 
 func (s *SettleServer) BuyDataBundle(ctx context.Context, in *proto.BuyDataBundleRequest) (*proto.UserDataBundle, error) {
-	fl, udb, err := services.BuyDataBundler(uint(in.UserId), uint(in.DataBundleId))
+	fl, udb, err := services.BuyDataBundle(uint(in.UserId), uint(in.DataBundleId), uint(in.Count))
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +84,7 @@ func (s *SettleServer) BuyDataBundle(ctx context.Context, in *proto.BuyDataBundl
 		ID:           uint32(udb.ID),
 		UserId:       uint32(udb.UserId),
 		DataBundleId: uint32(udb.DataBundleId),
+		Count:        uint32(udb.Count),
 		BoughtTime:   udb.BoughtTime.String(),
 	}, nil
 }

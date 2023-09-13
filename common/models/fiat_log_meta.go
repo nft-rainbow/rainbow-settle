@@ -26,6 +26,7 @@ type FiatMetaBuyBillplan struct {
 
 type FiatMetaBuyDatabundle struct {
 	DataBundleId     uint `json:"data_bundle_id"`
+	Count            uint `json:"count"`
 	UserDataBundleId uint `json:"user_data_bundle_id"`
 }
 
