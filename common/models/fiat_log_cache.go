@@ -173,7 +173,7 @@ func summaryMetas(fiatLogType FiatLogType, metasJson string) (interface{}, error
 		})
 		return _fms, nil
 	default:
-		return nil, errors.New("not supported")
+		return nil, errors.Errorf("not supported %v", fiatLogType)
 	}
 }
 
