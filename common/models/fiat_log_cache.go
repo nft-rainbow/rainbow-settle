@@ -157,6 +157,8 @@ func summaryMetas(fiatLogType FiatLogType, metasJson string) (interface{}, error
 		fallthrough
 	case FIAT_LOG_TYPE_REFUND_API_FEE:
 		fallthrough
+	case FIAT_LOG_TYPE_RESET_API_QUOTA:
+		fallthrough
 	case FIAT_LOG_TYPE_PAY_API_FEE:
 		fms, err := unmarshalType[[]*FiatMetaPayApiFee](metasJson)
 		if err != nil {
