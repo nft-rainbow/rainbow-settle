@@ -31,7 +31,7 @@ type FiatMetaBuyDatabundle struct {
 }
 
 type FiatMetaDepositDataBundle struct {
-	FiatMetaBuyDatabundle
+	UserDataBundleId uint `json:"user_data_bundle_id"`
 	Quota
 }
 

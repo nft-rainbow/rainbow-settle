@@ -186,9 +186,8 @@ func (u *UserQuotaOperator) DepositDataBundle(tx *gorm.DB, udb *UserDataBundle) 
 			return err
 		}
 
-		metaBuy := FiatMetaBuyDatabundle{udb.DataBundleId, udb.Count, udb.ID}
 		for _, v := range quotas {
-			meta, _ := json.Marshal(FiatMetaDepositDataBundle{metaBuy, *v})
+			meta, _ := json.Marshal(FiatMetaDepositDataBundle{udb.DataBundleId, *v})
 			flcs = append(flcs, &FiatLogCache{
 				FiatLogCore: FiatLogCore{
 					UserId:  udb.UserId,
