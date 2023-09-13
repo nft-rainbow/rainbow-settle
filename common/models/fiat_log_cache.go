@@ -106,18 +106,19 @@ func MergeToFiatlog(start, end time.Time) error {
 			apiFeeFls = append(apiFeeFls, &fl)
 		}
 
-		// var otherFls []*FiatLog
-		// err = tx.Model(&FiatLogCache{}).
-		// 	Where("created_at>=? and created_at<?", start, end).
-		// 	Where("is_merged=0").
-		// 	Where("type not in ?", needGroupFiatLogTypes).
-		// 	Select("user_id, amount, type, meta, order_no, CONCAT('[' , id, ']') as cache_ids").
-		// 	Scan(&otherFls).Error
-		// if err != nil {
-		// 	return err
-		// }
+		// note: avoid there is unmerged fiat log not in needGroupFiatLogTypes
+		var otherFls []*FiatLog
+		err = tx.Model(&FiatLogCache{}).
+			Where("created_at>=? and created_at<?", start, end).
+			Where("is_merged=0").
+			Where("type not in ?", needGroupFiatLogTypes).
+			Select("user_id, amount, type, meta, order_no, CONCAT('[' , id, ']') as cache_ids").
+			Scan(&otherFls).Error
+		if err != nil {
+			return err
+		}
 
-		allFls := apiFeeFls
+		allFls := append(otherFls, apiFeeFls...)
 		if len(allFls) == 0 {
 			return nil
 		}
