@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
+
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -103,9 +104,9 @@ func InitUserBalances() {
 	// }
 }
 
-func GetUserBalance(userId uint) (*UserBalance, error) {
+func GetUserBalance(tx *gorm.DB, userId uint) (*UserBalance, error) {
 	var ub UserBalance
-	if err := GetDB().Where("user_id = ?", userId).First(&ub).Error; err != nil {
+	if err := tx.Where("user_id = ?", userId).First(&ub).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ub = UserBalance{UserId: userId, Balance: decimal.Zero}
 			if err = GetDB().Create(&ub).Error; err != nil {
@@ -164,7 +165,7 @@ func (u *UserBalance) BalanceWithArrears() decimal.Decimal {
 func GetUserCfxPrice(userId uint) (decimal.Decimal, error) {
 	normalCfxPrice := decimal.NewFromFloat(cfxPrice)
 
-	ub, err := GetUserBalance(userId)
+	ub, err := GetUserBalance(GetDB(), userId)
 	if err != nil {
 		if gormutils.IsRecordNotFoundError(err) {
 			return normalCfxPrice, nil

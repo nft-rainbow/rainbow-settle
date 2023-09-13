@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
+	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -77,6 +78,22 @@ func FindFiatLogs(userId uint, offset int, limit int) (*[]FiatLog, error) {
 	res := db.Model(&FiatLog{}).
 		Where("user_id = ? AND amount != 0", userId).Order("id desc").Limit(limit).Offset(offset).Find(&logs)
 	return &logs, res.Error
+}
+
+// If not found, return default FiatLog
+func GetLastFiatLog(tx *gorm.DB, userId uint) (*FiatLog, error) {
+	var lastFiatLog FiatLog
+	if err := tx.Model(&FiatLog{}).Where("user_id=?", userId).Order("id desc").First(&lastFiatLog).Error; err != nil {
+		if !gormutils.IsRecordNotFoundError(err) {
+			return nil, err
+		}
+	}
+	ub, err := GetUserBalance(tx, userId)
+	if err != nil {
+		return nil, err
+	}
+	lastFiatLog.Balance = ub.Balance
+	return &lastFiatLog, nil
 }
 
 func RandomOrderNO() string {

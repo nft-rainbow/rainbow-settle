@@ -3,22 +3,54 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
-	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+)
+
+var (
+	needGroupFiatLogTypes = []FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE, FIAT_LOG_TYPE_PAY_API_QUOTA, FIAT_LOG_TYPE_REFUND_API_QUOTA, FIAT_LOG_TYPE_RESET_API_QUOTA}
+	mergeFiatLogLock      sync.Mutex
 )
 
 type FiatLogCache struct {
 	BaseModel
 	FiatLogCore
 	IsMerged bool `gorm:"default:0" json:"isMerged,omitempty"`
+}
+
+func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
+	mergeFiatLogLock.Lock()
+	defer mergeFiatLogLock.Unlock()
+
+	if f.IsMerged || lo.Contains(needGroupFiatLogTypes, f.Type) {
+		return nil
+	}
+
+	// get user last fiat log and calc balance
+	lastFiatLog, err := GetLastFiatLog(tx, f.UserId)
+	if err != nil {
+		return err
+	}
+
+	fl := &FiatLog{
+		FiatLogCore: f.FiatLogCore,
+		CacheIds:    datatypes.JSONSlice[uint]{f.ID},
+	}
+	fl.Balance = lastFiatLog.Balance.Add(f.Amount)
+	f.IsMerged = true
+
+	if err := tx.Save(f).Error; err != nil {
+		return err
+	}
+
+	return tx.Save(fl).Error
 }
 
 func FindSponsorFiatlogByTxid(txId uint) (*FiatLogCache, error) {
@@ -32,6 +64,8 @@ func FindSponsorFiatlogByTxid(txId uint) (*FiatLogCache, error) {
 }
 
 func MergeToFiatlog(start, end time.Time) error {
+	mergeFiatLogLock.Lock()
+	defer mergeFiatLogLock.Unlock()
 
 	type TmpFiatLog struct {
 		FiatLog
@@ -40,9 +74,6 @@ func MergeToFiatlog(start, end time.Time) error {
 	}
 
 	err := GetDB().Transaction(func(tx *gorm.DB) error {
-		// tx = tx.Debug()
-		needGroupFiatLogTypes := []FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE, FIAT_LOG_TYPE_PAY_API_QUOTA, FIAT_LOG_TYPE_REFUND_API_QUOTA}
-
 		var apiFeeTmpFls []*TmpFiatLog
 		err := tx.Model(&FiatLogCache{}).Group("user_id,type").
 			Where("created_at>=? and created_at<?", start, end).
@@ -75,33 +106,29 @@ func MergeToFiatlog(start, end time.Time) error {
 			apiFeeFls = append(apiFeeFls, &fl)
 		}
 
-		var otherFls []*FiatLog
-		err = tx.Model(&FiatLogCache{}).
-			Where("created_at>=? and created_at<?", start, end).
-			Where("is_merged=0").
-			Where("type not in ?", needGroupFiatLogTypes).
-			Select("user_id, amount, type, meta, order_no, CONCAT('[' , id, ']') as cache_ids").
-			Scan(&otherFls).Error
-		if err != nil {
-			return err
-		}
+		// var otherFls []*FiatLog
+		// err = tx.Model(&FiatLogCache{}).
+		// 	Where("created_at>=? and created_at<?", start, end).
+		// 	Where("is_merged=0").
+		// 	Where("type not in ?", needGroupFiatLogTypes).
+		// 	Select("user_id, amount, type, meta, order_no, CONCAT('[' , id, ']') as cache_ids").
+		// 	Scan(&otherFls).Error
+		// if err != nil {
+		// 	return err
+		// }
 
-		allFls := append(otherFls, apiFeeFls...)
+		allFls := apiFeeFls
 		if len(allFls) == 0 {
 			return nil
 		}
 
 		for _, fl := range allFls {
-			var lastFiatLog FiatLog
-			if err := tx.Model(&FiatLog{}).Where("user_id=?", fl.UserId).Order("id desc").First(&lastFiatLog).Error; err != nil {
-				if !gormutils.IsRecordNotFoundError(err) {
-					return err
-				}
-				lastFiatLog.Balance = decimal.Zero
+			lastFiatLog, err := GetLastFiatLog(tx, fl.UserId)
+			if err != nil {
+				return err
 			}
 
 			fl.Balance = lastFiatLog.Balance.Add(fl.Amount)
-
 		}
 		if err := tx.Save(&allFls).Error; err != nil {
 			return err

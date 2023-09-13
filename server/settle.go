@@ -143,7 +143,7 @@ func (s *SettleServer) RefundApiFee(ctx context.Context, in *proto.RefundApiFeeR
 }
 
 func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID) (*proto.UserBalance, error) {
-	ub, err := models.GetUserBalance(uint(in.UserId))
+	ub, err := models.GetUserBalance(models.GetDB(), uint(in.UserId))
 	if err != nil {
 		return nil, err
 	}

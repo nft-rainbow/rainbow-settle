@@ -89,7 +89,6 @@ func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatL
 }
 
 func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
-
 	fl, err := func() (uint, error) {
 		if err := checkDecimalQualified(amount); err != nil {
 			return 0, err
@@ -123,19 +122,12 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 		}
 
 		userBalance.Balance = userBalance.Balance.Add(amount)
-		// if freeApiCost != nil {
-		// 	userBalance.FreeOtherApiQuota -= freeApiCost.FreeOtherApi
-		// 	userBalance.FreeMintQuota -= freeApiCost.FreeMint
-		// 	userBalance.FreeDeployQuota -= freeApiCost.FreeDeploy
-		// }
-
 		return l.ID, tx.Save(&userBalance).Error
 	}()
 
 	logrus.WithFields(logrus.Fields{
-		"userId": userId,
-		"amount": amount,
-		// "freeApiCost": freeApiCost,
+		"userId":    userId,
+		"amount":    amount,
 		"logType":   logType,
 		"fiatLogId": fl,
 	}).WithError(err).Info("update user balance")

@@ -67,7 +67,7 @@ func settle() error {
 
 		// load userbalance and free quota
 		if userBalances[userId] == nil {
-			ub, err := models.GetUserBalance(userId)
+			ub, err := models.GetUserBalance(models.GetDB(), userId)
 			if err != nil {
 				logrus.WithError(err).WithField("user id", userId).Info("failed to get user balance")
 				continue
