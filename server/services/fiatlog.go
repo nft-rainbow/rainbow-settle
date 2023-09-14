@@ -15,16 +15,18 @@ func LoopMergeFiatlog() {
 	c := cron.New()
 
 	var eid cron.EntryID
+	var err error
 
 	fn := func() {
-		// TODO: TomorrowBegin 改为 TodayBegin
-		start, end := utils.EarlistDate(), utils.TomorrowBegin()
+		start, end := utils.EarlistDate(), utils.TodayBegin()
 		utils.Retry(10, time.Second*5, func() error { return models.MergeToFiatlog(start, end) })
 		logrus.WithField("val", c.Entry(eid).Next).Info("next merge fiat log time")
 	}
 	fn()
 
-	eid, _ = c.AddFunc(config.Get().Schedules.MergeFiatlog, fn)
+	if eid, err = c.AddFunc(config.Get().Schedules.MergeFiatlog, fn); err != nil {
+		panic(err)
+	}
 
 	c.Start()
 }

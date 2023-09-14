@@ -21,10 +21,10 @@ func Init() {
 
 func Run() {
 	go LoopSettle(time.Second * 2)
-	go LoopRunPlan()
-	go LoopMergeFiatlog()
 	go LoopSetRichFlag()
 	go StartWxOrderPolling()
 	go StartCmbOrderPolling()
+	LoopRunPlan()
+	LoopMergeFiatlog()
 	LoadAllApikeys()
 }
