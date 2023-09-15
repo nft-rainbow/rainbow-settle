@@ -4,5 +4,6 @@ use (
 	./apisix-go-plugin-runner
 	./common
 	./proto
+	./proxy
 	./server
 )

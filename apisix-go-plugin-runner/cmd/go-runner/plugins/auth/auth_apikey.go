@@ -84,6 +84,7 @@ func (c *ApikeyAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pk
 		if err != nil {
 			return err
 		}
+		log.Infof("get user info from redis: %d,%d,%v", userId, appId, err)
 		r.Header().Set(constants.RAINBOW_USER_ID_HEADER_KEY, fmt.Sprintf("%d", userId))
 		r.Header().Set(constants.RAINBOW_APP_ID_HEADER_KEY, fmt.Sprintf("%d", appId))
 		return nil

@@ -122,6 +122,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 	// log.Infof("get content-type %s", w.Header().Get("Content-Type"))
 	// w.Header().Set("Content-Type", w.Header().Get("Content-Type"))
+	log.Infof("in responsoe filter")
 
 	reqId := w.Header().Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 	// log.Infof("get x-rainbow-request-id %s", reqId)

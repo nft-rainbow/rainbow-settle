@@ -40,7 +40,7 @@ func DefaultRequestFilter(o Parser, w http.ResponseWriter, r pkgHTTP.Request) {
 
 	if err := fn(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		if _, err := w.Write([]byte(fmt.Sprintf("failed parse rainbow api request: %v", err))); err != nil {
+		if _, err := w.Write([]byte(fmt.Sprintf("failed parse rainbow request: %v", err))); err != nil {
 			log.Errorf("failed to write: %s", err)
 		}
 	}

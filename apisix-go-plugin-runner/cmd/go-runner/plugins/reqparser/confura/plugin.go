@@ -31,6 +31,7 @@ type ConfuraParser struct {
 
 type ConfuraParserConf struct {
 	IsMainnet bool `json:"is_mainnet,omitempty"`
+	IsCspace  bool `json:"is_cspace,omitempty"`
 }
 
 func (p *ConfuraParser) Name() string {
@@ -52,9 +53,9 @@ func (p *ConfuraParser) RequestFilter(conf interface{}, w http.ResponseWriter, r
 	// costType, _ := enums.ParseCostType(costTypeStr)
 	// serverType, _ := costType.ServerType()
 
-	if _conf.IsMainnet {
-		r.SetPath([]byte("https://main.confluxrpc.com/6G5LxkA1P3EXMfpArsPBBRxDL8GJk78ceeVRXDSBSwaxDab3YyyKLLZRE4NF6gQqejPoxfNsmJ4wBBJwdwGS4Vg8T"))
-	} else {
-		r.SetPath([]byte("https://test.confluxrpc.com/6G5LxkA1P3EXMfpArsPBBRxDL8GJk78ceeVRXDSBSwaxDab3YyyKLLZRE4NF6gQqejPoxfNsmJ4wBBJwdwGS4Vg8T"))
-	}
+	// if _conf.IsMainnet {
+	// 	r.SetPath([]byte("https://main.confluxrpc.com/6G5LxkA1P3EXMfpArsPBBRxDL8GJk78ceeVRXDSBSwaxDab3YyyKLLZRE4NF6gQqejPoxfNsmJ4wBBJwdwGS4Vg8T"))
+	// } else {
+	// 	r.SetPath([]byte("https://test.confluxrpc.com/6G5LxkA1P3EXMfpArsPBBRxDL8GJk78ceeVRXDSBSwaxDab3YyyKLLZRE4NF6gQqejPoxfNsmJ4wBBJwdwGS4Vg8T"))
+	// }
 }
