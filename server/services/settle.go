@@ -167,8 +167,11 @@ func settle() error {
 				}
 			}
 			us.Stack = datatypes.NewJSONType(data)
+			if err := tx.Debug().Save(us).Error; err != nil {
+				return errors.WithMessage(err, "failed to update user settle stack")
+			}
 			logrus.WithField("stack", us.Stack).Info("update user settle stack")
-			return tx.Save(us).Error
+			return nil
 		})
 		if err != nil {
 			logrus.WithError(err).Info("failed to update mysql user_balance and user_api_quota")

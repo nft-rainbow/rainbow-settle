@@ -133,8 +133,8 @@ func parseCountKeyByPrefix(key string, prefix string) (userId uint, costType enu
 func ParseRequestValue(val string) (userId uint, appId uint, costType enums.CostType, count int, err error) {
 	err = func() error {
 		items := strings.Split(val, "-")
-		if len(items) != 3 {
-			return errors.Errorf("expect 3 items, got %d", len(items))
+		if len(items) != 4 {
+			return errors.Errorf("expect 4 items, got %d", len(items))
 		}
 
 		userId, err = ParseUserId(items[0])

@@ -21,8 +21,6 @@ func main() {
 		Director: func(req *http.Request) {
 			targetAddr := req.Header.Get("Target_addr")
 			targetUrl := req.Header.Get("Target_url")
-			log.Printf("Target Addr: %v", targetAddr)
-			log.Printf("Target Url: %v", targetUrl)
 
 			if targetUrl != "" {
 				targetURL, _ := url.Parse(targetUrl) // 修改为你要代理的目标URL
