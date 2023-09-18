@@ -30,7 +30,6 @@ func DefaultRequestFilter(o Parser, w http.ResponseWriter, r pkgHTTP.Request) {
 			return err
 		}
 
-		// log.Infof("result %v", result)
 		r.Header().Set(constants.RAINBOW_COST_TYPE_HEADER_KEY, result.CostType.String())
 		r.Header().Set(constants.RAINBOW_COST_COUNT_HEADER_KEY, fmt.Sprintf("%d", result.Count))
 		r.Header().Set(constants.RAINBOW_REQUEST_ID_HEADER_KEY, uuid.New().String())

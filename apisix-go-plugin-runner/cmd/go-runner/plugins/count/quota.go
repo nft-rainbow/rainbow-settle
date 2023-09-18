@@ -12,3 +12,10 @@ func InitQuotaLimit() {
 	quotaLimit[enums.COST_TYPE_RAINBOW_MINT] = 200
 	quotaLimit[enums.COST_TYPE_RAINBOW_DEPLOY] = 200
 }
+
+func getQuotaLimit(costType enums.CostType) int {
+	if val, ok := quotaLimit[costType]; ok {
+		return val
+	}
+	return 10000
+}

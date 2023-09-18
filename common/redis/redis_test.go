@@ -10,6 +10,7 @@ import (
 
 func TestCheckIsRich(t *testing.T) {
 	assert.True(t, isRich(1055, enums.COST_TYPE_RAINBOW_NORMAL))
+	assert.True(t, isRich(103910431, enums.COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL))
 }
 
 func TestConnectDB(t *testing.T) {

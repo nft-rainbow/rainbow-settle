@@ -74,6 +74,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		if err != nil {
 			return errors.Wrapf(err, "failed to check rich")
 		}
+
 		if !isRich {
 			log.Infof("balance not enough when rich flag check, user %d cost type %s  ", userId, costType)
 			return errors.New("balance not enough")
@@ -93,7 +94,7 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		}
 		log.Infof("currentCount %d, currentPendingCount %d, costCount %d", currentCount, currentPendingCount, costCount)
 
-		if int(currentCount)+int(currentPendingCount)+costCount > quotaLimit[*costType] {
+		if int(currentCount)+int(currentPendingCount)+costCount > getQuotaLimit(*costType) {
 			log.Infof("balance not enough when clac by un-settled count, user %d cost type %s  ", userId, costType)
 			return errors.Errorf("balance not enough")
 		}

@@ -276,5 +276,6 @@ func CheckIsRich(userId uint, costType enums.CostType) (bool, error) {
 }
 
 func isRich(flag int, costType enums.CostType) bool {
-	return (1 << costType & flag) > 0
+	result := (1 << costType & flag) > 0
+	return result
 }
