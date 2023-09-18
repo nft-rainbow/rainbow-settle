@@ -9,7 +9,6 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
 )
 
 func LoopSetRichFlag() {
@@ -63,6 +62,6 @@ func calcRichFlag(states []*userCostState) int {
 			flag = flag | 1<<int(cs.CostType)
 		}
 	}
-	logrus.WithField("states", states).WithField("flag", flag).Info("calc rich flag")
+	// logrus.WithField("states", states).WithField("flag", flag).Info("calc rich flag")
 	return flag
 }
