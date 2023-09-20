@@ -11,7 +11,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func LoopSetRichFlag() {
+func LoopSetRichFlagToRedis() {
 	for {
 		refreshRichFlag()
 		time.Sleep(time.Second * 10)

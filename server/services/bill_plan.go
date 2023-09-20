@@ -56,7 +56,7 @@ func RenewPlans() error {
 func ResetQuotas() error {
 	logrus.Info("reset default quotas")
 	userPlans, err := models.GetUserBillPlanOperator().FindAllUsersEffectivePlan()
-	logrus.WithField("result", userPlans).WithError(err).Info("find all user effective plans")
+	logrus.WithField("result", userPlans).WithError(err).Trace("find all user effective plans")
 	if err != nil {
 		return err
 	}

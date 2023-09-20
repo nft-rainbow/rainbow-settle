@@ -20,8 +20,10 @@ func Init() {
 }
 
 func Run() {
+	SetPlanToRedis()
+	SetApiprofilesToRedis()
 	go LoopSettle(time.Second * 2)
-	go LoopSetRichFlag()
+	go LoopSetRichFlagToRedis()
 	go StartWxOrderPolling()
 	go StartCmbOrderPolling()
 	LoopRunPlan()
