@@ -7,6 +7,8 @@ import (
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
+	"github.com/nft-rainbow/rainbow-settle/common/constants"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 )
 
 var (
@@ -41,4 +43,5 @@ func (p *RainbowApiParser) ParseConf(in []byte) (interface{}, error) {
 
 func (p *RainbowApiParser) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
 	types.DefaultRequestFilter(&o, w, r)
+	r.Header().Set(constants.RAINBOW_SERVER_TYPE_HEADER_KEY, enums.SERVER_TYPE_RAINBOW.String())
 }

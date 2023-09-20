@@ -20,9 +20,6 @@ type ReqParseResult struct {
 	Count    int
 }
 
-type DefaultParserPlugin struct {
-}
-
 func DefaultRequestFilter(o Parser, w http.ResponseWriter, r pkgHTTP.Request) {
 	fn := func() error {
 		result, err := o.ParseRequest(r)

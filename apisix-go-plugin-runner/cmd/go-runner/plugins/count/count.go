@@ -10,7 +10,6 @@ import (
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
-	"github.com/nft-rainbow/rainbow-settle/common/config"
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
@@ -23,10 +22,6 @@ func init() {
 		log.Fatalf("failed to register plugin count: %s", err)
 	}
 	InitQuotaLimit()
-	redis.Init(config.Redis{
-		Host: "redis",
-		Port: 6379,
-	})
 }
 
 type Count struct {

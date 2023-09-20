@@ -8,10 +8,7 @@ import (
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
-)
-
-var (
-	o ConfuraRequestOp
+	"github.com/nft-rainbow/rainbow-settle/common/constants"
 )
 
 func init() {
@@ -29,11 +26,6 @@ type ConfuraParser struct {
 	plugin.DefaultPlugin
 }
 
-type ConfuraParserConf struct {
-	IsMainnet bool `json:"is_mainnet,omitempty"`
-	IsCspace  bool `json:"is_cspace,omitempty"`
-}
-
 func (p *ConfuraParser) Name() string {
 	return "confura_parser"
 }
@@ -45,17 +37,7 @@ func (p *ConfuraParser) ParseConf(in []byte) (interface{}, error) {
 }
 
 func (p *ConfuraParser) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
-	_conf := conf.(ConfuraParserConf)
-	o.IsMainnet = _conf.IsMainnet
-	types.DefaultRequestFilter(&o, w, r)
-	// convert url
-	// costTypeStr := r.Header().Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
-	// costType, _ := enums.ParseCostType(costTypeStr)
-	// serverType, _ := costType.ServerType()
-
-	// if _conf.IsMainnet {
-	// 	r.SetPath([]byte("https://main.confluxrpc.com/6G5LxkA1P3EXMfpArsPBBRxDL8GJk78ceeVRXDSBSwaxDab3YyyKLLZRE4NF6gQqejPoxfNsmJ4wBBJwdwGS4Vg8T"))
-	// } else {
-	// 	r.SetPath([]byte("https://test.confluxrpc.com/6G5LxkA1P3EXMfpArsPBBRxDL8GJk78ceeVRXDSBSwaxDab3YyyKLLZRE4NF6gQqejPoxfNsmJ4wBBJwdwGS4Vg8T"))
-	// }
+	c := conf.(ConfuraParserConf)
+	types.DefaultRequestFilter(&c, w, r)
+	r.Header().Set(constants.RAINBOW_SERVER_TYPE_HEADER_KEY, c.GetServerType().String())
 }

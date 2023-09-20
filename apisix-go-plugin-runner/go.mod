@@ -188,4 +188,5 @@ replace (
 	// github.com/nft-rainbow/rainbow-api v0.0.0-20230828095140-9ad4e2fb901d => /Users/dayong/myspace/mywork/rainbow-api
 	// github.com/thediveo/enumflag@v0.10.1 depends on github.com/spf13/cobra@v0.0.7
 	github.com/spf13/cobra v0.0.7 => github.com/spf13/cobra v1.2.1
+	github.com/Conflux-Chain/go-conflux-util v0.1.0 => /Users/dayong/myspace/mywork/go-conflux-util
 )

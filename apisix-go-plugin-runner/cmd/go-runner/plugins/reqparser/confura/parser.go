@@ -9,23 +9,46 @@ import (
 	"github.com/openweb3/go-rpc-provider"
 )
 
-type ConfuraRequestOp struct {
-	IsMainnet bool
+type ConfuraParserConf struct {
+	IsMainnet bool `json:"is_mainnet,omitempty"`
+	IsCspace  bool `json:"is_cspace,omitempty"`
 }
 
-func (o *ConfuraRequestOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseResult, error) {
+// type ConfuraParserConf struct {
+// 	IsMainnet bool `json:"is_mainnet,omitempty"`
+// 	IsCspace  bool `json:"is_cspace,omitempty"`
+// }
+
+func (o *ConfuraParserConf) GetCostType() enums.CostType {
+	if o.IsMainnet {
+		if o.IsCspace {
+			return enums.COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL
+		}
+		return enums.COST_TYPE_CONFURA_TEST_CSPACE_NOMRAL
+	} else {
+		if o.IsCspace {
+			return enums.COST_TYPE_CONFURA_MAIN_ESPACE_NOMRAL
+		}
+		return enums.COST_TYPE_CONFURA_TEST_ESPACE_NOMRAL
+	}
+}
+
+func (o *ConfuraParserConf) GetServerType() enums.ServerType {
+	if o.IsCspace {
+		return enums.SERVER_TYPE_CONFURA_CSPACE
+	}
+	return enums.SERVER_TYPE_CONFURA_ESPACE
+}
+
+func (o *ConfuraParserConf) ParseRequest(r pkgHTTP.Request) (*types.ReqParseResult, error) {
 	body, err := r.Body()
 	if err != nil {
 		return nil, err
 	}
 
 	result := &types.ReqParseResult{
-		CostType: enums.COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL,
+		CostType: o.GetCostType(),
 		Count:    1,
-	}
-
-	if !o.IsMainnet {
-		result.CostType = enums.COST_TYPE_CONFURA_TEST_CSPACE_NOMRAL
 	}
 
 	var ms []rpc.JsonRpcMessage
