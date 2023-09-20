@@ -147,7 +147,7 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 			})
 
 		}
-		if err := tx.Debug().Save(&flcs).Error; err != nil {
+		if err := tx.Save(&flcs).Error; err != nil {
 			return err
 		}
 

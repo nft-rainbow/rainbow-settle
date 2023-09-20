@@ -55,6 +55,7 @@ type BillPlan struct {
 	EffectivePeroid      PeroidType        `json:"effective_peroid"` // 月，年
 	RefreshQuotaSchedule PeroidType        `json:"reset_duration"`   // 日，月，年
 	Qps                  int               `json:"qps"`
+	IsQpsByRequset       bool              `json:"is_qps_by_request"` // 默认fasle，表示按costtype限流
 	Price                decimal.Decimal   `json:"price"`
 	Server               enums.ServerType  `json:"server"`
 	Priority             int               `json:"priority"`   // 同一plan server下plan都是互斥的，哪个生效由priority决定，如企业版>普通版

@@ -2,15 +2,18 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nft-rainbow/rainbow-settle/common/config"
+	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
+	"github.com/samber/lo"
 )
 
 var (
@@ -21,8 +24,11 @@ const (
 	PREFIX_COUNT_KEY         = "count-"
 	PREFIX_COUNT_PENDING_KEY = "count-pending-"
 	PREFIX_REQ_KEY           = "req-"
-	PREFIX_RICH              = "rich-"
-	PREFIX_APIKEY            = "apikey-"
+	PREFIX_RICH_KEY          = "rich-"
+	PREFIX_APIKEY_KEY        = "apikey-"
+	PREFIX_USER_PLAN_KEY     = "userplan-"
+	PREFIX_PLAN_KEY          = "plan-"
+	PREFIX_APIPROFILE_KEY    = "apiprofile-"
 )
 
 type ExtendClient struct {
@@ -83,16 +89,28 @@ func RequestValue(userId, appId, costType, count string) string {
 }
 
 func RichKey(userId uint) string {
-	return fmt.Sprintf("%s%d", PREFIX_RICH, userId)
+	return fmt.Sprintf("%s%d", PREFIX_RICH_KEY, userId)
 }
 
 func ApikeyKey(apikey string) string {
-	return fmt.Sprintf("%s%s", PREFIX_APIKEY, crypto.Keccak256Hash([]byte(apikey)).Hex())
+	return fmt.Sprintf("%s%s", PREFIX_APIKEY_KEY, crypto.Keccak256Hash([]byte(apikey)).Hex())
 }
 
 // value of user related apikey
 func ApikeyValue(userId, appId uint) string {
 	return fmt.Sprintf("%d%d", userId, appId)
+}
+
+func UserPlanKey(userId uint, serverType enums.ServerType) string {
+	return fmt.Sprintf("%s%d-%s", PREFIX_USER_PLAN_KEY, userId, serverType)
+}
+
+func PlanKey(planId uint) string {
+	return fmt.Sprintf("%s%d", PREFIX_PLAN_KEY, planId)
+}
+
+func ApiProfilesKey(costtype enums.CostType) string {
+	return fmt.Sprintf("%s%d", PREFIX_APIPROFILE_KEY, costtype)
 }
 
 func ParseCountKey(key string) (userId uint, costType enums.CostType, err error) {
@@ -212,6 +230,22 @@ func ParseCount(count string) (int, error) {
 	return _count, nil
 }
 
+func ParsePlanId(planId string) (int, error) {
+	_planId, err := strconv.Atoi(planId)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to parse plan_id %s", planId)
+	}
+	return _planId, nil
+}
+
+func ParsePlan(planstr string) (*models.BillPlan, error) {
+	var up models.BillPlan
+	if err := json.Unmarshal([]byte(planstr), &up); err != nil {
+		return nil, err
+	}
+	return &up, nil
+}
+
 func GetUserCounts() (map[string]string, error) {
 	return GetValuesByRegexKey(fmt.Sprintf("%s[0-9]*-*", PREFIX_COUNT_KEY))
 }
@@ -278,4 +312,74 @@ func CheckIsRich(userId uint, costType enums.CostType) (bool, error) {
 func isRich(flag int, costType enums.CostType) bool {
 	result := (1 << costType & flag) > 0
 	return result
+}
+
+func GetUserPlan(userid uint, server enums.ServerType) (*models.BillPlan, error) {
+	userPlanKey := UserPlanKey(userid, server)
+	planIdStr, err := DB().Get(context.Background(), userPlanKey).Result()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	planId, err := ParsePlanId(planIdStr)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	planKey := PlanKey(uint(planId))
+	planStr, err := DB().Get(context.Background(), planKey).Result()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	plan, err := ParsePlan(planStr)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return plan, nil
+}
+
+func GetUserServerQps(userid uint, server enums.ServerType) (bool, int, error) {
+	plan, err := GetUserPlan(userid, server)
+	if err != nil {
+		return false, 0, errors.WithStack(err)
+	}
+	return plan.IsQpsByRequset, plan.Qps, nil
+}
+
+func GetUserCostQps(userid uint, costType enums.CostType) (int, error) {
+	apiProfile, err := GetApiProfile(costType)
+	if err != nil {
+		return 0, err
+	}
+
+	plan, err := GetUserPlan(userid, apiProfile.ServerType)
+	if err != nil {
+		return 0, err
+	}
+
+	detail, ok := lo.Find(plan.BillPlanDetails, func(d *models.BillPlanDetail) bool {
+		return d.CostType == costType
+	})
+
+	if ok {
+		return detail.Qps, nil
+	}
+
+	return plan.Qps, nil
+}
+
+func GetApiProfile(costType enums.CostType) (*models.ApiProfile, error) {
+	apiProfileStr, err := DB().Get(context.Background(), ApiProfilesKey(costType)).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	var apiProfile *models.ApiProfile
+
+	if err := json.Unmarshal([]byte(apiProfileStr), &apiProfile); err != nil {
+		return nil, err
+	}
+
+	return apiProfile, nil
 }
