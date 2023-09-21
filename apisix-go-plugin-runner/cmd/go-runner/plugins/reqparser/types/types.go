@@ -12,32 +12,42 @@ import (
 )
 
 type Parser interface {
-	ParseRequest(r pkgHTTP.Request) (*ReqParseResult, error)
+	ParseRequest(r pkgHTTP.Request) (ReqParseResult, error)
 }
 
-type ReqParseResult struct {
+type ReqParseResult interface {
+	GetCostType() enums.CostType
+	GetCount() int
+}
+
+type DefaultReqParseResult struct {
 	CostType enums.CostType
 	Count    int
 }
 
-func DefaultRequestFilter(o Parser, w http.ResponseWriter, r pkgHTTP.Request) {
-	fn := func() error {
+func (d *DefaultReqParseResult) GetCostType() enums.CostType { return d.CostType }
+func (d *DefaultReqParseResult) GetCount() int               { return d.Count }
+
+func DefaultRequestFilter(o Parser, w http.ResponseWriter, r pkgHTTP.Request) (ReqParseResult, error) {
+	fn := func() (ReqParseResult, error) {
 		result, err := o.ParseRequest(r)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		r.Header().Set(constants.RAINBOW_COST_TYPE_HEADER_KEY, result.CostType.String())
-		r.Header().Set(constants.RAINBOW_COST_COUNT_HEADER_KEY, fmt.Sprintf("%d", result.Count))
+		r.Header().Set(constants.RAINBOW_COST_TYPE_HEADER_KEY, result.GetCostType().String())
+		r.Header().Set(constants.RAINBOW_COST_COUNT_HEADER_KEY, fmt.Sprintf("%d", result.GetCount()))
 		r.Header().Set(constants.RAINBOW_REQUEST_ID_HEADER_KEY, uuid.New().String())
 
-		return nil
+		return result, nil
 	}
 
-	if err := fn(); err != nil {
+	result, err := fn()
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if _, err := w.Write([]byte(fmt.Sprintf("failed parse rainbow request: %v", err))); err != nil {
 			log.Errorf("failed to write: %s", err)
 		}
 	}
+	return result, err
 }

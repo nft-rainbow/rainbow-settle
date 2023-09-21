@@ -1,14 +1,17 @@
 package rainbowapi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/types"
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
+	"github.com/nft-rainbow/rainbow-settle/common/redis"
 )
 
 func init() {
@@ -27,7 +30,7 @@ type ConfuraParser struct {
 }
 
 func (p *ConfuraParser) Name() string {
-	return "confura_parser"
+	return "confura-parser"
 }
 
 func (p *ConfuraParser) ParseConf(in []byte) (interface{}, error) {
@@ -37,7 +40,23 @@ func (p *ConfuraParser) ParseConf(in []byte) (interface{}, error) {
 }
 
 func (p *ConfuraParser) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
+	// log.Infof("in confura-parser request filter")
 	c := conf.(ConfuraParserConf)
-	types.DefaultRequestFilter(&c, w, r)
+	result, err := types.DefaultRequestFilter(&c, w, r)
+	if err != nil {
+		return
+	}
+
+	// log.Infof("aaa")
 	r.Header().Set(constants.RAINBOW_SERVER_TYPE_HEADER_KEY, c.GetServerType().String())
+
+	// write ids to redis
+	rpqId := r.Header().Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
+	rpcInfo := result.(*ConfuraParseResult).RpcInfo
+	rpcInfoJson, _ := json.Marshal(rpcInfo)
+	_, err = redis.DB().Set(context.Background(), redis.RpcIdsInfoKey(rpqId), rpcInfoJson, time.Minute).Result()
+	if err != nil {
+		log.Infof("failed set rpcids to redis: %v", err)
+	}
+	// log.Infof("bbb")
 }

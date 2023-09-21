@@ -42,7 +42,7 @@ func init() {
 type RainbowApiRequestOp struct {
 }
 
-func (o *RainbowApiRequestOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseResult, error) {
+func (o *RainbowApiRequestOp) ParseRequest(r pkgHTTP.Request) (types.ReqParseResult, error) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -61,7 +61,7 @@ func (o *RainbowApiRequestOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseRe
 	rainbowApiEngine.HandleContext(c)
 
 	if o.getAction(c.Request.Method, c.FullPath()) == enums.COST_TYPE_RAINBOW_NORMAL {
-		return &types.ReqParseResult{enums.COST_TYPE_RAINBOW_NORMAL, 1}, nil
+		return &types.DefaultReqParseResult{enums.COST_TYPE_RAINBOW_NORMAL, 1}, nil
 	}
 
 	body, err := r.Body()
@@ -72,8 +72,8 @@ func (o *RainbowApiRequestOp) ParseRequest(r pkgHTTP.Request) (*types.ReqParseRe
 	return o.parseRequestByGin(c)
 }
 
-func (o *RainbowApiRequestOp) parseRequestByGin(c *gin.Context) (*types.ReqParseResult, error) {
-	result := types.ReqParseResult{
+func (o *RainbowApiRequestOp) parseRequestByGin(c *gin.Context) (*types.DefaultReqParseResult, error) {
+	result := types.DefaultReqParseResult{
 		CostType: o.getAction(c.Request.Method, c.FullPath()),
 		Count:    1,
 	}

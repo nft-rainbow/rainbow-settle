@@ -4,6 +4,7 @@ import (
 	"context"
 
 	urate "github.com/Conflux-Chain/go-conflux-util/rate"
+	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
@@ -59,7 +60,8 @@ func (r *serverQpsObtainer) getQps(server, userid string) (qps, burst int, err e
 	if err != nil {
 		return 0, 0, err
 	}
-	return qps, qps * 5, nil
+	return 5, 10, nil
+	// return qps, qps * 2, nil
 }
 
 type costtypeQpsObtainer struct{}
@@ -79,7 +81,7 @@ func (r *costtypeQpsObtainer) getQps(costtype, userid string) (qps, burst int, e
 	if err != nil {
 		return 0, 0, err
 	}
-	return qps, qps * 5, nil
+	return 5, 10, nil
 }
 
 type RainbowLimiterFactory struct {
@@ -99,6 +101,7 @@ func (r *RainbowLimiterFactory) Create(ctx context.Context, serverOrCosttype, us
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("create limiter for user %s, server or cost type %v, qps %d, burst %d", userid, serverOrCosttype, qps, burst)
 	return urate.NewTokenBucket(qps, burst), nil
 }
 

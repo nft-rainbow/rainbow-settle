@@ -97,8 +97,8 @@ func TestParseRainbowApiRequest(t *testing.T) {
 		assert.NoError(t, err)
 
 		// assert.Equal(t, item.IsMainNet, result.IsMainnet, i)
-		assert.Equal(t, item.Count, result.Count, i)
-		assert.Equal(t, item.CostType, result.CostType, i)
+		assert.Equal(t, item.Count, result.GetCount(), i)
+		assert.Equal(t, item.CostType, result.GetCostType(), i)
 	}
 
 }

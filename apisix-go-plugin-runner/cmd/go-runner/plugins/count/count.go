@@ -119,6 +119,12 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 	// log.Infof("get content-type %s", w.Header().Get("Content-Type"))
 	// w.Header().Set("Content-Type", w.Header().Get("Content-Type"))
 	log.Infof("in responsoe filter")
+	DeterminCount(w, nil)
+}
+
+type GetSuccessCountHandler func(w pkgHTTP.Response) int
+
+func DeterminCount(w pkgHTTP.Response, successCountHandler GetSuccessCountHandler) {
 
 	reqId := w.Header().Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 	// log.Infof("get x-rainbow-request-id %s", reqId)
@@ -134,15 +140,9 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 		}
 	}()
 
-	val, err := redis.DB().Get(context.Background(), reqKey).Result()
+	userId, _, costType, count, err := redis.GetRequest(reqId)
 	if err != nil {
-		log.Errorf("failed to get req %d val: %s", w.ID(), err)
-		return
-	}
-
-	userId, _, costType, count, err := redis.ParseRequestValue(val)
-	if err != nil {
-		log.Errorf("failed to parse req %d val %s: %s", w.ID(), val, err)
+		log.Errorf("failed to get req %d val: %s", reqId, err)
 		return
 	}
 
@@ -152,16 +152,29 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 	// 无论成功失败都减去pending count
 	_, err = redis.DB().DecrBy(context.Background(), pengdingCountKey, int64(count)).Result()
 	if err != nil {
-		log.Errorf("failed to decrease pending cost count of req %d: %s", w.ID(), err)
+		log.Errorf("failed to decrease pending cost count of req %d: %s", reqId, err)
+		return
+	}
+
+	successCount := 0
+	if successCountHandler != nil {
+		successCount = successCountHandler(w)
+	} else {
+		if w.StatusCode() >= http.StatusOK && w.StatusCode() < http.StatusMultipleChoices {
+			successCount = count
+		}
+	}
+
+	if successCount <= 0 {
 		return
 	}
 
 	// 请求成功，改变pending count 为 count
-	if w.StatusCode() >= http.StatusOK && w.StatusCode() < http.StatusMultipleChoices {
-		_, err = redis.DB().IncrBy(context.Background(), countKey, int64(count)).Result()
-		if err != nil {
-			log.Errorf("failed to increase cost count of req %d: %s", w.ID(), err)
-			return
-		}
+	// if w.StatusCode() >= http.StatusOK && w.StatusCode() < http.StatusMultipleChoices {
+	_, err = redis.DB().IncrBy(context.Background(), countKey, int64(successCount)).Result()
+	if err != nil {
+		log.Errorf("failed to increase cost count of req %d: %s", reqId, err)
+		return
 	}
+	// }
 }

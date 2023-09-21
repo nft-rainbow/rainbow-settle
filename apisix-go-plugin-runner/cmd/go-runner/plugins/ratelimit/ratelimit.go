@@ -28,6 +28,7 @@ import (
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
+	"github.com/nft-rainbow/rainbow-settle/common/redis"
 )
 
 var (
@@ -96,10 +97,18 @@ func (p *RateLimit) RequestFilter(conf interface{}, w http.ResponseWriter, r pkg
 		case "request":
 			return serverReqRegistry.Limit(ctx, serverType)
 		case "cost_type":
-			if err := serverCostRegistry.Limit(ctx, serverType); err != nil {
+			countStr := r.Header().Get(constants.RAINBOW_COST_COUNT_HEADER_KEY)
+			count, err := redis.ParseCount(countStr)
+			if err != nil {
 				return err
 			}
-			return costRegistry.Limit(ctx, costType)
+
+			log.Infof("server cost limit: %v %v", serverType, count)
+			if err := serverCostRegistry.LimitN(ctx, serverType, count); err != nil {
+				return err
+			}
+			log.Infof("cost limit: %v %v", costType, count)
+			return costRegistry.LimitN(ctx, costType, count)
 		default:
 			return fmt.Errorf("unsupport limit mode %s", c.Mode)
 		}
@@ -107,8 +116,23 @@ func (p *RateLimit) RequestFilter(conf interface{}, w http.ResponseWriter, r pkg
 
 	if err := fn(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		if _, err := w.Write([]byte(fmt.Sprintf("failed count for request: %v", err))); err != nil {
+		if _, err := w.Write([]byte(err.Error())); err != nil {
 			log.Errorf("failed to write: %s", err)
 		}
 	}
+
+	// if err := fn(); err != nil {
+	// 	w.WriteHeader(http.StatusOK)
+	// 	body, _err := json.Marshal(
+	// 		rpc.JsonRpcMessage{
+	// 			Error: &rpc.JsonError{Code: -32602, Message: err.Error()},
+	// 		},
+	// 	)
+	// 	if _err != nil {
+	// 		log.Errorf("failed to marshal json error: %s", err)
+	// 	}
+	// 	if _, _err := w.Write(body); _err != nil {
+	// 		log.Errorf("failed to write: %s", err)
+	// 	}
+	// }
 }

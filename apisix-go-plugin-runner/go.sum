@@ -82,6 +82,8 @@ github.com/Conflux-Chain/go-conflux-sdk v1.5.8 h1:AJLSnevYBONzy7SwX3Nyqb1BUoZVah
 github.com/Conflux-Chain/go-conflux-sdk v1.5.8/go.mod h1:Gwqy5/enBtw7hS7zSuOsa+F4OMonSqgHSN9N/oFDzos=
 github.com/Conflux-Chain/go-conflux-util v0.1.0 h1:Ljnq6JwIc14XyAieyZOo2oyPAC7P2UhWH8akgZ625Mo=
 github.com/Conflux-Chain/go-conflux-util v0.1.0/go.mod h1:w2Ns80q8u9GfEvzrd18QvZUtlP3EmzVq9w8lZuY8uwk=
+github.com/Conflux-Chain/go-conflux-util v0.1.1-0.20230921105413-f3b80d91bf83 h1:GQEEn7bRgucVQ1a2dvNixllO1tdIuCDUtHZv3Nixp9E=
+github.com/Conflux-Chain/go-conflux-util v0.1.1-0.20230921105413-f3b80d91bf83/go.mod h1:w2Ns80q8u9GfEvzrd18QvZUtlP3EmzVq9w8lZuY8uwk=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.5.2 h1:vUG4lAyuPCXO0TLbXvPv7EB7cNK1QV/luu55UHLrrn8=

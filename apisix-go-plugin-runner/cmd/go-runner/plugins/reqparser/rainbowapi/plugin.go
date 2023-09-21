@@ -34,7 +34,7 @@ type RainbowApiParserConf struct {
 }
 
 func (p *RainbowApiParser) Name() string {
-	return "rainbow_api_parser"
+	return "rainbow-api-parser"
 }
 
 func (p *RainbowApiParser) ParseConf(in []byte) (interface{}, error) {
