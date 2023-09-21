@@ -29,6 +29,7 @@ const (
 	PREFIX_USER_PLAN_KEY     = "userplan-"
 	PREFIX_PLAN_KEY          = "plan-"
 	PREFIX_APIPROFILE_KEY    = "apiprofile-"
+	PREFIX_RPC_IDS_KEY       = "rpcids-"
 )
 
 type ExtendClient struct {
@@ -111,6 +112,25 @@ func PlanKey(planId uint) string {
 
 func ApiProfilesKey(costtype enums.CostType) string {
 	return fmt.Sprintf("%s%d", PREFIX_APIPROFILE_KEY, costtype)
+}
+
+func RpcIdsInfoKey(requestId string) string {
+	return fmt.Sprintf("%s%s", PREFIX_RPC_IDS_KEY, requestId)
+}
+
+type RpcInfo struct {
+	Items      []*RpcInfoItem
+	IsBatchRpc bool `json:"is_batch_rpc"`
+}
+
+type RpcInfoItem struct {
+	RpcId      string `json:"rpc_id"`
+	RpcVersion string `json:"rpc_version"`
+}
+
+func RpcIdsValue(info RpcInfo) string {
+	v, _ := json.Marshal(info)
+	return string(v)
 }
 
 func ParseCountKey(key string) (userId uint, costType enums.CostType, err error) {
@@ -244,6 +264,14 @@ func ParsePlan(planstr string) (*models.BillPlan, error) {
 		return nil, err
 	}
 	return &up, nil
+}
+
+func ParseRpcIdsInfo(rpcInfoStr string) (*RpcInfo, error) {
+	var rpcInfo RpcInfo
+	if err := json.Unmarshal([]byte(rpcInfoStr), &rpcInfo); err != nil {
+		return nil, err
+	}
+	return &rpcInfo, nil
 }
 
 func GetUserCounts() (map[string]string, error) {
@@ -382,4 +410,29 @@ func GetApiProfile(costType enums.CostType) (*models.ApiProfile, error) {
 	}
 
 	return apiProfile, nil
+}
+
+func GetRequest(reqId string) (userId uint, appId uint, costType enums.CostType, count int, err error) {
+	reqKey := RequestKey(reqId)
+	val, err := DB().Get(context.Background(), reqKey).Result()
+	if err != nil {
+		// log.Errorf("failed to get req %d val: %s", w.ID(), err)
+		return 0, 0, 0, 0, errors.Wrapf(err, "failed to get req %s", reqId)
+	}
+
+	userId, appId, costType, count, err = ParseRequestValue(val)
+	if err != nil {
+		// log.Errorf("failed to parse req %d val %s: %s", w.ID(), val, err)
+		return 0, 0, 0, 0, errors.Wrapf(err, "failed to parse req %s", reqId)
+	}
+	return
+}
+
+func GetRpcIdsInfo(requestId string) (*RpcInfo, error) {
+	rpcIdsStr, err := DB().Get(context.Background(), RpcIdsInfoKey(requestId)).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRpcIdsInfo(rpcIdsStr)
 }

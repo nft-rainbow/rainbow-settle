@@ -101,11 +101,7 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAu
 		}
 
 		if oldUserPlan != nil {
-			oldPlan, err := GetBillPlanById(oldUserPlan.PlanId)
-			if err != nil {
-				return err
-			}
-			if oldPlan.Priority == newPlan.Priority {
+			if oldUserPlan.Plan.Priority == newPlan.Priority {
 				return errors.New("the plan is using currently")
 			}
 		}
@@ -118,6 +114,9 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAu
 			BoughtTime:    now,
 			ExpireTime:    newPlan.EffectivePeroid.EndTime(now),
 			IsAutoRenewal: isAutoRenew,
+		}
+		if oldUserPlan != nil {
+			newUserPlan.BaseModel = oldUserPlan.BaseModel
 		}
 
 		if err := tx.Save(&newUserPlan).Error; err != nil {
