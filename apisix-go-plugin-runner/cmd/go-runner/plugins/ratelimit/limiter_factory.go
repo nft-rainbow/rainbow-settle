@@ -60,8 +60,8 @@ func (r *serverQpsObtainer) getQps(server, userid string) (qps, burst int, err e
 	if err != nil {
 		return 0, 0, err
 	}
-	return 5, 10, nil
-	// return qps, qps * 2, nil
+	// return 5, 10, nil
+	return qps, qps, nil
 }
 
 type costtypeQpsObtainer struct{}
@@ -81,7 +81,7 @@ func (r *costtypeQpsObtainer) getQps(costtype, userid string) (qps, burst int, e
 	if err != nil {
 		return 0, 0, err
 	}
-	return 5, 10, nil
+	return qps, qps, nil
 }
 
 type RainbowLimiterFactory struct {
