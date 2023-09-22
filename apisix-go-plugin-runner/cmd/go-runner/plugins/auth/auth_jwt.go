@@ -37,7 +37,7 @@ type JwtAuthConf struct {
 func (j *JwtAuthConf) getJwtKey() (string, bool) {
 	var keys = map[string]string{
 		"rainbow-api-prod":  "",
-		"rainbow-api-dev":   "",
+		"rainbow-api-dev":   "jwt-openapi-key",
 		"rainbow-api-local": "jwt-openapi-key",
 	}
 	val, ok := keys[j.appEnvString()]
