@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	thisHttp "github.com/apache/apisix-go-plugin-runner/internal/http"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	thttp "github.com/stretchr/testify/http"
 )
 
 func TestAuthFail(t *testing.T) {
@@ -81,4 +85,22 @@ func TestParseConf(t *testing.T) {
 func TestTmp(t *testing.T) {
 	j, _ := json.Marshal(JwtAuthConf{"header: Authorization", "rainbow-api", "local"})
 	fmt.Printf("%s", j)
+}
+
+func _TestAnyPath(t *testing.T) {
+	g := gin.New()
+	g.Any("*path", func(c *gin.Context) {})
+
+	var w thttp.TestResponseWriter
+	c, _ := gin.CreateTestContext(&w)
+	url, _ := url.Parse("/dashboard")
+
+	c.Request = &http.Request{
+		URL:    url,
+		Method: "GET",
+	}
+
+	g.HandleContext(c)
+	fmt.Println(c.Writer.Status())
+	assert.Equal(t, "/dashboard", c.FullPath())
 }

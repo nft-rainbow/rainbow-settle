@@ -2,23 +2,29 @@
 # Set your parameters
 #######################################################################################################
 
-# # local
-# apisix_addr=http://127.0.0.1:9180
-# servers_domain=nftrainbow.me
-# rainbow_api_addr=http://172.16.100.252:8080
-# settle_addr=http://172.16.100.252:8091
-# proxy_addr="172.16.100.252:8020"
-# jwt_auth_env=local
+# local
+# upstreams
+env=local
+upstream_proxy="172.16.100.252:8020"
+upstream_rainbow_app_service="172.16.100.252:8081"
+upstream_logs_service="172.16.100.252:19080"
 
-# dev
-apisix_addr=http://dev-apisix-admin.nftrainbow.cn
-servers_domain=nftrainbow.cn
-rainbow_api_addr=http://127.0.0.1:8080
-settle_addr=http://127.0.0.1:8091
-proxy_addr="172.18.0.1:8020"
-jwt_auth_env=dev
+apisix_addr=http://127.0.0.1:9180
+servers_domain=nftrainbow.me
+rainbow_api_addr=http://172.16.100.252:8080
+settle_addr=http://172.16.100.252:8091
 apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
 apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
+
+# dev
+# env=dev
+# apisix_addr=http://dev-apisix-admin.nftrainbow.cn
+# servers_domain=nftrainbow.cn
+# rainbow_api_addr=http://127.0.0.1:8080
+# settle_addr=http://127.0.0.1:8091
+# upstream_proxy="172.18.0.1:8020"
+# apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
+# apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
 
 echo "开始配置apisix路由"
 
@@ -33,12 +39,30 @@ curl $apisix_addr/apisix/admin/upstreams/100  \
 {
     "type":"roundrobin",
     "nodes":{
-        "'${proxy_addr}'": 1
+        "'${upstream_proxy}'": 1
+    }
+}'
+
+curl $apisix_addr/apisix/admin/upstreams/200  \
+-H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
+{
+    "type":"roundrobin",
+    "nodes":{
+        "'${upstream_rainbow_app_service}'": 1
+    }
+}'
+
+curl $apisix_addr/apisix/admin/upstreams/300  \
+-H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
+{
+    "type":"roundrobin",
+    "nodes":{
+        "'${upstream_logs_service}'": 1
     }
 }'
 
 # 查upstream
-curl $apisix_addr/apisix/admin/upstreams/100 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1'
+curl $apisix_addr/apisix/admin/upstreams -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1'
 
 
 # ******************** rainbow 使用的路由 *******************
@@ -56,7 +80,7 @@ curl $apisix_addr/apisix/admin/routes/1000 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "plugins": {
     "ext-plugin-pre-req": {
        "conf": [
-         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-api\",\"env\":\"'${jwt_auth_env}'\"}"},
+         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-api\",\"env\":\"'${env}'\"}"},
          {"name":"rainbow-api-parser", "value":"{}"},
          {"name":"count", "value":"{}"},
          {"name":"rate-limit", "value":"{\"mode\":\"request\"}"}
@@ -86,14 +110,14 @@ curl $apisix_addr/apisix/admin/routes/1100 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "desc": "rainbow dashboard api 路由,只匹配dashboard需要收费的api",
   "uri": "/*",
   "vars": [
-    ["uri", "~~", "^/dashboard/apps/*/(contracts|nft).*$"]
+    ["uri", "~~", "^/dashboard/apps/.*/(contracts|nft).*$"]
   ],
   "host": "dev.'${servers_domain}'",
   "methods": ["POST"],
   "plugins": {
     "ext-plugin-pre-req": {
        "conf": [
-         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-api\",\"env\":\"local\"}"},
+         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-dashboard\",\"env\":\"'${env}'\"}"},
          {"name":"rainbow-api-parser", "value":"{}"},
          {"name":"count", "value":"{}"}
        ]
@@ -110,6 +134,62 @@ curl $apisix_addr/apisix/admin/routes/1100 -H 'X-API-KEY: edd1c9f034335f136f87ad
     } 
   },
   "upstream_id": "100",
+  "priority": 400
+}'
+
+# rainbow api dashboard 免费接口
+curl $apisix_addr/apisix/admin/routes/1120 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "rainbow-dashboard-api-free",
+  "desc": "rainbow dashboard api 路由,只匹配dashboard免费api",
+  "uri": "/*",
+  "vars": [
+    ["uri", "~~", "^/dashboard/.*$"]
+  ],
+  "host": "dev.'${servers_domain}'",
+  "methods": ["POST"],
+  "plugins": {
+    "ext-plugin-pre-req": {
+       "conf": [
+         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-dashboard\",\"env\":\"local\"}"}
+       ]
+    },
+    "proxy-rewrite": {
+      "headers": {
+        "target_addr": "'${rainbow_api_addr}'"
+      }
+    }
+  },
+  "upstream_id": "100",
+  "priority": 300
+}'
+
+
+# rainbow apps
+curl $apisix_addr/apisix/admin/routes/1130 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "rainbow-app-service",
+  "desc": "rainbow-app-service 路由",
+  "uri": "/*",
+  "vars": [
+    ["uri", "~~", "^/apps/.*$"]
+  ],
+  "host": "dev.'${servers_domain}'",
+  "upstream_id": "200",
+  "priority": 400
+}'
+
+# rainbow apps
+curl $apisix_addr/apisix/admin/routes/1140 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "rainbow-http-logs",
+  "desc": "rainbow-http-logs 路由",
+  "uri": "/*",
+  "vars": [
+    ["uri", "~~", "^/logs/.*$"]
+  ],
+  "host": "dev.'${servers_domain}'",
+  "upstream_id": "300",
   "priority": 400
 }'
 

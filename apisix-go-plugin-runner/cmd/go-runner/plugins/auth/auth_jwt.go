@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"strings"
 
 	"fmt"
 	"net/http"
@@ -39,6 +40,14 @@ func (j *JwtAuthConf) getJwtKey() (string, bool) {
 		"rainbow-api-prod":  "",
 		"rainbow-api-dev":   "jwt-openapi-key",
 		"rainbow-api-local": "jwt-openapi-key",
+
+		"rainbow-dashboard-prod":  "",
+		"rainbow-dashboard-dev":   "jwt-dashboard-key",
+		"rainbow-dashboard-local": "jwt-dashboard-key",
+
+		"rainbow-admin-prod":  "",
+		"rainbow-admin-dev":   "jwt-admin-key",
+		"rainbow-admin-local": "jwt-ddmin-key",
 	}
 	val, ok := keys[j.appEnvString()]
 	return val, ok
@@ -85,9 +94,14 @@ func (c *JwtAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHT
 		}
 
 		ctx, _ := gin.CreateTestContext(w)
-		url, _ := url.Parse(fmt.Sprintf("%v%v", r.Path(), r.Args()))
+		urlStr := string(r.Path())
+		if len(r.Args()) > 0 {
+			urlStr = fmt.Sprintf("%s?%s", urlStr, r.Args().Encode())
+		}
+		url, _ := url.Parse(urlStr)
 		ctx.Request = &http.Request{
 			Header: r.Header().View(),
+			Method: r.Method(),
 			URL:    url,
 		}
 
@@ -154,6 +168,24 @@ func extractUserInfoFromJwt(jwtMid *jwt.GinJWTMiddleware, ctx *gin.Context) (str
 	if err != nil {
 		return "", "", err
 	}
-	log.Infof("claims: %v", claims)
-	return fmt.Sprintf("%v", claims["AppUserId"]), fmt.Sprintf("%v", claims["id"]), nil
+
+	if strings.HasPrefix(ctx.Request.URL.Path, "/v1") {
+		log.Infof("claims: %v", claims)
+		return fmt.Sprintf("%v", claims["AppUserId"]), fmt.Sprintf("%v", claims["id"]), nil
+	}
+	if strings.HasPrefix(ctx.Request.URL.Path, "/dashboard/apps/") {
+		s := strings.TrimPrefix(ctx.Request.URL.Path, "/dashboard/apps/")
+		len := strings.Index(s, "/")
+		var id string
+		if len == -1 {
+			id = s
+		} else {
+			id = s[:len]
+		}
+		return fmt.Sprintf("%v", claims["id"]), id, nil
+	}
+	if strings.HasPrefix(ctx.Request.URL.Path, "/admin") {
+		return fmt.Sprintf("%v", claims["id"]), fmt.Sprintf("%d", 0), nil
+	}
+	return "", "", fmt.Errorf("unsupport get user id of path %s", ctx.Request.URL.Path)
 }

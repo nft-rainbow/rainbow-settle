@@ -12,6 +12,7 @@ import (
 	pkgHTTP "github.com/apache/apisix-go-plugin-runner/pkg/http"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-api/services"
 	"github.com/nft-rainbow/rainbow-api/utils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
@@ -23,6 +24,7 @@ var (
 
 func init() {
 	rainbowApiEngine = gin.New()
+	// rainbowApiEngine.Any("*path", func(c *gin.Context) {})
 	emptyHandler := gin.HandlerFunc(func(c *gin.Context) {})
 	for k := range utils.MintPaths {
 		rainbowApiEngine.POST(k, emptyHandler)
@@ -31,6 +33,7 @@ func init() {
 	for k := range utils.DeployPaths {
 		rainbowApiEngine.POST(k, emptyHandler)
 	}
+	ginutils.RegisterValidation()
 }
 
 // type RainbowApiReqParseResult struct {
@@ -86,31 +89,45 @@ func (o *RainbowApiRequestOp) parseRequestByGin(c *gin.Context) (*types.DefaultR
 		var mintMeta services.CustomMintDto
 		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		isMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		// return &result, err
 
 	case "/v1/mints/customizable":
 		var mintMeta services.CustomMintDto
 		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		isMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		// return &result, err
 
 	case "/v1/mints/customizable/batch":
 		var mintMeta services.CustomMintBatchDto
 		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		isMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		// return &result, err
 
 	case "/v1/mints/easy/files":
 		var mintMeta services.EasyMintFileDto
 		err = c.ShouldBind(&mintMeta)
 		isMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		// return &result, err
 
 	case "/v1/mints/easy/urls":
 		var mintMeta services.EasyMintMetaPartsDto
 		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
 		isMainnet = utils.IsMainnetByName(mintMeta.Chain)
-		// return &result, err
+
+	case "/dashboard/apps/:id/nft":
+		var mintMeta services.MintMetaPartsDto
+		err = c.ShouldBindBodyWith(&mintMeta, binding.JSON)
+		isMainnet = utils.IsMainnetByName(mintMeta.Chain)
+
+	case "/dashboard/apps/:id/nft/batch/by-meta-parts":
+		var batchMintMeta []*services.AppMintByMetaPartsDto
+		err = c.ShouldBindBodyWith(&batchMintMeta, binding.JSON)
+		result.Count = len(batchMintMeta)
+		if len(batchMintMeta) > 0 {
+			isMainnet = utils.IsMainnetByName(batchMintMeta[0].Chain)
+		}
+
+	case "/dashboard/apps/:id/nft/batch/by-meta-uri":
+		var batchMintMeta services.AppBatchMintByMetaUriDto
+		err = c.ShouldBindBodyWith(&batchMintMeta, binding.JSON)
+		result.Count = len(batchMintMeta.MintItems)
+		isMainnet = utils.IsMainnetByName(batchMintMeta.Chain)
 
 	case "/dashboard/apps/:id/contracts":
 		fallthrough
@@ -118,20 +135,18 @@ func (o *RainbowApiRequestOp) parseRequestByGin(c *gin.Context) (*types.DefaultR
 		var contractDeployDto services.ContractDeployDto
 		err = c.ShouldBindBodyWith(&contractDeployDto, binding.JSON)
 		isMainnet = utils.IsMainnetByName(contractDeployDto.Chain)
-		// return &result, err
 
 	case "/v1/transfers/customizable":
 		var transferMeta services.TransferDto
 		err = c.ShouldBindBodyWith(&transferMeta, binding.JSON)
 		isMainnet = utils.IsMainnetByName(transferMeta.Chain)
-		// return &result, err
 
 	case "/v1/transfers/customizable/batch":
 		var transferBatchMeta services.TransferBatchDto
 		err = c.ShouldBindBodyWith(&transferBatchMeta, binding.JSON)
 		isMainnet = utils.IsMainnetByName(transferBatchMeta.Chain)
 		result.Count = len(transferBatchMeta.Items)
-		// return &result, err
+
 	}
 	if err != nil {
 		return nil, err

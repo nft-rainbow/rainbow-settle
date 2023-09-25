@@ -186,7 +186,7 @@ replace (
 	// github.com/Conflux-Chain/go-conflux-util v0.1.0 => /Users/dayong/myspace/mywork/go-conflux-util
 	github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.25
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.1 => github.com/miguelmota/go-ethereum-hdwallet v0.0.0-20230703073920-dca85a91a62c
-	// github.com/nft-rainbow/rainbow-api v0.0.0-20230828095140-9ad4e2fb901d => /Users/dayong/myspace/mywork/rainbow-api
+	github.com/nft-rainbow/rainbow-api v0.0.0-20230915100651-0a1d88502f56 => /Users/dayong/myspace/mywork/rainbow-api
 	// github.com/thediveo/enumflag@v0.10.1 depends on github.com/spf13/cobra@v0.0.7
 	github.com/spf13/cobra v0.0.7 => github.com/spf13/cobra v1.2.1
 )
