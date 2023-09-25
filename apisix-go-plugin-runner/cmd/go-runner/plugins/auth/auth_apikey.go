@@ -41,11 +41,17 @@ func (a *ApikeyAuthConf) ExtractApiKey(r pkgHTTP.Request) (string, error) {
 		return items[len(items)-1], nil
 
 	case "query":
-		if !args.Has("apikey") {
+		if !args.Has(constants.RAINBOW_APIKEY_KEY) {
 			return "", fmt.Errorf("missing apikey")
 		}
-		return args.Get("apikey"), nil
+		return args.Get(constants.RAINBOW_APIKEY_KEY), nil
 
+	case "header":
+		apikey := r.Header().Get(constants.RAINBOW_APIKEY_KEY)
+		if len(apikey) == 0 {
+			return "", fmt.Errorf("missing apikey")
+		}
+		return apikey, nil
 	default:
 		return "", errors.Errorf("not support lookup: %s", a.Lookup)
 	}
@@ -78,6 +84,10 @@ func (c *ApikeyAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pk
 		apikey, err := ApikeyAuthConf.ExtractApiKey(r)
 		if err != nil {
 			return err
+		}
+
+		if apikey == "" {
+			return errors.New("missing api key")
 		}
 
 		userId, appId, err := redis.GetUserInfoByApikey(apikey)

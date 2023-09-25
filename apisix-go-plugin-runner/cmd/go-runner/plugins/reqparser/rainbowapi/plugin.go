@@ -18,7 +18,7 @@ var (
 func init() {
 	err := plugin.RegisterPlugin(&RainbowApiParser{})
 	if err != nil {
-		log.Fatalf("failed to register plugin rainbow_api_parser: %s", err)
+		log.Fatalf("failed to register plugin rainbow-api-parser: %s", err)
 	}
 }
 

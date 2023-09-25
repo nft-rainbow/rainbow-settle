@@ -19,14 +19,14 @@ type ConfuraParserConf struct {
 func (o *ConfuraParserConf) GetCostType() enums.CostType {
 	if o.IsMainnet {
 		if o.IsCspace {
-			return enums.COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL
+			return enums.COST_TYPE_CONFURA_MAIN_CSPACE_NORMAL
 		}
-		return enums.COST_TYPE_CONFURA_TEST_CSPACE_NOMRAL
+		return enums.COST_TYPE_CONFURA_TEST_CSPACE_NORMAL
 	} else {
 		if o.IsCspace {
-			return enums.COST_TYPE_CONFURA_MAIN_ESPACE_NOMRAL
+			return enums.COST_TYPE_CONFURA_MAIN_ESPACE_NORMAL
 		}
-		return enums.COST_TYPE_CONFURA_TEST_ESPACE_NOMRAL
+		return enums.COST_TYPE_CONFURA_TEST_ESPACE_NORMAL
 	}
 }
 

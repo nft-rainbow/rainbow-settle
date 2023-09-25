@@ -10,7 +10,7 @@ import (
 
 func TestCalcRichFlag(t *testing.T) {
 	costStates := []*userCostState{
-		{1, enums.COST_TYPE_CONFURA_MAIN_CSPACE_NOMRAL, 100, 100, decimal.NewFromInt(1), decimal.NewFromInt(1)},
+		{1, enums.COST_TYPE_CONFURA_MAIN_CSPACE_NORMAL, 100, 100, decimal.NewFromInt(1), decimal.NewFromInt(1)},
 	}
 	flag := calcRichFlag(costStates)
 	assert.Equal(t, 0b10000000000, flag)

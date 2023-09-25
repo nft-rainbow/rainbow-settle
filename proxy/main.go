@@ -8,10 +8,17 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"github.com/nft-rainbow/conflux-gin-helper/logger"
 	"github.com/nft-rainbow/conflux-gin-helper/middlewares"
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
+)
+
+const (
+	HEADER_KEY_TARGET_ADDR  = "X-Rainbow-Target-Addr"
+	HEADER_KEY_TARGET_URL   = "X-Rainbow-Target-Url"
+	HEADER_KEY_APPEND_QUERY = "X-Rainbow-Append-Query"
 )
 
 func main() {
@@ -19,24 +26,53 @@ func main() {
 	// 创建代理服务器的 HTTP 处理函数
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
-			targetAddr := req.Header.Get("Target_addr")
-			targetUrl := req.Header.Get("Target_url")
+			targetAddr := req.Header.Get(HEADER_KEY_TARGET_ADDR)
+			targetUrl := req.Header.Get(HEADER_KEY_TARGET_URL)
+			appendQuery := req.Header.Get(HEADER_KEY_APPEND_QUERY)
 
-			if targetUrl != "" {
-				targetURL, _ := url.Parse(targetUrl) // 修改为你要代理的目标URL
-				req.URL.Scheme = targetURL.Scheme
-				req.URL.Host = targetURL.Host
-				req.Host = targetURL.Host
-				req.URL.Path = targetURL.Path
-				return
-			}
-			if targetAddr != "" {
-				targetURL, _ := url.Parse(targetAddr) // 修改为你要代理的目标服务器地址
-				req.URL.Scheme = targetURL.Scheme
-				req.URL.Host = targetURL.Host
-				req.Host = targetURL.Host
-				return
-			}
+			// 替换URL
+			func() {
+				if targetUrl != "" {
+					targetURL, err := url.Parse(targetUrl) // 修改为你要代理的目标URL
+					if err != nil {
+						log.Panicf("failed parse target url %s, %v: ", targetURL, err.Error())
+					}
+					logrus.WithField("target url", targetURL).Info("parse target url")
+					req.URL.Scheme = targetURL.Scheme
+					req.URL.Host = targetURL.Host
+					req.Host = targetURL.Host
+					req.URL.Path = targetURL.Path
+					return
+				}
+				if targetAddr != "" {
+					targetURL, err := url.Parse(targetAddr) // 修改为你要代理的目标服务器地址
+					if err != nil {
+						log.Panicf("failed parse target addr %s, %v: ", targetAddr, err.Error())
+					}
+					logrus.WithField("target addr", targetURL).Info("parse target addr")
+					req.URL.Scheme = targetURL.Scheme
+					req.URL.Host = targetURL.Host
+					req.Host = targetURL.Host
+					return
+				}
+			}()
+
+			// 增加HEADER
+			func() {
+				if appendQuery != "" {
+					queries, err := url.ParseQuery(appendQuery)
+					if err != nil {
+						return
+					}
+
+					newQuery := req.URL.Query()
+					for k, v := range queries {
+						newQuery[k] = v
+					}
+
+					req.URL.RawQuery = newQuery.Encode()
+				}
+			}()
 		},
 	}
 
@@ -59,15 +95,20 @@ func initGin() *gin.Engine {
 }
 
 func headerLog(header http.Header) interface{} {
-	targetAddr := header.Get("Target_addr")
-	targetUrl := header.Get("Target_url")
+	targetAddr := header.Get(HEADER_KEY_TARGET_ADDR)
+	targetUrl := header.Get(HEADER_KEY_TARGET_URL)
+	appendQuery := header.Get(HEADER_KEY_APPEND_QUERY)
+	result := make(map[string]string)
 	if targetAddr != "" {
-		return map[string]string{"Target_addr": targetAddr}
+		result[HEADER_KEY_TARGET_ADDR] = targetAddr
 	}
 	if targetUrl != "" {
-		return map[string]string{"Target_url": targetUrl}
+		result[HEADER_KEY_TARGET_URL] = targetUrl
 	}
-	return nil
+	if appendQuery != "" {
+		result[HEADER_KEY_APPEND_QUERY] = appendQuery
+	}
+	return result
 }
 
 func RunWithGin(proxyAddr string, handlerFunc http.HandlerFunc) {

@@ -6,6 +6,7 @@ import (
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/ratelimit"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/confura"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/rainbowapi"
+	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/scan"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/resp_format"
 	"github.com/nft-rainbow/rainbow-settle/common/config"
 	"github.com/nft-rainbow/rainbow-settle/common/redis"

@@ -15,6 +15,8 @@ rainbow_api_addr=http://172.16.100.252:8080
 settle_addr=http://172.16.100.252:8091
 apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
 apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
+apikey_scan_main="xxx"
+apikey_scan_test="xxx"
 
 # dev
 # env=dev
@@ -28,14 +30,13 @@ apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
 
 echo "开始配置apisix路由"
 
-
 #######################################################################################################
 
 # ******************** rainbow 使用的upstream *******************
 
 # 添加upstream
-curl $apisix_addr/apisix/admin/upstreams/100  \
--H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
+curl $apisix_addr/apisix/admin/upstreams/100 \
+  -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
 {
     "type":"roundrobin",
     "nodes":{
@@ -43,8 +44,8 @@ curl $apisix_addr/apisix/admin/upstreams/100  \
     }
 }'
 
-curl $apisix_addr/apisix/admin/upstreams/200  \
--H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
+curl $apisix_addr/apisix/admin/upstreams/200 \
+  -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
 {
     "type":"roundrobin",
     "nodes":{
@@ -52,8 +53,8 @@ curl $apisix_addr/apisix/admin/upstreams/200  \
     }
 }'
 
-curl $apisix_addr/apisix/admin/upstreams/300  \
--H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
+curl $apisix_addr/apisix/admin/upstreams/300 \
+  -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -i -X PUT -d '
 {
     "type":"roundrobin",
     "nodes":{
@@ -63,7 +64,6 @@ curl $apisix_addr/apisix/admin/upstreams/300  \
 
 # 查upstream
 curl $apisix_addr/apisix/admin/upstreams -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1'
-
 
 # ******************** rainbow 使用的路由 *******************
 
@@ -88,7 +88,7 @@ curl $apisix_addr/apisix/admin/routes/1000 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "proxy-rewrite": {
       "headers": {
-        "target_addr": "'${rainbow_api_addr}'"
+        "X-Rainbow-Target-Addr": "'${rainbow_api_addr}'"
       }
     },
     "ext-plugin-post-resp": {
@@ -124,7 +124,7 @@ curl $apisix_addr/apisix/admin/routes/1100 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "proxy-rewrite": {
       "headers": {
-        "target_addr": "'${rainbow_api_addr}'"
+        "X-Rainbow-Target-Addr": "'${rainbow_api_addr}'"
       }
     },
     "ext-plugin-post-resp": {
@@ -156,14 +156,13 @@ curl $apisix_addr/apisix/admin/routes/1120 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "proxy-rewrite": {
       "headers": {
-        "target_addr": "'${rainbow_api_addr}'"
+        "X-Rainbow-Target-Addr": "'${rainbow_api_addr}'"
       }
     }
   },
   "upstream_id": "100",
   "priority": 300
 }'
-
 
 # rainbow apps
 curl $apisix_addr/apisix/admin/routes/1130 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
@@ -206,7 +205,7 @@ curl $apisix_addr/apisix/admin/routes/1150 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "plugins": {
     "proxy-rewrite": {
       "headers": {
-        "target_addr": "'${settle_addr}'"
+        "X-Rainbow-Target-Addr": "'${settle_addr}'"
       }
     }
   },
@@ -224,7 +223,7 @@ curl $apisix_addr/apisix/admin/routes/1200 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "plugins": {
     "proxy-rewrite": {
       "headers": {
-        "target_addr": "'${rainbow_api_addr}'"
+        "X-Rainbow-Target-Addr": "'${rainbow_api_addr}'"
       }
     }
   },
@@ -251,7 +250,7 @@ curl $apisix_addr/apisix/admin/routes/2000 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "proxy-rewrite": {
       "headers": {
-        "target_url": "https://main.confluxrpc.com/'${apikey_confura_main}'"
+        "X-Rainbow-Target-Url": "https://main.confluxrpc.com/'${apikey_confura_main}'"
       }
     },
     "ext-plugin-post-resp": {
@@ -282,7 +281,7 @@ curl $apisix_addr/apisix/admin/routes/2100 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "proxy-rewrite": {
       "headers": {
-        "target_url": "https://test.confluxrpc.com/'${apikey_confura_test}'"
+        "X-Rainbow-Target-Url": "https://test.confluxrpc.com/'${apikey_confura_test}'"
       }
     },
     "ext-plugin-post-resp": {
@@ -313,7 +312,7 @@ curl $apisix_addr/apisix/admin/routes/2200 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "proxy-rewrite": {
       "headers": {
-        "target_url": "https://evm.confluxrpc.com/'${apikey_confura_main}'"
+        "X-Rainbow-Target-Url": "https://evm.confluxrpc.com/'${apikey_confura_main}'"
       }
     },
     "ext-plugin-post-resp": {
@@ -344,7 +343,7 @@ curl $apisix_addr/apisix/admin/routes/2300 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "proxy-rewrite": {
       "headers": {
-        "target_url": "https://evmtestnet.confluxrpc.com/'${apikey_confura_test}'"
+        "X-Rainbow-Target-Url": "https://evmtestnet.confluxrpc.com/'${apikey_confura_test}'"
       }
     },
     "ext-plugin-post-resp": {
@@ -357,13 +356,46 @@ curl $apisix_addr/apisix/admin/routes/2300 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "priority": 400
 }'
 
+# Scan
+# cspace-main
+curl $apisix_addr/apisix/admin/routes/3000 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "scan-cspace-main",
+  "desc": "scan core space main net",
+  "uri": "/*",
+  "host": "dev-scan-cspace-main.'${servers_domain}'",
+  "plugins": {
+    "ext-plugin-pre-req": {
+       "conf": [
+         {"name":"apikey-auth", "value":"{\"lookup\":\"header\"}"},
+         {"name":"scan-parser", "value":"{\"is_mainnet\":true,\"is_cspace\":true}"},
+         {"name":"count", "value":"{}"},
+         {"name":"rate-limit", "value":"{\"mode\":\"cost_type\"}"}
+       ]
+    },
+    "proxy-rewrite": {
+      "headers": {
+        "X-Rainbow-Target-Addr": "https://api.confluxscan.net",
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
+        "apiKey": "'${apikey_scan_main}'"
+      }
+    },
+    "ext-plugin-post-resp": {
+       "conf": [
+         {"name":"count", "value":"{}"}
+       ]
+    }
+  },
+  "upstream_id": "100",
+  "priority": 400
+}'
+
 echo "配置apisix路由完成"
 # *************************** 证书相关 ***********************************
 
 # ssh证书生成
 
 # openssl req -new -out server.csr -key server.key -subj "/C=CN/ST=BeiJing/L=BeiJing/O=blockchain/OU=conflux/CN=api.rainbow.com
-
 
 # # ***************************** DEV 环境 ********************************
 # 1. 将 $servers_domain 修改为 nftrainbow.cn
