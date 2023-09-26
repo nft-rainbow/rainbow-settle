@@ -1,3 +1,7 @@
+TODO:
+1. 设置Rainbow路由的JwtKey
+2. 挂载config.yaml文件
+
 #######################################################################################################
 # Set your parameters
 #######################################################################################################
@@ -80,7 +84,7 @@ curl $apisix_addr/apisix/admin/routes/1000 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "plugins": {
     "ext-plugin-pre-req": {
        "conf": [
-         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-api\",\"env\":\"'${env}'\"}"},
+         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"jwt_key\":\"jwt-openapi-key\"}"},
          {"name":"rainbow-api-parser", "value":"{}"},
          {"name":"count", "value":"{}"},
          {"name":"rate-limit", "value":"{\"mode\":\"request\"}"}
@@ -117,7 +121,7 @@ curl $apisix_addr/apisix/admin/routes/1100 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "plugins": {
     "ext-plugin-pre-req": {
        "conf": [
-         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-dashboard\",\"env\":\"'${env}'\"}"},
+         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"jwt_key\":\"jwt-dashboard-key\"}"},
          {"name":"rainbow-api-parser", "value":"{}"},
          {"name":"count", "value":"{}"}
        ]
@@ -151,7 +155,7 @@ curl $apisix_addr/apisix/admin/routes/1120 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "plugins": {
     "ext-plugin-pre-req": {
        "conf": [
-         {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"app\":\"rainbow-dashboard\",\"env\":\"local\"}"}
+          {"name":"jwt-auth", "value":"{\"token_lookup\":\"header: Authorization\",\"jwt_key\":\"jwt-dashboard-key\"}"}
        ]
     },
     "proxy-rewrite": {

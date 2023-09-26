@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"os"
+
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/auth"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/count"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/ratelimit"
@@ -8,13 +10,15 @@ import (
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/rainbowapi"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/scan"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/resp_format"
-	"github.com/nft-rainbow/rainbow-settle/common/config"
+	"github.com/sirupsen/logrus"
+
+	pconfig "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/config"
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
 )
 
 func init() {
-	redis.Init(config.Redis{
-		Host: "redis",
-		Port: 6379,
-	})
+	wd, err := os.Getwd()
+	logrus.WithError(err).WithField("wd", wd).Info("current working directory")
+	pconfig.InitByFile("../apisix-go-plugin-runner/config.yaml")
+	redis.Init(pconfig.Get().Redis)
 }

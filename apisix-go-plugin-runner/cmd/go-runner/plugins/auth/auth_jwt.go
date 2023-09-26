@@ -31,31 +31,34 @@ func init() {
 
 type JwtAuthConf struct {
 	TokenLookup string `json:"token_lookup"`
-	APP         string `json:"app"` // rainbow-api, rainbow-dashboard, rainbow-admin
-	Env         string `json:"env"` // prod, env, local
+	JwtKey      string `json:"jwt_key"`
+	// APP         string `json:"app"` // rainbow-api, rainbow-dashboard, rainbow-admin
+	// Env         string `json:"env"` // prod, env, local
 }
 
-func (j *JwtAuthConf) getJwtKey() (string, bool) {
-	var keys = map[string]string{
-		"rainbow-api-prod":  "",
-		"rainbow-api-dev":   "jwt-openapi-key",
-		"rainbow-api-local": "jwt-openapi-key",
+func (j *JwtAuthConf) getJwtKey() string {
+	return j.JwtKey
 
-		"rainbow-dashboard-prod":  "",
-		"rainbow-dashboard-dev":   "jwt-dashboard-key",
-		"rainbow-dashboard-local": "jwt-dashboard-key",
+	// var keys = map[string]string{
+	// 	"rainbow-api-prod":  "",
+	// 	"rainbow-api-dev":   "jwt-openapi-key",
+	// 	"rainbow-api-local": "jwt-openapi-key",
 
-		"rainbow-admin-prod":  "",
-		"rainbow-admin-dev":   "jwt-admin-key",
-		"rainbow-admin-local": "jwt-ddmin-key",
-	}
-	val, ok := keys[j.appEnvString()]
-	return val, ok
+	// 	"rainbow-dashboard-prod":  "",
+	// 	"rainbow-dashboard-dev":   "jwt-dashboard-key",
+	// 	"rainbow-dashboard-local": "jwt-dashboard-key",
+
+	// 	"rainbow-admin-prod":  "",
+	// 	"rainbow-admin-dev":   "jwt-admin-key",
+	// 	"rainbow-admin-local": "jwt-ddmin-key",
+	// }
+	// val, ok := keys[j.appEnvString()]
+	// return val, ok
 }
 
-func (j *JwtAuthConf) appEnvString() string {
-	return fmt.Sprintf("%v-%v", j.APP, j.Env)
-}
+// func (j *JwtAuthConf) appEnvString() string {
+// 	return fmt.Sprintf("%v-%v", j.APP, j.Env)
+// }
 
 type JwtAuth struct {
 	plugin.DefaultPlugin
@@ -132,23 +135,18 @@ func (j *JwtAuth) getJwtMiddleware(conf JwtAuthConf) (*jwt.GinJWTMiddleware, err
 		j.jwtAuthMiddlewares = make(map[string]*jwt.GinJWTMiddleware)
 	}
 
-	appEnv := conf.appEnvString()
+	jwtKey := conf.getJwtKey()
 
-	if j.jwtAuthMiddlewares[appEnv] == nil {
-		jwtKey, ok := conf.getJwtKey()
-		if !ok {
-			return nil, errors.Errorf("unsupported JWT auth for %v %v", conf.APP, conf.Env)
-		}
+	if jwtKey == "" {
+		return nil, errors.Errorf("missing JWT key")
+	}
 
+	if j.jwtAuthMiddlewares[conf.getJwtKey()] == nil {
 		timeout := time.Hour
 		jwtMid, err := jwt.New(&jwt.GinJWTMiddleware{
-			// Realm:      "Rainbow-openapi",
-			Key:        []byte(jwtKey),
-			Timeout:    timeout,
-			MaxRefresh: time.Hour * 5,
-			// Unauthorized: func(c *gin.Context, code int, message string) {
-			// 	ginutils.RenderRespError(c, errors.New(message), rainbow_errors.RainbowError(rainbow_errors.GetRainbowOthersErrCode(code)))
-			// },
+			Key:           []byte(jwtKey),
+			Timeout:       timeout,
+			MaxRefresh:    time.Hour * 5,
 			TokenLookup:   conf.TokenLookup,
 			TokenHeadName: "Bearer",
 			TimeFunc:      time.Now,
@@ -156,10 +154,9 @@ func (j *JwtAuth) getJwtMiddleware(conf JwtAuthConf) (*jwt.GinJWTMiddleware, err
 		if err != nil {
 			return nil, err
 		}
-		j.jwtAuthMiddlewares[appEnv] = jwtMid
+		j.jwtAuthMiddlewares[jwtKey] = jwtMid
 	}
-
-	return j.jwtAuthMiddlewares[appEnv], nil
+	return j.jwtAuthMiddlewares[jwtKey], nil
 }
 
 // TODO: support rainbow-dashboard

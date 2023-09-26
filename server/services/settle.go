@@ -110,9 +110,13 @@ func settle() error {
 
 		// calc count in balance
 		price := models.GetApiPrice(costType)
-		needCost := price.Mul(decimal.NewFromInt(int64(count - countInQuota)))
-		actualCost := decimal.Min(needCost, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota))
-		countInBalance := actualCost.Div(price).BigInt().Int64()
+		countInBalance := int64(count - countInQuota)
+		countInBalance = mathutils.Min(countInBalance, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota).Div(price).BigInt().Int64())
+		actualCost := price.Mul(decimal.NewFromInt(countInBalance))
+
+		// needCost := price.Mul(decimal.NewFromInt(int64(count - countInQuota)))
+		// actualCost := decimal.Min(needCost, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota))
+		// countInBalance := actualCost.Div(price).BigInt().Int64()
 
 		if countInBalance == 0 && countInQuota == 0 {
 			continue
@@ -167,7 +171,7 @@ func settle() error {
 				}
 			}
 			us.Stack = datatypes.NewJSONType(data)
-			if err := tx.Debug().Save(us).Error; err != nil {
+			if err := tx.Save(us).Error; err != nil {
 				return errors.WithMessage(err, "failed to update user settle stack")
 			}
 			logrus.WithField("stack", us.Stack).Info("update user settle stack")

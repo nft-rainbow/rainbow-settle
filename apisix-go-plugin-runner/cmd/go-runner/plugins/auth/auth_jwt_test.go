@@ -49,7 +49,7 @@ func TestAuthFail(t *testing.T) {
 		r := thisHttp.CreateRequest([]byte{0, 0, 0, 0})
 		r.Header().Set("Authorization", item.Authorization)
 
-		a.RequestFilter(JwtAuthConf{item.TokenLookup, "rainbow-api", "local"}, w, r)
+		a.RequestFilter(JwtAuthConf{item.TokenLookup, "jwt-openapi-key"}, w, r)
 		resp := w.Result()
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -66,7 +66,7 @@ func TestAuthOk(t *testing.T) {
 	r := thisHttp.CreateRequest([]byte{0, 0, 0, 0})
 	r.Header().Set("Authorization", token)
 
-	a.RequestFilter(JwtAuthConf{"header: Authorization", "rainbow-api", "local"}, w, r)
+	a.RequestFilter(JwtAuthConf{"header: Authorization", "jwt-openapi-key"}, w, r)
 	resp := w.Result()
 
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -83,7 +83,7 @@ func TestParseConf(t *testing.T) {
 }
 
 func TestTmp(t *testing.T) {
-	j, _ := json.Marshal(JwtAuthConf{"header: Authorization", "rainbow-api", "local"})
+	j, _ := json.Marshal(JwtAuthConf{"header: Authorization", "jwt-openapi-key"})
 	fmt.Printf("%s", j)
 }
 

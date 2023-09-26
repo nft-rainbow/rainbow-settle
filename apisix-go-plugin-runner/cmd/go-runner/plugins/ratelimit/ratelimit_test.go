@@ -30,13 +30,13 @@ func TestRateLimit(t *testing.T) {
 	}
 }
 
-func BenchmarkXxx(b *testing.B) {
+func BenchmarkCallRpc(b *testing.B) {
 
 	fmt.Printf("n: %d", b.N)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// 定义要执行的Shell语句
-		command := `curl -k -X POST --data '{"jsonrpc":"2.0","method":"cfx_getNextNonce","params":["cfx:aajj1b1gm7k51mhzm80czcx31kwxrm2f6jxvy30mvk"],"id":1}' -H "Content-Type: application/json" http://dev-rpc-cspace-main.nftrainbow.me:9080/rvbDstNuuN`
+		command := `curl -k -X POST --data '{"jsonrpc":"2.0","method":"cfx_getNextNonce","params":["cfx:aamwcnmz4e7v2pa1sh2hjfsac3ssusu6eeyu2untze"],"id":1}' -H "Content-Type: application/json" http://dev-rpc-cspace-main.nftrainbow.me:9080/rvbDstNuuN`
 
 		// 创建用于执行Shell语句的命令
 		cmd := exec.Command("sh", "-c", command)

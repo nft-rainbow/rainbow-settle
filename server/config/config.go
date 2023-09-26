@@ -5,7 +5,7 @@ import (
 	cfg "github.com/nft-rainbow/rainbow-settle/common/config"
 )
 
-type ConfigBase struct {
+type Config struct {
 	Environment string `yaml:"environment"`
 	Port        struct {
 		Grpc    int `yaml:"grpc"`
@@ -28,11 +28,11 @@ type ConfigBase struct {
 // }
 
 var (
-	_config ConfigBase
+	_config Config
 )
 
 func InitByFile(file string) {
-	_config = *cfg.InitByFile[ConfigBase](file)
+	_config = *cfg.InitByFile[Config](file)
 
 	// type tmpConfig struct {
 	// 	QuotaRules []quotaRuleRaw `yaml:"quotaRules"`
@@ -53,6 +53,6 @@ func InitByFile(file string) {
 	// })
 }
 
-func Get() *ConfigBase {
+func Get() *Config {
 	return &_config
 }

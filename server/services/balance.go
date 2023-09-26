@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 
+	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
@@ -89,6 +90,20 @@ func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatL
 }
 
 func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
+	// 找 logtype 上一条记录的unsettle
+	flc, err := models.FindLastFiatLogCache(userId, logType)
+	if err != nil {
+		if gormutils.IsRecordNotFoundError(err) {
+			flc = &models.FiatLogCache{}
+		} else {
+			return 0, err
+		}
+	}
+
+	// 小于1分的零头只记录，等凑齐1分以上才结算
+	_amount := amount.Add(flc.UnsettleAmount)
+	amount, leftover := calcLeftover(_amount)
+
 	fl, err := func() (uint, error) {
 		if err := checkDecimalQualified(amount); err != nil {
 			return 0, err
@@ -116,6 +131,7 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 				OrderNO: models.RandomOrderNO(),
 				Balance: userBalance.Balance.Add(amount),
 			},
+			UnsettleAmount: leftover,
 		}
 		if err := tx.Create(&l).Error; err != nil {
 			return 0, err
@@ -157,4 +173,14 @@ func checkDecimalQualified(amount decimal.Decimal) error {
 		return errors.Errorf("the decimal place of value cannot be greater than 2, but got %v", amount)
 	}
 	return nil
+}
+
+func calcLeftover(rawAmount decimal.Decimal) (amount, leftover decimal.Decimal) {
+	leftover = decimal.Zero
+	if !rawAmount.Round(2).Equal(rawAmount) {
+		fen, _ := decimal.NewFromString(".01")
+		leftover = rawAmount.Mod(fen)
+		amount = rawAmount.Sub(leftover)
+	}
+	return amount, leftover
 }

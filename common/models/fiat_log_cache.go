@@ -9,6 +9,7 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -22,7 +23,8 @@ var (
 type FiatLogCache struct {
 	BaseModel
 	FiatLogCore
-	IsMerged bool `gorm:"default:0" json:"isMerged,omitempty"`
+	UnsettleAmount decimal.Decimal `gorm:"type:decimal(20,10)" json:"unsettle_amount"`
+	IsMerged       bool            `gorm:"default:0" json:"isMerged,omitempty"`
 }
 
 func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
@@ -63,6 +65,17 @@ func FindSponsorFiatlogByTxid(txId uint) (*FiatLogCache, error) {
 	return &fl, nil
 }
 
+func FindLastFiatLogCache(userId uint, logType FiatLogType) (*FiatLogCache, error) {
+	var fl FiatLogCache
+	if err := db.Model(&FiatLogCache{}).
+		Where("user_id=? and type =?", userId, logType).
+		Order("id desc").
+		First(&fl).Error; err != nil {
+		return nil, err
+	}
+	return &fl, nil
+}
+
 func MergeToFiatlog(start, end time.Time) error {
 	mergeFiatLogLock.Lock()
 	defer mergeFiatLogLock.Unlock()
@@ -82,8 +95,10 @@ func MergeToFiatlog(start, end time.Time) error {
 			Select("user_id, sum(amount) as amount, type, GROUP_CONCAT(meta) as meta, GROUP_CONCAT(id) as cache_ids").
 			Scan(&apiFeeTmpFls).Error
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
+
+		logrus.WithField("fls", apiFeeTmpFls).Trace("get temp api fee fiat logs")
 
 		var apiFeeFls []*FiatLog
 		for _, tmpFl := range apiFeeTmpFls {
@@ -91,14 +106,14 @@ func MergeToFiatlog(start, end time.Time) error {
 
 			metas, err := summaryMetas(fl.Type, fmt.Sprintf("[%s]", tmpFl.Meta))
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			meta, _ := json.Marshal(metas)
 			fl.Meta = meta
 
 			ids, err := unmarshalType[[]uint](fmt.Sprintf("[%s]", tmpFl.CacheIds))
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			fl.CacheIds = datatypes.JSONSlice[uint](*ids)
 
@@ -115,7 +130,7 @@ func MergeToFiatlog(start, end time.Time) error {
 			Select("user_id, amount, type, meta, order_no, CONCAT('[' , id, ']') as cache_ids").
 			Scan(&otherFls).Error
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		allFls := append(otherFls, apiFeeFls...)
@@ -126,13 +141,13 @@ func MergeToFiatlog(start, end time.Time) error {
 		for _, fl := range allFls {
 			lastFiatLog, err := GetLastFiatLog(tx, fl.UserId)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 
 			fl.Balance = lastFiatLog.Balance.Add(fl.Amount)
 		}
 		if err := tx.Save(&allFls).Error; err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		// update is_merged flag
@@ -140,12 +155,12 @@ func MergeToFiatlog(start, end time.Time) error {
 			Where("created_at>=? and created_at<?", start, end).
 			Where("is_merged=0").Update("is_merged", true).Error
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		return nil
 	})
-	logrus.WithError(err).WithField("start", start).WithField("end", end).Info("merged fiatlog")
+	logrus.WithField("error", fmt.Sprintf("%+v", err)).WithField("start", start).WithField("end", end).Info("merged fiatlog")
 	return err
 }
 
