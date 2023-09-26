@@ -177,6 +177,7 @@ func summaryMetas(fiatLogType FiatLogType, metasJson string) (interface{}, error
 	case FIAT_LOG_TYPE_PAY_API_FEE:
 		fms, err := unmarshalType[[]*FiatMetaPayApiFee](metasJson)
 		if err != nil {
+			logrus.WithField("input", metasJson).Debug("failed unmarshal metas to []*FiatMetaPayApiFee")
 			return nil, err
 		}
 		fmsByAddr := lo.GroupBy(*fms, func(fm *FiatMetaPayApiFee) enums.CostType {
