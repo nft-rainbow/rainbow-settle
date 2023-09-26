@@ -6,31 +6,38 @@ TODO:
 # Set your parameters
 #######################################################################################################
 
-# local
-# upstreams
-env=local
-upstream_proxy="172.16.100.252:8020"
-upstream_rainbow_app_service="172.16.100.252:8081"
-upstream_logs_service="172.16.100.252:19080"
+# # local
+# # upstreams
+# env=local
+# upstream_proxy="172.16.100.252:8020"
+# upstream_rainbow_app_service="172.16.100.252:8081"
+# upstream_logs_service="172.16.100.252:19080"
 
-apisix_addr=http://127.0.0.1:9180
-servers_domain=nftrainbow.me
-rainbow_api_addr=http://172.16.100.252:8080
-settle_addr=http://172.16.100.252:8091
+# apisix_addr=http://127.0.0.1:9180
+# servers_domain=nftrainbow.me
+# rainbow_api_addr=http://172.16.100.252:8080
+# settle_addr=http://172.16.100.252:8091
+
+# apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
+# apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
+# apikey_scan_main="xxx"
+# apikey_scan_test="xxx"
+
+# dev
+env=dev
+upstream_proxy="172.18.0.1:8020"
+upstream_rainbow_app_service="172.18.0.1:8081"
+upstream_logs_service="172.18.0.1:19080"
+
+apisix_addr=http://dev-apisix-admin.nftrainbow.cn
+servers_domain=nftrainbow.cn
+rainbow_api_addr=http://127.0.0.1:8080
+settle_addr=http://127.0.0.1:8091
+
 apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
 apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
 apikey_scan_main="xxx"
 apikey_scan_test="xxx"
-
-# dev
-# env=dev
-# apisix_addr=http://dev-apisix-admin.nftrainbow.cn
-# servers_domain=nftrainbow.cn
-# rainbow_api_addr=http://127.0.0.1:8080
-# settle_addr=http://127.0.0.1:8091
-# upstream_proxy="172.18.0.1:8020"
-# apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
-# apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
 
 echo "开始配置apisix路由"
 
