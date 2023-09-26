@@ -104,6 +104,8 @@ func MergeToFiatlog(start, end time.Time) error {
 		for _, tmpFl := range apiFeeTmpFls {
 			fl := tmpFl.FiatLog
 
+			logrus.WithField("metas", fmt.Sprintf("[%s]", tmpFl.Meta)).Debug("rat metas string")
+
 			metas, err := summaryMetas(fl.Type, fmt.Sprintf("[%s]", tmpFl.Meta))
 			if err != nil {
 				return errors.WithStack(err)
