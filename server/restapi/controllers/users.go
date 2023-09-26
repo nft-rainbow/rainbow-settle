@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -44,7 +45,12 @@ func getUserWorkingBillPlans(c *gin.Context) {
 		return
 	}
 
-	ginutils.RenderRespOK(c, lo.Values(ueps))
+	values := lo.Values(ueps)
+	sort.Slice(values, func(i, j int) bool {
+		return values[i].ServerType < values[j].ServerType
+	})
+
+	ginutils.RenderRespOK(c, values)
 }
 
 func getUserIdByQuery(c *gin.Context) (uint, error) {
