@@ -88,7 +88,7 @@ func MergeToFiatlog(start, end time.Time) error {
 
 	err := GetDB().Transaction(func(tx *gorm.DB) error {
 		var apiFeeTmpFls []*TmpFiatLog
-		err := tx.Model(&FiatLogCache{}).Group("user_id,type").
+		err := tx.Debug().Model(&FiatLogCache{}).Group("user_id,type").
 			Where("created_at>=? and created_at<?", start, end).
 			Where("is_merged=0").
 			Where("type in ?", needGroupFiatLogTypes).
@@ -106,7 +106,8 @@ func MergeToFiatlog(start, end time.Time) error {
 
 			logrus.WithField("metas", fmt.Sprintf("[%s]", tmpFl.Meta)).Debug("rat metas string")
 
-			metas, err := summaryMetas(fl.Type, fmt.Sprintf("[%s]", tmpFl.Meta))
+			// TODO: 这里由于meta是截断后的结果，暂时不存meta，需要处理
+			metas, err := summaryMetas(fl.Type, fmt.Sprintf("[%s]", "")) //tmpFl.Meta))
 			if err != nil {
 				return errors.WithStack(err)
 			}
