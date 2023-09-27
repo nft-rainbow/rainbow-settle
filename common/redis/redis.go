@@ -319,7 +319,7 @@ func GetUserInfoByApikey(apikey string) (uint, uint, error) {
 	key := ApikeyKey(apikey)
 	val, err := DB().Get(context.Background(), key).Result()
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, errors.WithMessage(err, "failed to access db")
 	}
 
 	return ParseApikeyValue(val)

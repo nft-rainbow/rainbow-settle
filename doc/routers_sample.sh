@@ -106,7 +106,7 @@ curl $apisix_addr/apisix/admin/routes/1000 -H 'X-API-KEY: edd1c9f034335f136f87ad
        "conf": [
          {"name":"count","value":"{}"}
        ]
-    } 
+    }
   },
   "upstream_id": "100",
   "priority": 400
@@ -268,7 +268,15 @@ curl $apisix_addr/apisix/admin/routes/2000 -H 'X-API-KEY: edd1c9f034335f136f87ad
        "conf": [
          {"name":"rpc-resp-format","value":"{}"}
        ]
-    } 
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/confura_cspace"
+    }
   },
   "upstream_id": "100",
   "priority": 400

@@ -83,7 +83,7 @@ func (c *ApikeyAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pk
 
 		apikey, err := ApikeyAuthConf.ExtractApiKey(r)
 		if err != nil {
-			return err
+			return errors.WithMessage(err, "failed to extract api key")
 		}
 
 		if apikey == "" {
@@ -92,7 +92,7 @@ func (c *ApikeyAuth) RequestFilter(conf interface{}, w http.ResponseWriter, r pk
 
 		userId, appId, err := redis.GetUserInfoByApikey(apikey)
 		if err != nil {
-			return err
+			return errors.WithMessage(err, "failed to get user info by apikey")
 		}
 		log.Infof("get user info from redis: %d,%d,%v", userId, appId, err)
 		r.Header().Set(constants.RAINBOW_USER_ID_HEADER_KEY, fmt.Sprintf("%d", userId))

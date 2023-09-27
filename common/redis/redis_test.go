@@ -11,7 +11,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	Init(config.Redis{Port: 6379})
+	Init(config.Redis{Host: "172.16.100.252", Port: 6379})
 	code := m.Run()
 	os.Exit(code)
 }

@@ -21,10 +21,10 @@ func (o *ConfuraParserConf) GetCostType() enums.CostType {
 		if o.IsCspace {
 			return enums.COST_TYPE_CONFURA_MAIN_CSPACE_NORMAL
 		}
-		return enums.COST_TYPE_CONFURA_TEST_CSPACE_NORMAL
+		return enums.COST_TYPE_CONFURA_MAIN_ESPACE_NORMAL
 	} else {
 		if o.IsCspace {
-			return enums.COST_TYPE_CONFURA_MAIN_ESPACE_NORMAL
+			return enums.COST_TYPE_CONFURA_TEST_CSPACE_NORMAL
 		}
 		return enums.COST_TYPE_CONFURA_TEST_ESPACE_NORMAL
 	}
