@@ -33,14 +33,25 @@ func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, 
 	if err != nil {
 		return 0, nil, err
 	}
-	up, err := models.GetUserBillPlanOperator().UpdateUserBillPlan(userId, planId, isAutoRenewal)
+
+	var up *models.UserBillPlan
+	var fl uint
+
+	err = models.GetDB().Transaction(func(tx *gorm.DB) error {
+		up, err = models.GetUserBillPlanOperator().UpdateUserBillPlan(tx, userId, planId, isAutoRenewal)
+		if err != nil {
+			return err
+		}
+		fl, err = updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_BILLPLAN, models.FiatMetaBuyBillplan{up.PlanId, up.ID})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return 0, nil, err
 	}
-	fl, err := updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_BILLPLAN, models.FiatMetaBuyBillplan{up.PlanId, up.ID})
-	if err != nil {
-		return 0, nil, err
-	}
+
 	return fl, up, nil
 }
 
@@ -49,14 +60,20 @@ func BuyDataBundle(userId uint, dataBundleId uint, count uint) (fiatlogId uint, 
 	if err != nil {
 		return 0, nil, err
 	}
-	udb, err := models.CreateUserDataBundleAndConsume(userId, dataBundleId, count)
-	if err != nil {
-		return 0, nil, err
-	}
-	fl, err := updateUserBalance(userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.Count, udb.ID})
-	if err != nil {
-		return 0, nil, err
-	}
+
+	var udb *models.UserDataBundle
+	var fl uint
+	err = models.GetDB().Transaction(func(tx *gorm.DB) error {
+		udb, err = models.CreateUserDataBundleAndConsume(tx, userId, dataBundleId, count)
+		if err != nil {
+			return err
+		}
+		fl, err = updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(plan.Price), models.FIAT_LOG_TYPE_BUY_DATABUNDLE, models.FiatMetaBuyDatabundle{udb.DataBundleId, udb.Count, udb.ID})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 
 	return fl, udb, nil
 }
@@ -175,12 +192,13 @@ func checkDecimalQualified(amount decimal.Decimal) error {
 	return nil
 }
 
-func calcLeftover(rawAmount decimal.Decimal) (amount, leftover decimal.Decimal) {
-	leftover = decimal.Zero
+// returns amount in fen and leftover small than 1 fen
+func calcLeftover(rawAmount decimal.Decimal) (decimal.Decimal, decimal.Decimal) {
 	if !rawAmount.Round(2).Equal(rawAmount) {
 		fen, _ := decimal.NewFromString(".01")
-		leftover = rawAmount.Mod(fen)
-		amount = rawAmount.Sub(leftover)
+		leftover := rawAmount.Mod(fen)
+		amount := rawAmount.Sub(leftover)
+		return amount, leftover
 	}
-	return amount, leftover
+	return rawAmount, decimal.Zero
 }

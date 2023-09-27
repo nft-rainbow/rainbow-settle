@@ -16,7 +16,7 @@ type UserDataBundle struct {
 	IsConsumed   bool      `json:"is_consumed"`
 }
 
-func CreateUserDataBundleAndConsume(userId, dataBundleId, count uint) (*UserDataBundle, error) {
+func CreateUserDataBundleAndConsume(tx *gorm.DB, userId, dataBundleId, count uint) (*UserDataBundle, error) {
 	udb := &UserDataBundle{
 		UserId:       userId,
 		DataBundleId: dataBundleId,
@@ -24,17 +24,27 @@ func CreateUserDataBundleAndConsume(userId, dataBundleId, count uint) (*UserData
 		BoughtTime:   time.Now(),
 	}
 
-	err := GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&udb).Error; err != nil {
+	coreFn := func(_tx *gorm.DB) error {
+		if err := _tx.Create(&udb).Error; err != nil {
 			return err
 		}
-		if err := GetUserQuotaOperator().DepositDataBundle(tx, udb); err != nil {
+		if err := GetUserQuotaOperator().DepositDataBundle(_tx, udb); err != nil {
 			return err
 		}
 
-		utils.Retry(10, time.Second, func() error { return tx.Save(&udb).Error })
+		utils.Retry(10, time.Second, func() error { return _tx.Save(&udb).Error })
 		return nil
-	})
+	}
+
+	var err error
+	if tx == db {
+		err = GetDB().Transaction(func(tx *gorm.DB) error {
+			return coreFn(tx)
+		})
+	} else {
+		err = coreFn(tx)
+	}
+
 	if err != nil {
 		return nil, err
 	}

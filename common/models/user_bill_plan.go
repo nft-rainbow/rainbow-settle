@@ -84,16 +84,16 @@ func (u *UserBillPlanOperator) First(filter *UserBillPlanFilter) (*UserBillPlan,
 }
 
 // 购买新套餐时，直接覆盖现有套餐
-func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAutoRenew bool) (*UserBillPlan, error) {
+func (u *UserBillPlanOperator) UpdateUserBillPlan(tx *gorm.DB, userId uint, planId uint, isAutoRenew bool) (*UserBillPlan, error) {
 
 	var oldUserPlan, newUserPlan *UserBillPlan
-	err := GetDB().Transaction(func(tx *gorm.DB) error {
+	coreFn := func(_tx *gorm.DB) error {
 		newPlan, err := GetBillPlanById(planId)
 		if err != nil {
 			return err
 		}
 
-		if err := tx.Where("user_id=? and server_type=?", userId, newPlan.Server).First(&oldUserPlan).Error; err != nil {
+		if err := _tx.Where("user_id=? and server_type=?", userId, newPlan.Server).First(&oldUserPlan).Error; err != nil {
 			oldUserPlan = nil
 			if !gormutils.IsRecordNotFoundError(err) {
 				return err
@@ -119,7 +119,7 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAu
 			newUserPlan.BaseModel = oldUserPlan.BaseModel
 		}
 
-		if err := tx.Save(&newUserPlan).Error; err != nil {
+		if err := _tx.Save(&newUserPlan).Error; err != nil {
 			return err
 		}
 
@@ -128,11 +128,21 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(userId uint, planId uint, isAu
 		}
 
 		return nil
-	})
+	}
+
+	var err error
+	if tx == db {
+		err = GetDB().Transaction(func(tx *gorm.DB) error {
+			return coreFn(tx)
+		})
+	} else {
+		err = coreFn(tx)
+	}
 
 	if err != nil {
 		return nil, err
 	}
+
 	return newUserPlan, nil
 }
 

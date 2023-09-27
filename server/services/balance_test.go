@@ -22,4 +22,10 @@ func TestCalcLeftover(t *testing.T) {
 	amount, leftover = calcLeftover(rawAmount)
 	assert.Equal(t, decimal.NewFromFloat(-0.06).String(), amount.String())
 	assert.Equal(t, decimal.NewFromFloat(-0.006).String(), leftover.String())
+
+	rawAmount, err = decimal.NewFromString("-1000")
+	assert.NoError(t, err)
+	amount, leftover = calcLeftover(rawAmount)
+	assert.Equal(t, decimal.NewFromFloat(-1000).String(), amount.String())
+	assert.Equal(t, decimal.NewFromFloat(0).String(), leftover.String())
 }
