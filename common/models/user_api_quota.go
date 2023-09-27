@@ -29,7 +29,7 @@ func (u *UserApiQuota) Total() int {
 	return u.CountReset + u.CountRollover
 }
 
-func InitUserUserApiQuota() {
+func InitUserApiQuota() {
 	userIds := MustGetAllUserIds()
 	costTypes := MustGetAllCostTypes()
 
@@ -72,6 +72,7 @@ func (*UserQuotaOperator) GetUserQuotas(userId uint, offset int, limit int) (*gi
 }
 
 func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costTypes []enums.CostType) error {
+	logrus.WithField("user ids", userIds).WithField("cost types", costTypes).Info("create user api quota")
 	var quotas []*UserApiQuota
 	if err := tx.Where("user_id in ?", userIds).Where("cost_type in ?", costTypes).Find(&quotas).Error; err != nil {
 		return err

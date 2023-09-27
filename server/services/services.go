@@ -14,8 +14,10 @@ var (
 
 func Init() {
 	userQuotaOperater = models.GetUserQuotaOperator()
+
 	userBillPlanOperater = models.GetUserBillPlanOperator()
 	userBillPlanOperater.RegisterOnChangedEvent(ResetQuotaOnPlanUpdated)
+
 	cmbDepositNoOperator = &models.CmbDepositNoOperator{}
 }
 

@@ -99,7 +99,7 @@ func ApikeyKey(apikey string) string {
 
 // value of user related apikey
 func ApikeyValue(userId, appId uint) string {
-	return fmt.Sprintf("%d%d", userId, appId)
+	return fmt.Sprintf("%d-%d", userId, appId)
 }
 
 func UserPlanKey(userId uint, serverType enums.ServerType) string {

@@ -32,6 +32,9 @@ type SettleClient interface {
 	RefundSponsor(ctx context.Context, in *RefundSponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	RefundApiFee(ctx context.Context, in *RefundApiFeeRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetUserBalance(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserBalance, error)
+	// rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
+	UserCreated(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*Empty, error)
+	ApikeyUpdated(ctx context.Context, in *ApiKeyUpdated, opts ...grpc.CallOption) (*Empty, error)
 	CreateCmcDepositNo(ctx context.Context, in *CreateCmcDepositNoReqeust, opts ...grpc.CallOption) (*Empty, error)
 	GetCmcDepositNo(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*CmbDepositNo, error)
 	QueryRecentCmbHistory(ctx context.Context, in *Pagenation, opts ...grpc.CallOption) (*QueryRecentCmbHistoryResponse, error)
@@ -136,6 +139,24 @@ func (c *settleClient) GetUserBalance(ctx context.Context, in *UserID, opts ...g
 	return out, nil
 }
 
+func (c *settleClient) UserCreated(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/UserCreated", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) ApikeyUpdated(ctx context.Context, in *ApiKeyUpdated, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/ApikeyUpdated", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *settleClient) CreateCmcDepositNo(ctx context.Context, in *CreateCmcDepositNoReqeust, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/CreateCmcDepositNo", in, out, opts...)
@@ -186,6 +207,9 @@ type SettleServer interface {
 	RefundSponsor(context.Context, *RefundSponsorRequest) (*Empty, error)
 	RefundApiFee(context.Context, *RefundApiFeeRequest) (*Empty, error)
 	GetUserBalance(context.Context, *UserID) (*UserBalance, error)
+	// rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
+	UserCreated(context.Context, *UserID) (*Empty, error)
+	ApikeyUpdated(context.Context, *ApiKeyUpdated) (*Empty, error)
 	CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error)
 	GetCmcDepositNo(context.Context, *UserID) (*CmbDepositNo, error)
 	QueryRecentCmbHistory(context.Context, *Pagenation) (*QueryRecentCmbHistoryResponse, error)
@@ -226,6 +250,12 @@ func (UnimplementedSettleServer) RefundApiFee(context.Context, *RefundApiFeeRequ
 }
 func (UnimplementedSettleServer) GetUserBalance(context.Context, *UserID) (*UserBalance, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserBalance not implemented")
+}
+func (UnimplementedSettleServer) UserCreated(context.Context, *UserID) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserCreated not implemented")
+}
+func (UnimplementedSettleServer) ApikeyUpdated(context.Context, *ApiKeyUpdated) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApikeyUpdated not implemented")
 }
 func (UnimplementedSettleServer) CreateCmcDepositNo(context.Context, *CreateCmcDepositNoReqeust) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCmcDepositNo not implemented")
@@ -432,6 +462,42 @@ func _Settle_GetUserBalance_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Settle_UserCreated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).UserCreated(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/UserCreated",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).UserCreated(ctx, req.(*UserID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_ApikeyUpdated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApiKeyUpdated)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).ApikeyUpdated(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/ApikeyUpdated",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).ApikeyUpdated(ctx, req.(*ApiKeyUpdated))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Settle_CreateCmcDepositNo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateCmcDepositNoReqeust)
 	if err := dec(in); err != nil {
@@ -550,6 +616,14 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserBalance",
 			Handler:    _Settle_GetUserBalance_Handler,
+		},
+		{
+			MethodName: "UserCreated",
+			Handler:    _Settle_UserCreated_Handler,
+		},
+		{
+			MethodName: "ApikeyUpdated",
+			Handler:    _Settle_ApikeyUpdated_Handler,
 		},
 		{
 			MethodName: "CreateCmcDepositNo",

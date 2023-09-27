@@ -11,8 +11,11 @@ import (
 )
 
 var (
-	userBillPlanOperator UserBillPlanOperator
+	userBillPlanOperator          UserBillPlanOperator
+	onUserBillPlanChangedHandlers []OnUserBillPlanChangedHandler
 )
+
+type OnUserBillPlanChangedHandler func(old, new *UserBillPlan)
 
 // 用户套餐：用户ID，套餐ID，购买时间（生效时间），是否自动续费
 type UserBillPlan struct {
@@ -42,6 +45,13 @@ func (u *UserBillPlan) AfterFind(tx *gorm.DB) (err error) {
 	return
 }
 
+// func (u *UserBillPlan) AfterSave(tx *gorm.DB) (err error) {
+// 	for _, h := range onUserBillPlanChangedHandlers {
+// 		h(u)
+// 	}
+// 	return nil
+// }
+
 type UserBillPlanMap map[uint]map[enums.ServerType]*UserBillPlan
 
 func (u *UserBillPlanMap) PopulatePlans() error {
@@ -56,17 +66,15 @@ func (u *UserBillPlanMap) PopulatePlans() error {
 }
 
 type UserBillPlanOperator struct {
-	onChanged []OnUserBillPlanChangedHandler
+	// onChanged []OnUserBillPlanChangedHandler
 }
 
 func GetUserBillPlanOperator() *UserBillPlanOperator {
 	return &userBillPlanOperator
 }
 
-type OnUserBillPlanChangedHandler func(old, new *UserBillPlan)
-
 func (u *UserBillPlanOperator) RegisterOnChangedEvent(handler OnUserBillPlanChangedHandler) {
-	u.onChanged = append(u.onChanged, handler)
+	onUserBillPlanChangedHandlers = append(onUserBillPlanChangedHandlers, handler)
 }
 
 type UserBillPlanFilter struct {
@@ -123,10 +131,6 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(tx *gorm.DB, userId uint, plan
 			return err
 		}
 
-		for _, h := range u.onChanged {
-			h(oldUserPlan, newUserPlan)
-		}
-
 		return nil
 	}
 
@@ -141,6 +145,11 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(tx *gorm.DB, userId uint, plan
 
 	if err != nil {
 		return nil, err
+	}
+
+	// TODO: 如果事务失败需要重新触发事件
+	for _, h := range onUserBillPlanChangedHandlers {
+		h(oldUserPlan, newUserPlan)
 	}
 
 	return newUserPlan, nil

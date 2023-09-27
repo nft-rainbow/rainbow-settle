@@ -152,6 +152,30 @@ func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID) (*p
 	}, nil
 }
 
+func (s *SettleServer) UserCreated(ctx context.Context, in *proto.UserID) (*proto.Empty, error) {
+	costTypes, err := models.GetAllCostTypes()
+	if err != nil {
+		return nil, err
+	}
+	if err := models.GetUserQuotaOperator().CreateIfNotExists(models.GetDB(), []uint{uint(in.UserId)}, costTypes); err != nil {
+		return nil, err
+	}
+	if err := models.GetUserSettledOperator().CreateIfNotExists(models.GetDB(), []uint{uint(in.UserId)}, costTypes); err != nil {
+		return nil, err
+	}
+	if err := services.ResetQuotaOnUserCreated(uint(in.UserId)); err != nil {
+		return nil, err
+	}
+	return &proto.Empty{}, nil
+}
+
+func (s *SettleServer) ApikeyUpdated(ctx context.Context, in *proto.ApiKeyUpdated) (*proto.Empty, error) {
+	if err := services.RefreshApikeyToRedis(in.Old, in.New, uint64(in.UserId), uint64(in.AppId)); err != nil {
+		return nil, err
+	}
+	return &proto.Empty{}, nil
+}
+
 // func (s *SettleServer) GetUserApiQuota(ctx context.Context, in *proto.UserID) (*proto.UserApiQuotas, error) {
 // 	_uqs, err := services.GetUserQuotaOperator().GetUserQuotasMap(uint(in.UserId))
 // 	if err != nil {

@@ -22,6 +22,7 @@ func SetPlanToRedis() {
 }
 
 func setUserPlansToRedis() {
+	logrus.Info("refresh all user plans to redis")
 	userPlansMap, err := models.GetUserBillPlanOperator().FindAllUsersEffectivePlan()
 	if err != nil {
 		panic(err)

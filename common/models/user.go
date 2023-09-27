@@ -80,16 +80,6 @@ func (u *User) AfterCreate(tx *gorm.DB) (err error) {
 	if err := tx.Create(NewUserBalance(u.ID)).Error; err != nil {
 		return err
 	}
-	costTypes, err := GetAllCostTypes()
-	if err != nil {
-		return err
-	}
-	if err := GetUserQuotaOperator().CreateIfNotExists(tx, []uint{u.ID}, costTypes); err != nil {
-		return err
-	}
-	if err := GetUserSettledOperator().CreateIfNotExists(tx, []uint{u.ID}, costTypes); err != nil {
-		return err
-	}
 	return nil
 }
 

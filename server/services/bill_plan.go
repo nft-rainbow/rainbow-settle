@@ -25,7 +25,7 @@ func RunPlan() {
 		if err := RenewPlans(); err != nil {
 			return err
 		}
-		return ResetQuotas()
+		return ResetAllUsersQuotas()
 	})
 	logrus.WithError(err).Info("run plan completed")
 }
@@ -51,11 +51,9 @@ func RenewPlans() error {
 	return nil
 }
 
-// 1. find users highest priority plan
-// 2. set users without plan for default plan
-func ResetQuotas() error {
-	logrus.Info("reset default quotas")
-	userPlans, err := models.GetUserBillPlanOperator().FindAllUsersEffectivePlan()
+func ResetUsersQuotas(userIds []uint) error {
+	logrus.WithField("users", userIds).Info("reset users quotas")
+	userPlans, err := models.GetUserBillPlanOperator().FindUsersEffectivePlans(userIds)
 	logrus.WithField("result", userPlans).WithError(err).Trace("find all user effective plans")
 	if err != nil {
 		return err
@@ -82,6 +80,17 @@ func ResetQuotas() error {
 	return nil
 }
 
+// 1. find users highest priority plan
+// 2. set users without plan for default plan
+func ResetAllUsersQuotas() error {
+	logrus.Info("reset all users quotas")
+	allUserIds, err := models.GetAllUserIds()
+	if err != nil {
+		return err
+	}
+	return ResetUsersQuotas(allUserIds)
+}
+
 func resetQuotaByPlan(plan *models.BillPlan, userIds []uint) error {
 	quotas := plan.GetQuotas()
 	nextSchedule, err := plan.NextRefreshQuotaTime()
@@ -92,6 +101,10 @@ func resetQuotaByPlan(plan *models.BillPlan, userIds []uint) error {
 		return err
 	}
 	return nil
+}
+
+func ResetQuotaOnUserCreated(userId uint) error {
+	return ResetUsersQuotas([]uint{userId})
 }
 
 func ResetQuotaOnPlanUpdated(old, new *models.UserBillPlan) {

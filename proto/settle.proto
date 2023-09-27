@@ -153,6 +153,13 @@ message UpdateUpdateBillPlanRenewRequest {
   bool IsAutoRenewal = 3;
 }
 
+message ApiKeyUpdated{
+  string Old =1;
+  string New=2;
+  uint32 UserId=3;
+  uint32 AppId=4;
+}
+
 message QueryRecentCmbHistoryResponse { repeated ModelsCmbRecord List = 1; }
 
 service Settle {
@@ -171,6 +178,8 @@ service Settle {
 
   rpc GetUserBalance(UserID) returns (UserBalance);
   // rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
+  rpc UserCreated(UserID)returns(Empty);
+  rpc ApikeyUpdated(ApiKeyUpdated)returns(Empty);
 
   rpc CreateCmcDepositNo(CreateCmcDepositNoReqeust) returns (Empty);
   rpc GetCmcDepositNo(UserID) returns (CmbDepositNo);
