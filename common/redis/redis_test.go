@@ -33,6 +33,11 @@ func TestGetUserServerQps(t *testing.T) {
 	}
 }
 
+func TestGetUserInfoByApikey(t *testing.T) {
+	_, _, err := GetUserInfoByApikey("rvbDstNuuN")
+	assert.NoError(t, err)
+}
+
 func BenchmarkGetUserInfoByApikey(b *testing.B) {
 	// Init(config.Redis{Port: 6379})
 	b.ResetTimer()

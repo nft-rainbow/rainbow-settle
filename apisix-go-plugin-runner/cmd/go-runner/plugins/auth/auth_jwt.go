@@ -170,17 +170,24 @@ func extractUserInfoFromJwt(jwtMid *jwt.GinJWTMiddleware, ctx *gin.Context) (str
 		log.Infof("claims: %v", claims)
 		return fmt.Sprintf("%v", claims["AppUserId"]), fmt.Sprintf("%v", claims["id"]), nil
 	}
-	if strings.HasPrefix(ctx.Request.URL.Path, "/dashboard/apps/") {
-		s := strings.TrimPrefix(ctx.Request.URL.Path, "/dashboard/apps/")
-		len := strings.Index(s, "/")
-		var id string
-		if len == -1 {
-			id = s
-		} else {
-			id = s[:len]
+
+	if strings.HasPrefix(ctx.Request.URL.Path, "/dashboard") {
+		userId := fmt.Sprintf("%v", claims["id"])
+		appId := "0"
+		if strings.HasPrefix(ctx.Request.URL.Path, "/dashboard/apps/") {
+			s := strings.TrimPrefix(ctx.Request.URL.Path, "/dashboard/apps/")
+			len := strings.Index(s, "/")
+			var id string
+			if len == -1 {
+				id = s
+			} else {
+				id = s[:len]
+			}
+			appId = id
 		}
-		return fmt.Sprintf("%v", claims["id"]), id, nil
+		return userId, appId, nil
 	}
+
 	if strings.HasPrefix(ctx.Request.URL.Path, "/admin") {
 		return fmt.Sprintf("%v", claims["id"]), fmt.Sprintf("%d", 0), nil
 	}

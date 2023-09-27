@@ -148,7 +148,35 @@ curl $apisix_addr/apisix/admin/routes/1100 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "priority": 400
 }'
 
-# rainbow api dashboard 免费接口
+# rainbow api dashboard 不需要身份验证的接口
+	# dashboardRouter.POST("/register", userRegisterEndpoint)
+	# dashboardRouter.POST("/login", middlewares.UserLoginHandler)
+	# dashboardRouter.POST("/logout", middlewares.JwtAuthMiddleware.LogoutHandler)
+	# dashboardRouter.GET("/refresh_token", middlewares.UserRefreshTokenHandler)
+	# dashboardRouter.POST("/password/session", createPasswordResetSessionEndpoint)
+	# dashboardRouter.GET("/password/session/:code", getPasswordResetSessionEndpoint)
+	# dashboardRouter.POST("/password/session/:code", newPasswordEndpoint)
+curl $apisix_addr/apisix/admin/routes/1115 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "rainbow-dashboard-api-no-jwt",
+  "desc": "rainbow dashboard api 不需要身份验证的接口",
+  "uri": "/*",
+  "vars": [
+    ["uri", "~~", "^/dashboard/(register|login|logout|refresh_token|password).*$"]
+  ],
+  "host": "dev.'${servers_domain}'",
+  "plugins": {
+    "proxy-rewrite": {
+      "headers": {
+        "X-Rainbow-Target-Addr": "'${rainbow_api_addr}'"
+      }
+    }
+  },
+  "upstream_id": "100",
+  "priority": 300
+}'
+
+# rainbow api dashboard 免费接口，但需要身份验证
 curl $apisix_addr/apisix/admin/routes/1120 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
   "name": "rainbow-dashboard-api-free",
@@ -172,7 +200,7 @@ curl $apisix_addr/apisix/admin/routes/1120 -H 'X-API-KEY: edd1c9f034335f136f87ad
     }
   },
   "upstream_id": "100",
-  "priority": 300
+  "priority": 200
 }'
 
 # rainbow apps
@@ -189,7 +217,7 @@ curl $apisix_addr/apisix/admin/routes/1130 -H 'X-API-KEY: edd1c9f034335f136f87ad
   "priority": 400
 }'
 
-# rainbow apps
+# rainbow logs
 curl $apisix_addr/apisix/admin/routes/1140 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
   "name": "rainbow-http-logs",
@@ -307,7 +335,15 @@ curl $apisix_addr/apisix/admin/routes/2100 -H 'X-API-KEY: edd1c9f034335f136f87ad
        "conf": [
          {"name":"rpc-resp-format","value":"{}"}
        ]
-    } 
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/confura_cspace"
+    }
   },
   "upstream_id": "100",
   "priority": 400
@@ -338,7 +374,15 @@ curl $apisix_addr/apisix/admin/routes/2200 -H 'X-API-KEY: edd1c9f034335f136f87ad
        "conf": [
          {"name":"rpc-resp-format","value":"{}"}
        ]
-    } 
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/confura_espace"
+    }
   },
   "upstream_id": "100",
   "priority": 400
@@ -369,7 +413,15 @@ curl $apisix_addr/apisix/admin/routes/2300 -H 'X-API-KEY: edd1c9f034335f136f87ad
        "conf": [
          {"name":"rpc-resp-format","value":"{}"}
        ]
-    } 
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/confura_espace"
+    }
   },
   "upstream_id": "100",
   "priority": 400
@@ -403,6 +455,137 @@ curl $apisix_addr/apisix/admin/routes/3000 -H 'X-API-KEY: edd1c9f034335f136f87ad
        "conf": [
          {"name":"count", "value":"{}"}
        ]
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/scan_cspace"
+    }
+  },
+  "upstream_id": "100",
+  "priority": 400
+}'
+
+# cspace-test
+curl $apisix_addr/apisix/admin/routes/3100 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "scan-cspace-test",
+  "desc": "scan core space test net",
+  "uri": "/*",
+  "host": "dev-scan-cspace-test.'${servers_domain}'",
+  "plugins": {
+    "ext-plugin-pre-req": {
+       "conf": [
+         {"name":"apikey-auth", "value":"{\"lookup\":\"header\"}"},
+         {"name":"scan-parser", "value":"{\"is_mainnet\":false,\"is_cspace\":true}"},
+         {"name":"count", "value":"{}"},
+         {"name":"rate-limit", "value":"{\"mode\":\"cost_type\"}"}
+       ]
+    },
+    "proxy-rewrite": {
+      "headers": {
+        "X-Rainbow-Target-Addr": "https://api-testnet.confluxscan.net",
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
+        "apiKey": "'${apikey_scan_main}'"
+      }
+    },
+    "ext-plugin-post-resp": {
+       "conf": [
+         {"name":"count", "value":"{}"}
+       ]
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/scan_cspace"
+    }
+  },
+  "upstream_id": "100",
+  "priority": 400
+}'
+
+# espace-main
+curl $apisix_addr/apisix/admin/routes/3200 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "scan-espace-main",
+  "desc": "scan espace main net",
+  "uri": "/*",
+  "host": "dev-scan-espace-main.'${servers_domain}'",
+  "plugins": {
+    "ext-plugin-pre-req": {
+       "conf": [
+         {"name":"apikey-auth", "value":"{\"lookup\":\"header\"}"},
+         {"name":"scan-parser", "value":"{\"is_mainnet\":true,\"is_cspace\":true}"},
+         {"name":"count", "value":"{}"},
+         {"name":"rate-limit", "value":"{\"mode\":\"cost_type\"}"}
+       ]
+    },
+    "proxy-rewrite": {
+      "headers": {
+        "X-Rainbow-Target-Addr": "https://evmapi.confluxscan.net",
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
+        "apiKey": "'${apikey_scan_main}'"
+      }
+    },
+    "ext-plugin-post-resp": {
+       "conf": [
+         {"name":"count", "value":"{}"}
+       ]
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/scan_espace"
+    }
+  },
+  "upstream_id": "100",
+  "priority": 400
+}'
+
+# espace-test
+curl $apisix_addr/apisix/admin/routes/3300 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+{
+  "name": "scan-espace-test",
+  "desc": "scan espace test net",
+  "uri": "/*",
+  "host": "dev-scan-espace-test.'${servers_domain}'",
+  "plugins": {
+    "ext-plugin-pre-req": {
+       "conf": [
+         {"name":"apikey-auth", "value":"{\"lookup\":\"header\"}"},
+         {"name":"scan-parser", "value":"{\"is_mainnet\":false,\"is_cspace\":true}"},
+         {"name":"count", "value":"{}"},
+         {"name":"rate-limit", "value":"{\"mode\":\"cost_type\"}"}
+       ]
+    },
+    "proxy-rewrite": {
+      "headers": {
+        "X-Rainbow-Target-Addr": "https://evmapi-testnet.confluxscan.net",
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
+        "apiKey": "'${apikey_scan_main}'"
+      }
+    },
+    "ext-plugin-post-resp": {
+       "conf": [
+         {"name":"count", "value":"{}"}
+       ]
+    },
+    "http-logger": {
+      "_meta": {
+        "disable": false
+      },
+      "include_req_body": true,
+      "include_resp_body": true,
+      "uri": "http://'${upstream_logs_service}'/logs/scan_espace"
     }
   },
   "upstream_id": "100",
