@@ -52,6 +52,9 @@ func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, 
 		return 0, nil, err
 	}
 
+	if err := setUserPlansToRedis([]uint{userId}); err != nil {
+		logrus.WithField("user", userId).Info("failed to set user plans after buy plans")
+	}
 	return fl, up, nil
 }
 

@@ -15,17 +15,20 @@ import (
 // 当用户PlanId变化时更新redis
 
 func SetPlanToRedis() {
-	setUserPlansToRedis()
-	setPlansToRedis()
-	refreshOnPlanChanged()
+	if err := setAllUserPlansToRedis(); err != nil {
+		panic(err)
+	}
+	if err := setPlansToRedis(); err != nil {
+		panic(err)
+	}
 	logrus.Info("set plans related to redis")
 }
 
-func setUserPlansToRedis() {
-	logrus.Info("refresh all user plans to redis")
-	userPlansMap, err := models.GetUserBillPlanOperator().FindAllUsersEffectivePlan()
+func setUserPlansToRedis(userIds []uint) error {
+	logrus.WithField("users", userIds).Info("refresh user plans to redis")
+	userPlansMap, err := models.GetUserBillPlanOperator().FindUsersEffectivePlans(userIds)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var kvs []string
@@ -38,14 +41,24 @@ func setUserPlansToRedis() {
 	}
 
 	if _, err := redis.DB().MSet(context.Background(), kvs).Result(); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func setPlansToRedis() {
+func setAllUserPlansToRedis() error {
+	logrus.Info("refresh all user plans to redis")
+	allUserIds, err := models.GetAllUserIds()
+	if err != nil {
+		return err
+	}
+	return setUserPlansToRedis(allUserIds)
+}
+
+func setPlansToRedis() error {
 	plans, err := models.GetAllPlansMap()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var kvs []string
@@ -53,18 +66,13 @@ func setPlansToRedis() {
 		key := redis.PlanKey(planId)
 		val, err := json.Marshal(plan)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		kvs = append(kvs, key, string(val))
 	}
 
 	if _, err := redis.DB().MSet(context.Background(), kvs).Result(); err != nil {
-		panic(err)
+		return err
 	}
-}
-
-func refreshOnPlanChanged() {
-	models.GetUserBillPlanOperator().RegisterOnChangedEvent(func(old, new *models.UserBillPlan) {
-		setUserPlansToRedis()
-	})
+	return nil
 }
