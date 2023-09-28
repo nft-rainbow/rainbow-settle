@@ -84,16 +84,24 @@ func FindFiatLogs(userId uint, offset int, limit int) (*[]FiatLog, error) {
 func GetLastFiatLog(tx *gorm.DB, userId uint) (*FiatLog, error) {
 	var lastFiatLog FiatLog
 	if err := tx.Model(&FiatLog{}).Where("user_id=?", userId).Order("id desc").First(&lastFiatLog).Error; err != nil {
-		if !gormutils.IsRecordNotFoundError(err) {
-			return nil, err
-		}
-	}
-	ub, err := GetUserBalance(tx, userId)
-	if err != nil {
 		return nil, err
 	}
-	lastFiatLog.Balance = ub.Balance
 	return &lastFiatLog, nil
+}
+
+func GetLastBlanceByFiatlog(tx *gorm.DB, userId uint) (decimal.Decimal, error) {
+	lastFiatLog, err := GetLastFiatLog(tx, userId)
+	if err != nil {
+		if !gormutils.IsRecordNotFoundError(err) {
+			return decimal.Zero, err
+		}
+		ub, err := GetUserBalance(tx, userId)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		return ub.Balance, nil
+	}
+	return lastFiatLog.Balance, nil
 }
 
 func RandomOrderNO() string {

@@ -36,7 +36,7 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 	}
 
 	// get user last fiat log and calc balance
-	lastFiatLog, err := GetLastFiatLog(tx, f.UserId)
+	lastBalance, err := GetLastBlanceByFiatlog(tx, f.UserId)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 		FiatLogCore: f.FiatLogCore,
 		CacheIds:    datatypes.JSONSlice[uint]{f.ID},
 	}
-	fl.Balance = lastFiatLog.Balance.Add(f.Amount)
+	fl.Balance = lastBalance.Add(f.Amount)
 	f.IsMerged = true
 
 	if err := tx.Save(f).Error; err != nil {
@@ -119,8 +119,6 @@ func MergeToFiatlog(start, end time.Time) error {
 				return errors.WithStack(err)
 			}
 			fl.CacheIds = datatypes.JSONSlice[uint](*ids)
-
-			fl.OrderNO = RandomOrderNO()
 			apiFeeFls = append(apiFeeFls, &fl)
 		}
 
@@ -130,7 +128,7 @@ func MergeToFiatlog(start, end time.Time) error {
 			Where("created_at>=? and created_at<?", start, end).
 			Where("is_merged=0").
 			Where("type not in ?", needGroupFiatLogTypes).
-			Select("user_id, amount, type, meta, order_no, CONCAT('[' , id, ']') as cache_ids").
+			Select("user_id, amount, type, meta, CONCAT('[' , id, ']') as cache_ids").
 			Scan(&otherFls).Error
 		if err != nil {
 			return errors.WithStack(err)
@@ -141,15 +139,23 @@ func MergeToFiatlog(start, end time.Time) error {
 			return nil
 		}
 
+		lastBalances := make(map[uint]decimal.Decimal)
 		for _, fl := range allFls {
-			lastFiatLog, err := GetLastFiatLog(tx, fl.UserId)
-			if err != nil {
-				return errors.WithStack(err)
+			if _, ok := lastBalances[fl.UserId]; !ok {
+				lastBalance, err := GetLastBlanceByFiatlog(tx, fl.UserId)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				lastBalances[fl.UserId] = lastBalance
 			}
+			fl.OrderNO = RandomOrderNO()
+			fl.Balance = lastBalances[fl.UserId].Add(fl.Amount)
+			lastBalances[fl.UserId] = fl.Balance
 
-			fl.Balance = lastFiatLog.Balance.Add(fl.Amount)
+			logrus.WithField("user", fl.UserId).WithField("val", lastBalances[fl.UserId]).WithField("amount", fl.Amount).Info("updated last balance")
 		}
-		if err := tx.Save(&allFls).Error; err != nil {
+		logrus.WithField("all fls", allFls).Info("save fiat logs")
+		if err := tx.Debug().Save(&allFls).Error; err != nil {
 			return errors.WithStack(err)
 		}
 
