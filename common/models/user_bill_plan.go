@@ -109,7 +109,7 @@ func (u *UserBillPlanOperator) UpdateUserBillPlan(tx *gorm.DB, userId uint, plan
 		}
 
 		if oldUserPlan != nil {
-			if oldUserPlan.Plan.Priority == newPlan.Priority {
+			if oldUserPlan.Plan.Priority == newPlan.Priority && oldUserPlan.ExpireTime.After(time.Now()) {
 				return errors.New("the plan is using currently")
 			}
 		}

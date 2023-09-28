@@ -11,7 +11,7 @@ TODO:
 env=local
 upstream_proxy="172.16.100.252:8020"
 upstream_rainbow_app_service="172.16.100.252:8081"
-upstream_logs_service="172.16.100.252:19080"
+upstream_logs_service="http://172.16.100.252:8000"
 
 apisix_addr=http://127.0.0.1:9180
 servers_domain=nftrainbow.me

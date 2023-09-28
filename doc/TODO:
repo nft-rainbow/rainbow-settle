@@ -1,0 +1,202 @@
+TODO:
+logger 自动更新文件名服务 加到 logger init 里
+
+rate limit 后格式不对  --- 暂不处理。 APISIX功能不足，post resp只有在pre request执行后有效
+
+pending count 超时后减去。 --- 由于在pre request插件中失败的请求不会执行post resp插件，这些count将永久在pengding count中不会消失，导致pending count不断增大，而使计数器失效。 暂时处理：检查balance是否足够时，不计入pending count，根据rich判断，settle服务需要加监控
+
+新BUG，余额补充失败后，不停的退款  DONE
+
+Dashboard deploy 解析不对 DONE
+新建账户后没有刷新 quota， redis没有设置apikey DONE
+购买新服务后 qps没有刷新 DONE
+购买企业版后没有扣款 DONE
+
+# 插件
+TODO: 
+- 配置文件
+	- Redis 
+	- Jwt auth keys
+- Dashboard auth-jwt配置
+- Dashboard api request parser
+- 限流插件
+
+
+身份识别插件：
+head：
+x-rainbow-user-id
+x-rainbow-app-id
+
+rainbow：jwt
+confura：path
+scan: query
+
+
+请求解析插件：
+head:
+x-rainbow-cost-type
+x-rainbow-cost-count
+
+计数插件：
+
+不考虑apisix服务挂掉的情况
+	内存记录req -> user + app + cost_type + cost_count
+	INCR USER-COSTTYPE-COUNT
+	失败后DECR
+
+	结算服务购买QUOTA，判断 USER-COSTTYPE-COUNT 超过阈值后返回余额不足
+
+考虑apisix服务挂掉的情况
+	内存记录req -> user + cost_type + cost_count
+	INCR USER-COSTTYPE-COUNT-PENDING
+	失败后读内存req，DECR USER-COSTTYPE-COUNT-PENDING
+	成功后读内存req, 1. DECR USER-COSTTYPE-COUNT-PENDING 2. INCR USER-COSTTYPE-COUNT
+
+	结算服务购买QUOTA，判断 USER-COSTTYPE-COUNT-PENDING + USER-COSTTYPE-COUNT 超过阈值后返回余额不足
+
+限流插件：
+	内存记录 
+	- USER-COSTTYPE-QPS
+	- USER-SERVER-QPS
+
+
+结算服务：
+	框架：grpc
+	特性：更新 user balance 操作的唯一入口
+	API：
+	1. 充值
+	2. 退款
+	3. 退QUOTA
+	3. 购买套餐
+	4. TODO: 修改续订状态
+
+	框架：gin
+	4. 获取套餐列表
+	5. 获取用户生效套餐
+	6. 获取用户quotas
+	
+
+	充值/退款
+	1. 监控deposite表，更新userbalance
+	2. 交易失败退款后通知结算服务，更新用户balance
+	3. 用户购买套餐后更新用户quota
+
+	结算：
+	每秒查询redis中的key进行结算
+		1. 结算redis中的quota，减user_balance, 加redis quota
+		2. 结算时记录多少是使用的免费quota，用于退款的时候区分退quota还是balance
+			记录结算堆栈：退费时根据堆栈退还
+				一月
+				begin    [balance5, quota100]
+				mint5    [balance10,quota100]
+				refund15 [quota95]
+				mint20   [balance15,quota100]
+				二月 新增100免费quota
+				mint20   [quota20,balance15,quota100]
+				refund15 [quota5,balance15,quota100]
+
+			可定期删除结算堆栈超过100000后的项
+		3. 发现余额不足后置标记 USER-RICH ，值按costtype位与 
+			0 -> 1 存款，退款，重置quota，充值quota，退还quota
+			1 -> 0 每次settle后使得 balance 和 quota都为0
+
+			简单方法：不监听事件，轮询数据库写redis
+			
+
+套餐购买
+	数据表：套餐，套餐详情，用户套餐购买及消费记录
+
+	套餐：名称，生效时长，qps,价格
+	套餐详情：重置周期,CostType,Count,qps(优先)
+	用户套餐：用户ID，套餐ID，购买时间（生效时间），过期时间，是否自动续费
+		- 每个server的套餐是互斥的，优先级表示级别，比如VIP和企业版套餐（企业版优先级>VIP）
+
+	购买套餐：
+		- 购买一个 Server的新套餐时直接覆盖旧套餐且即时生效
+		- 购买时检查当前套餐，如果已购买返回错误
+
+
+	示例：
+	1. 每日N次CostType，持续1月
+	2. 一次性N次CostType，永久有效
+	3. qps
+	4. 价格
+
+	接口：
+	1. 购买 grpc + restapi
+	
+	服务：购买成功后触发，初始化时触发，每日0点触发
+	1. 查询该用户所有有效套餐（过期时间>当前时间），遍历每个有效套餐的套餐详情重置quota
+	，当购买新的套餐后，直接覆盖旧套餐且即时生效
+	2. 自动续订
+	3. 购买套餐且是升级套餐时，即时刷新quota
+	
+
+限流器设计
+
+	库：time/rate
+
+	限流插件
+	- 限流Conf：request 或 costtype
+
+	## 流程
+	限流器Map: 
+	- 用户-costtype-limiter
+	- 用户-servertype-limiter
+
+	限流规则：
+	rainbow：按请求限流
+	- 按server限流
+	confura：按costtype限流
+	- 先按server限流再按costtype限流
+
+	Redis获取限流配置:
+	- userplan-用户-servertype-planid
+	- userplan-0-servertype-planid
+	- plan-id-value
+
+	getQpsByServer(server)
+	getQpsByCosttype(costtype)
+
+
+	
+
+
+Mysql
+
+100 --- 100 --------- 结算 -- 98 --- 98 --- 99
+
+Redis
+
+0	---	-1	---	-2 --- 0 --- -1 --- -1 --- -1
+
+用户 -- mint -- mint -- x -- mint -- 失败
+
+
+
+
+
+问题
+1. 请求未完成，服务挂掉怎么计数
+	- 记录req id -> user + cost_type + cost_count, 
+	例 : req-001: `["1","mint","1"]`
+
+
+域名：
+dev-apisix.nftrainbow.cn
+dev-apisix-admin.nftrainbow.cn 
+dev-apisix-dashboard.nftrainbow.cn
+dev-rainbow.nftrainbow.cn 暂时没用
+dev-rainbow-dashboard.nftrainbow.cn 暂时没用
+dev-rainbow-admin.nftrainbow.cn 暂时没用
+devapi.nftrainbow.cn //openapi
+dev.nftrainbow.cn  //dashboard
+devadmin.nftrainbow.cn //admin
+dev-rpc-cspace-main.nftrainbow.cn
+dev-rpc-cspace-test.nftrainbow.cn
+dev-rpc-espace-main.nftrainbow.cn
+dev-rpc-espace-test.nftrainbow.cn
+dev-scan-cspace-main.nftrainbow.cn
+dev-scan-cspace-test.nftrainbow.cn
+dev-scan-espace-main.nftrainbow.cn
+dev-scan-espace-test.nftrainbow.cn

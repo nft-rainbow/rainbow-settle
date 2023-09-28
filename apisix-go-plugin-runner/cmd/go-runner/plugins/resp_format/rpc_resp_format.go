@@ -46,7 +46,7 @@ func (c *RpcRespFormat) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 	// NOTE: 这里置count是由于 1.apisix ext-plugin-post-resp 不支持多个 2.status ok，而rpc返回错误的不扣费
 	determineCount(w)
 
-	log.Infof("in rpc-resp-format response filter")
+	log.Infof("in rpc-resp-format response filter, status code: %d", w.StatusCode())
 	if w.StatusCode() < http.StatusBadRequest {
 		return
 	}

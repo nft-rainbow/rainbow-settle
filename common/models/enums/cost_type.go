@@ -1,10 +1,10 @@
 package enums
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
+	"github.com/pkg/errors"
 )
 
 type CostType uint
@@ -85,13 +85,13 @@ func (t *CostType) UnmarshalText(data []byte) error {
 		*t = v
 		return nil
 	}
-	return fmt.Errorf("unknown cost type %v", string(data))
+	return errors.WithStack(fmt.Errorf("unknown cost type %v", string(data)))
 }
 
 func ParseCostType(str string) (*CostType, error) {
 	v, ok := CostTypeStr2ValueMap[str]
 	if !ok {
-		return nil, fmt.Errorf("unknown cost type %v", str)
+		return nil, errors.WithStack(fmt.Errorf("unknown cost type %v", str))
 	}
 	return &v, nil
 }

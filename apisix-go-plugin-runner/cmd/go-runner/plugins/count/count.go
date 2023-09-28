@@ -89,7 +89,8 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 		}
 		log.Infof("currentCount %d, currentPendingCount %d, costCount %d", currentCount, currentPendingCount, costCount)
 
-		if int(currentCount)+int(currentPendingCount)+costCount > getQuotaLimit(*costType) {
+		// 不加pending，pending的表示未响应或在pre 插件执行中就失败的，比如被限流的
+		if int(currentCount)+costCount > getQuotaLimit(*costType) {
 			log.Infof("balance not enough when clac by un-settled count, user %d cost type %s  ", userId, costType)
 			return errors.Errorf("balance not enough")
 		}

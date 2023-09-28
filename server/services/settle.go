@@ -118,10 +118,10 @@ func settle() error {
 		// actualCost := decimal.Min(needCost, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota))
 		// countInBalance := actualCost.Div(price).BigInt().Int64()
 
+		logrus.WithField("cost type", costType).WithField("in reset", countInResetQuota).WithField("in rollover", countInRolloverQuota).WithField("in balance", countInBalance).Debug("calculated cost quota")
 		if countInBalance == 0 && countInQuota == 0 {
 			continue
 		}
-		logrus.WithField("cost type", costType).WithField("in reset", countInResetQuota).WithField("in rollover", countInRolloverQuota).WithField("in balance", countInBalance).Info("calculated cost quota")
 
 		// update mysql
 		err = models.GetDB().Transaction(func(tx *gorm.DB) error {

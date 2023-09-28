@@ -40,7 +40,7 @@ func TestUrlParse(t *testing.T) {
 
 func TestParseRainbowApiRequest(t *testing.T) {
 	o := RainbowApiRequestOp{}
-	body1, _ := json.Marshal(services.CustomMintDto{
+	mints1Body, _ := json.Marshal(services.CustomMintDto{
 		ContractInfoDtoWithoutType: services.ContractInfoDtoWithoutType{
 			Chain:           "conflux",
 			ContractAddress: "cfx:aamjy3abae3j0ud8ys0npt38ggnunk5r4ps2pg8vcc",
@@ -49,14 +49,14 @@ func TestParseRainbowApiRequest(t *testing.T) {
 			MintToAddress: "cfx:aamjy3abae3j0ud8ys0npt38ggnunk5r4ps2pg8vcc",
 		},
 	})
-	req1 := testutils.HttpRequest{
+	mints1Req := testutils.HttpRequest{
 		Method_: http.MethodPost,
 		Path_:   []byte("http://localhost:8080/v1/mints/"),
 		Header_: testutils.NewHttpHeader(),
-		Body_:   body1,
+		Body_:   mints1Body,
 	}
 
-	body2, _ := json.Marshal(services.CustomMintDto{
+	mints2Body, _ := json.Marshal(services.CustomMintDto{
 		ContractInfoDtoWithoutType: services.ContractInfoDtoWithoutType{
 			Chain:           "conflux_test",
 			ContractAddress: "cfxtest:acfgbf21bj612uth2xekuj5xh8cmgbj56j3fawd5c2",
@@ -65,11 +65,24 @@ func TestParseRainbowApiRequest(t *testing.T) {
 			MintToAddress: "cfxtest:acfgbf21bj612uth2xekuj5xh8cmgbj56j3fawd5c2",
 		},
 	})
-	req2 := testutils.HttpRequest{
+	mints2Req := testutils.HttpRequest{
 		Method_: http.MethodPost,
 		Path_:   []byte("http://localhost:8080/v1/mints/"),
 		Header_: testutils.NewHttpHeader(),
-		Body_:   body2,
+		Body_:   mints2Body,
+	}
+
+	deploy1Body, _ := json.Marshal(services.ContractDeployDto{
+		Chain:  "conflux",
+		Name:   "xxx",
+		Symbol: "xxx",
+		Type:   "erc721",
+	})
+	deploy1Req := testutils.HttpRequest{
+		Method_: http.MethodPost,
+		Path_:   []byte("http://localhost:8080/dashboard/apps/7/contracts"),
+		Header_: testutils.NewHttpHeader(),
+		Body_:   deploy1Body,
 	}
 
 	table := []struct {
@@ -79,16 +92,22 @@ func TestParseRainbowApiRequest(t *testing.T) {
 		CostType  enums.CostType
 	}{
 		{
-			Req:       req1,
+			Req:       mints1Req,
 			IsMainNet: true,
 			Count:     1,
 			CostType:  enums.COST_TYPE_RAINBOW_MINT,
 		},
 		{
-			Req:       req2,
+			Req:       mints2Req,
 			IsMainNet: false,
 			Count:     1,
 			CostType:  enums.COST_TYPE_RAINBOW_NORMAL,
+		},
+		{
+			Req:       deploy1Req,
+			IsMainNet: false,
+			Count:     1,
+			CostType:  enums.COST_TYPE_RAINBOW_DEPLOY,
 		},
 	}
 
