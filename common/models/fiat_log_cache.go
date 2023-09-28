@@ -152,9 +152,9 @@ func MergeToFiatlog(start, end time.Time) error {
 			fl.Balance = lastBalances[fl.UserId].Add(fl.Amount)
 			lastBalances[fl.UserId] = fl.Balance
 
-			logrus.WithField("user", fl.UserId).WithField("val", lastBalances[fl.UserId]).WithField("amount", fl.Amount).Info("updated last balance")
+			logrus.WithField("user", fl.UserId).WithField("val", lastBalances[fl.UserId]).WithField("amount", fl.Amount).Debug("updated last balance")
 		}
-		logrus.WithField("all fls", allFls).Info("save fiat logs")
+		logrus.WithField("all fls", allFls).Debug("save fiat logs")
 		if err := tx.Debug().Save(&allFls).Error; err != nil {
 			return errors.WithStack(err)
 		}
