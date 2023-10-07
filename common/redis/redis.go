@@ -21,15 +21,16 @@ var (
 )
 
 const (
-	PREFIX_COUNT_KEY         = "count-"
-	PREFIX_COUNT_PENDING_KEY = "count-pending-"
-	PREFIX_REQ_KEY           = "req-"
-	PREFIX_RICH_KEY          = "rich-"
-	PREFIX_APIKEY_KEY        = "apikey-"
-	PREFIX_USER_PLAN_KEY     = "userplan-"
-	PREFIX_PLAN_KEY          = "plan-"
-	PREFIX_APIPROFILE_KEY    = "apiprofile-"
-	PREFIX_RPC_IDS_KEY       = "rpcids-"
+	PREFIX_COUNT_KEY                            = "count-"
+	PREFIX_COUNT_PENDING_KEY                    = "count-pending-"
+	PREFIX_REQ_KEY                              = "req-"
+	PREFIX_RICH_KEY                             = "rich-"
+	PREFIX_APIKEY_KEY                           = "apikey-"
+	PREFIX_USER_PLAN_KEY                        = "userplan-"
+	PREFIX_USER_PLAN_UPDATED_FOR_QPS_PLUGIN_KEY = "user-plan-updated-for-qps-plugin-"
+	PREFIX_PLAN_KEY                             = "plan-"
+	PREFIX_APIPROFILE_KEY                       = "apiprofile-"
+	PREFIX_RPC_IDS_KEY                          = "rpcids-"
 )
 
 type ExtendClient struct {
@@ -104,6 +105,10 @@ func ApikeyValue(userId, appId uint) string {
 
 func UserPlanKey(userId uint, serverType enums.ServerType) string {
 	return fmt.Sprintf("%s%d-%s", PREFIX_USER_PLAN_KEY, userId, serverType)
+}
+
+func UserPlanUpdatedForQpsPluginKey(userId uint, serverType enums.ServerType) string {
+	return fmt.Sprintf("%s%d-%s", PREFIX_USER_PLAN_UPDATED_FOR_QPS_PLUGIN_KEY, userId, serverType)
 }
 
 func PlanKey(planId uint) string {
@@ -435,4 +440,16 @@ func GetRpcIdsInfo(requestId string) (*RpcInfo, error) {
 	}
 
 	return ParseRpcIdsInfo(rpcIdsStr)
+}
+
+func CheckUserPlanUpdatedForQpsPlugin(userId uint, serverType enums.ServerType) (bool, error) {
+	_, err := DB().Get(context.Background(), UserPlanUpdatedForQpsPluginKey(userId, serverType)).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }

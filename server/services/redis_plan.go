@@ -24,7 +24,7 @@ func SetPlanToRedis() {
 	logrus.Info("set plans related to redis")
 }
 
-func setUserPlansToRedis(userIds []uint) error {
+func setUserPlansToRedis(userIds []uint, setUpdateFlag bool) error {
 	logrus.WithField("users", userIds).Info("refresh user plans to redis")
 	userPlansMap, err := models.GetUserBillPlanOperator().FindUsersEffectivePlans(userIds)
 	if err != nil {
@@ -37,6 +37,11 @@ func setUserPlansToRedis(userIds []uint) error {
 			key := redis.UserPlanKey(userId, serverType)
 			val := fmt.Sprintf("%d", userPlan.PlanId)
 			kvs = append(kvs, key, val)
+
+			if setUpdateFlag {
+				updatedKey := redis.UserPlanUpdatedForQpsPluginKey(userId, serverType)
+				kvs = append(kvs, updatedKey, val)
+			}
 		}
 	}
 
@@ -52,7 +57,7 @@ func setAllUserPlansToRedis() error {
 	if err != nil {
 		return err
 	}
-	return setUserPlansToRedis(allUserIds)
+	return setUserPlansToRedis(allUserIds, false)
 }
 
 func setPlansToRedis() error {
