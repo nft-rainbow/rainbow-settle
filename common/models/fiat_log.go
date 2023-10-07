@@ -70,13 +70,22 @@ type FiatLogCore struct {
 type FiatLog struct {
 	BaseModel
 	FiatLogCore
-	CacheIds datatypes.JSONSlice[uint] `json:"cache_ids"`
+	CacheIds    datatypes.JSONSlice[uint] `json:"cache_ids"`
+	InvoiceId   *uint                     `gorm:"type:int;index" json:"invoice_id"`    // 发票id, 如果某条消费 log 已开发票, 此字段会有值
+	RefundLogId *uint                     `gorm:"type:int;index" json:"refund_log_id"` // 退款日志id, 如果某条消费 log 被退款了, 此字段会有值
 }
 
 func FindFiatLogs(userId uint, offset int, limit int) (*[]FiatLog, error) {
 	var logs []FiatLog
 	res := db.Model(&FiatLog{}).
 		Where("user_id = ? AND amount != 0", userId).Order("id desc").Limit(limit).Offset(offset).Find(&logs)
+	return &logs, res.Error
+}
+
+func FindUserFiatLogsByIds(userId uint, logIds []uint) (*[]FiatLog, error) {
+	var logs []FiatLog
+	res := db.Model(&FiatLog{}).
+		Where("user_id = ? AND id IN ?", userId, logIds).Find(&logs)
 	return &logs, res.Error
 }
 
@@ -128,6 +137,7 @@ type FiatLogFilter struct {
 	EndedAt   *string     `form:"ended_at" json:"ended_at"`
 	Type      FiatLogType `form:"type" json:"type"`
 	Address   *string     `form:"address" json:"address"`
+	InvoiceId *uint       `form:"invoice_id" json:"invoice_id"`
 }
 
 func (filter *FiatLogFilter) Where() *gorm.DB {
@@ -149,6 +159,9 @@ func (filter *FiatLogFilter) Where() *gorm.DB {
 	}
 	if filter.Type != 0 {
 		where = where.Where("fiat_logs.type=?", filter.Type)
+	}
+	if filter.InvoiceId != nil && *filter.InvoiceId != 0 {
+		where = where.Where("fiat_logs.invoice_id=?", filter.InvoiceId)
 	}
 	return where
 }
@@ -174,8 +187,8 @@ func (filter *FiatlogWithDetailFilter) Where() *gorm.DB {
 func FindAndCountFiatLogWithDetails(filter FiatlogWithDetailFilter, offset, limit int) (logs []*FiatLogWithDetails, count int64, err error) {
 	table := db.Debug().Model(&FiatLog{}).
 		Where(filter.Where()).
+		Joins("LEFT JOIN deposit_orders on fiat_logs.meta->'$.deposit_order_id'=deposit_orders.id").
 		Where("deposit_orders.status=1 or deposit_orders.status is null").
-		Joins("left join deposit_orders on fiat_logs.meta->'$.deposit_order_id'=deposit_orders.id").
 		Joins("LEFT JOIN users on fiat_logs.user_id = users.id").
 		Select("fiat_logs.*, users.email,  deposit_orders.trade_no")
 
