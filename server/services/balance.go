@@ -36,15 +36,16 @@ func BuyStorage(userId uint, amount decimal.Decimal, txId uint, address string, 
 }
 
 func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, userBillPlan *models.UserBillPlan, err error) {
-	plan, err := models.GetBillPlanById(planId)
-	if err != nil {
-		return 0, nil, err
-	}
 
 	var up *models.UserBillPlan
 	var fl uint
 
 	err = models.GetDB().Transaction(func(tx *gorm.DB) error {
+		plan, err := models.GetBillPlanById(planId)
+		if err != nil {
+			return err
+		}
+
 		up, err = models.GetUserBillPlanOperator().UpdateUserBillPlan(tx, userId, planId, isAutoRenewal)
 		if err != nil {
 			return err
@@ -66,14 +67,14 @@ func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, 
 }
 
 func BuyDataBundle(userId uint, dataBundleId uint, count uint) (fiatlogId uint, userDataBundle *models.UserDataBundle, err error) {
-	plan, err := models.GetDataBundleById(dataBundleId)
-	if err != nil {
-		return 0, nil, err
-	}
-
 	var udb *models.UserDataBundle
 	var fl uint
 	err = models.GetDB().Transaction(func(tx *gorm.DB) error {
+		plan, err := models.GetDataBundleById(dataBundleId)
+		if err != nil {
+			return err
+		}
+
 		udb, err = CreateUserDataBundleAndConsume(tx, userId, dataBundleId, count)
 		if err != nil {
 			return err
@@ -84,6 +85,10 @@ func BuyDataBundle(userId uint, dataBundleId uint, count uint) (fiatlogId uint, 
 		}
 		return nil
 	})
+
+	if err != nil {
+		return 0, nil, err
+	}
 
 	return fl, udb, nil
 }
@@ -96,22 +101,14 @@ func CreateUserDataBundleAndConsume(tx *gorm.DB, userId, dataBundleId, count uin
 		BoughtTime:   time.Now(),
 	}
 
-	coreFn := func(_tx *gorm.DB) error {
-		if err := _tx.Create(&udb).Error; err != nil {
-			return err
-		}
-		if err := GetUserQuotaOperator().DepositDataBundle(_tx, udb); err != nil {
-			return err
-		}
-
-		utils.Retry(10, time.Second, func() error { return _tx.Save(&udb).Error })
-		return nil
-	}
-
-	err := coreFn(tx)
-	if err != nil {
+	if err := tx.Create(&udb).Error; err != nil {
 		return nil, err
 	}
+	if err := GetUserQuotaOperator().ConsumeDataBundle(tx, udb); err != nil {
+		return nil, err
+	}
+
+	utils.Retry(10, time.Second, func() error { return tx.Save(&udb).Error })
 
 	return udb, nil
 }
@@ -134,8 +131,20 @@ func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (u
 	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFee{costType, int(count)}, false)
 }
 
+func PayQuota(tx *gorm.DB, userId uint, costType enums.CostType, countReset int, countRollover int) (uint, error) {
+	return updateUserBalanceWithTx(tx, userId, decimal.Zero, models.FIAT_LOG_TYPE_PAY_API_QUOTA, models.FiatMetaPayApiQuota{costType, countReset, countRollover}, false)
+}
+
 func ResetQuota(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	return updateUserBalanceWithTx(tx, userId, decimal.Zero, models.FIAT_LOG_TYPE_RESET_API_QUOTA, models.FiatMetaResetQuota{costType, int(count)}, false)
+}
+
+func RefundQuota(tx *gorm.DB, userId uint, costType enums.CostType, countReset int, countRollover int) (uint, error) {
+	return updateUserBalanceWithTx(tx, userId, decimal.Zero, models.FIAT_LOG_TYPE_REFUND_API_QUOTA, models.FiatMetaRefundApiQuota{costType, countReset, countRollover}, false)
+}
+
+func DepositeDatabundle(tx *gorm.DB, userId uint, dataBundleId uint, quota models.Quota) (uint, error) {
+	return updateUserBalanceWithTx(tx, userId, decimal.Zero, models.FIAT_LOG_TYPE_DEPOSITE_DATABUNDLE, models.FiatMetaDepositDataBundle{dataBundleId, quota}, false)
 }
 
 func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
