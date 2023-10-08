@@ -180,11 +180,8 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 			return 0, err
 		}
 
-		userBalance := models.UserBalance{
-			UserId: userId,
-		}
-
-		if err := tx.Where(&userBalance).Find(&userBalance).Error; err != nil {
+		userBalance, err := models.GetUserBalance(tx, userId)
+		if err != nil {
 			return 0, err
 		}
 
