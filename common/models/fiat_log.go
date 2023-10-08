@@ -73,6 +73,10 @@ type FiatLog struct {
 	CacheIds datatypes.JSONSlice[uint] `json:"cache_ids"`
 }
 
+func (f *FiatLog) AfterCreate(tx *gorm.DB) (err error) {
+	return UpdateUserBalanceOnFiatlog(tx, f)
+}
+
 func FindFiatLogs(userId uint, offset int, limit int) (*[]FiatLog, error) {
 	var logs []FiatLog
 	res := db.Model(&FiatLog{}).
