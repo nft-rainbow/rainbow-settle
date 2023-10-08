@@ -52,7 +52,6 @@ func Init(mysqlConfig config.Mysql, fee config.Fee, cfxPrice float64) {
 	ConnectDB(mysqlConfig)
 	InitApiProfile()
 	InitUserBalances()
-	InitUserApiQuota()
 	InitUserSettleds()
 	InitBillPlan()
 }

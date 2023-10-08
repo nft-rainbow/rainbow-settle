@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/server/services"
 	"github.com/pingcap/errors"
 	"github.com/samber/lo"
 )
@@ -18,7 +19,7 @@ func getUserApiQuotas(c *gin.Context) {
 		ginutils.RenderRespError(c, err, http.StatusBadRequest)
 		return
 	}
-	uaqs, err := models.GetUserQuotaOperator().GetUserQuotas(userId, c.GetInt("offset"), c.GetInt("limit"))
+	uaqs, err := services.GetUserQuotaOperator().GetUserQuotas(userId, c.GetInt("offset"), c.GetInt("limit"))
 	if err != nil {
 		ginutils.RenderRespError(c, err, http.StatusInternalServerError)
 		return

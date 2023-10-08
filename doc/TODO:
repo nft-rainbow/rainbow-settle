@@ -1,10 +1,21 @@
 TODO:
 logger 自动更新文件名服务 加到 logger init 里
+Rainbow api 代付主账号没钱后跳过充代付
+
+Fiatlog invoiceId 跟 refund log 相关逻辑查看。
+Fiatlog Fiatlogcahe 对账。
+Scan 返回错误识别
 
 rate limit 后格式不对  --- 暂不处理。 APISIX功能不足，post resp只有在pre request执行后有效
 
-pending count 超时后减去。 --- 由于在pre request插件中失败的请求不会执行post resp插件，这些count将永久在pengding count中不会消失，导致pending count不断增大，而使计数器失效。 暂时处理：检查balance是否足够时，不计入pending count，根据rich判断，settle服务需要加监控
+pending count 超时后减去。 --- 由于在pre request插件中失败的请求不会执行post resp插件，这些count将永久在pengding count中不会消失，导致pending count不断增大，而使计数器失效。 暂时处理：检查balance是否足够时，不计入pending 
+count，根据rich判断，settle服务需要加监控
 
+
+BUG DONE:
+购买新服务后 qps没有刷新 DONE
+33用户09.28 汇总后的余额不对 DONE
+33用户没有自动续订 DONE
 新BUG，余额补充失败后，不停的退款  DONE
 
 Dashboard deploy 解析不对 DONE

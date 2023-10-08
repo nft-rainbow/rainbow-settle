@@ -2,7 +2,10 @@ package services
 
 import (
 	"encoding/json"
+	"sync"
+	"time"
 
+	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
@@ -10,6 +13,10 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+)
+
+var (
+	balanceMu sync.Mutex
 )
 
 func DepositBalance(userId uint, amount decimal.Decimal, depositOrderId uint, logType models.FiatLogType) (uint, error) {
@@ -67,7 +74,7 @@ func BuyDataBundle(userId uint, dataBundleId uint, count uint) (fiatlogId uint, 
 	var udb *models.UserDataBundle
 	var fl uint
 	err = models.GetDB().Transaction(func(tx *gorm.DB) error {
-		udb, err = models.CreateUserDataBundleAndConsume(tx, userId, dataBundleId, count)
+		udb, err = CreateUserDataBundleAndConsume(tx, userId, dataBundleId, count)
 		if err != nil {
 			return err
 		}
@@ -79,6 +86,34 @@ func BuyDataBundle(userId uint, dataBundleId uint, count uint) (fiatlogId uint, 
 	})
 
 	return fl, udb, nil
+}
+
+func CreateUserDataBundleAndConsume(tx *gorm.DB, userId, dataBundleId, count uint) (*models.UserDataBundle, error) {
+	udb := &models.UserDataBundle{
+		UserId:       userId,
+		DataBundleId: dataBundleId,
+		Count:        count,
+		BoughtTime:   time.Now(),
+	}
+
+	coreFn := func(_tx *gorm.DB) error {
+		if err := _tx.Create(&udb).Error; err != nil {
+			return err
+		}
+		if err := GetUserQuotaOperator().DepositDataBundle(_tx, udb); err != nil {
+			return err
+		}
+
+		utils.Retry(10, time.Second, func() error { return _tx.Save(&udb).Error })
+		return nil
+	}
+
+	err := coreFn(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return udb, nil
 }
 
 func RefundSponsor(userId uint, amount decimal.Decimal, sponsorFiatlogId uint, sponsorFiatlogType models.FiatLogType, txId uint) (uint, error) {
@@ -99,6 +134,10 @@ func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (u
 	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFee{costType, int(count)}, false)
 }
 
+func ResetQuota(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
+	return updateUserBalanceWithTx(tx, userId, decimal.Zero, models.FIAT_LOG_TYPE_RESET_API_QUOTA, models.FiatMetaResetQuota{costType, int(count)}, false)
+}
+
 func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
 	var fiatLogId uint
 	err := models.GetDB().Transaction(func(tx *gorm.DB) error {
@@ -110,6 +149,9 @@ func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatL
 }
 
 func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
+	balanceMu.Lock()
+	defer balanceMu.Unlock()
+
 	// 找 logtype 上一条记录的unsettle
 	flc, err := models.FindLastFiatLogCache(userId, logType)
 	if err != nil {

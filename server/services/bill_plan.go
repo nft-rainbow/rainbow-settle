@@ -119,7 +119,7 @@ func ResetQuotaOnPlanUpdated(old, new *models.UserBillPlan) {
 			if err != nil {
 				return err
 			}
-			return models.GetUserQuotaOperator().Reset(models.GetDB(), []uint{new.UserId}, newPlan.GetQuotas(), nextRefreshTime, true)
+			return GetUserQuotaOperator().Reset(models.GetDB(), []uint{new.UserId}, newPlan.GetQuotas(), nextRefreshTime, true)
 		}
 		return nil
 	})
