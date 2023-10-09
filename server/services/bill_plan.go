@@ -35,6 +35,7 @@ func RenewPlans() error {
 	if err != nil {
 		return err
 	}
+	logrus.WithField("need renews", needRenews).Debug("ready to renew plans")
 
 	for userId, server2Userplan := range needRenews {
 		for _, userPlan := range server2Userplan {
