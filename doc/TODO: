@@ -14,7 +14,7 @@ merge fiatlogcache 会出现 n-n 的关系
 merge时根据refund数量拆分fiatlog，当前的不足，往前找fiatlog并设置refund-log id；保证fiatlog-refundlog 是1对多的
 
 Fiatlog Fiatlogcahe 对账。
-Scan 返回错误识别
+Scan 返回错误识别； 0或1 成功，其它失败
 
 rate limit 后格式不对  --- 暂不处理。 APISIX功能不足，post resp只有在pre request执行后有效
 

@@ -117,8 +117,6 @@ func (c *Count) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP
 }
 
 func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
-	// log.Infof("get content-type %s", w.Header().Get("Content-Type"))
-	// w.Header().Set("Content-Type", w.Header().Get("Content-Type"))
 	log.Infof("in responsoe filter")
 	DeterminCount(w, nil)
 }
@@ -126,9 +124,7 @@ func (c *Count) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 type GetSuccessCountHandler func(w pkgHTTP.Response) int
 
 func DeterminCount(w pkgHTTP.Response, successCountHandler GetSuccessCountHandler) {
-
 	reqId := w.Header().Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
-	// log.Infof("get x-rainbow-request-id %s", reqId)
 	if reqId == "" {
 		return
 	}
@@ -171,11 +167,9 @@ func DeterminCount(w pkgHTTP.Response, successCountHandler GetSuccessCountHandle
 	}
 
 	// 请求成功，改变pending count 为 count
-	// if w.StatusCode() >= http.StatusOK && w.StatusCode() < http.StatusMultipleChoices {
 	_, err = redis.DB().IncrBy(context.Background(), countKey, int64(successCount)).Result()
 	if err != nil {
 		log.Errorf("failed to increase cost count of req %d: %s", reqId, err)
 		return
 	}
-	// }
 }

@@ -1,4 +1,4 @@
-package respformat
+package resphandler
 
 import (
 	"encoding/json"
@@ -15,38 +15,38 @@ import (
 )
 
 func init() {
-	err := plugin.RegisterPlugin(&RpcRespFormat{})
+	err := plugin.RegisterPlugin(&RpcRespHandler{})
 	if err != nil {
-		log.Fatalf("failed to register plugin rpc-resp-format: %s", err)
+		log.Fatalf("failed to register plugin rpc-resp-handler: %s", err)
 	}
 }
 
-// RpcRespFormat is a demo to show how to return data directly instead of proxying
+// RpcRespHandler is a demo to show how to return data directly instead of proxying
 // it to the upstream.
-type RpcRespFormat struct {
+type RpcRespHandler struct {
 	// Embed the default plugin here,
 	// so that we don't need to reimplement all the methods.
 	plugin.DefaultPlugin
 }
 
-type RpcRespFormatConf struct {
+type RpcRespHandlerConf struct {
 }
 
-func (p *RpcRespFormat) Name() string {
-	return "rpc-resp-format"
+func (p *RpcRespHandler) Name() string {
+	return "rpc-resp-handler"
 }
 
-func (p *RpcRespFormat) ParseConf(in []byte) (interface{}, error) {
-	conf := RpcRespFormatConf{}
+func (p *RpcRespHandler) ParseConf(in []byte) (interface{}, error) {
+	conf := RpcRespHandlerConf{}
 	err := json.Unmarshal(in, &conf)
 	return conf, err
 }
 
-func (c *RpcRespFormat) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
+func (c *RpcRespHandler) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 	// NOTE: 这里置count是由于 1.apisix ext-plugin-post-resp 不支持多个 2.status ok，而rpc返回错误的不扣费
-	determineCount(w)
+	c.determineCount(w)
 
-	log.Infof("in rpc-resp-format response filter, status code: %d", w.StatusCode())
+	log.Infof("in rpc-resp-handler response filter, status code: %d", w.StatusCode())
 	if w.StatusCode() < http.StatusBadRequest {
 		return
 	}
@@ -88,7 +88,7 @@ func (c *RpcRespFormat) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
 	// log.Infof("ddd")
 }
 
-func determineCount(w pkgHTTP.Response) {
+func (c *RpcRespHandler) determineCount(w pkgHTTP.Response) {
 	count.DeterminCount(w, func(w pkgHTTP.Response) int {
 		if w.StatusCode() != http.StatusOK {
 			return 0

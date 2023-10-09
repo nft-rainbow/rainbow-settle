@@ -9,7 +9,7 @@ import (
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/confura"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/rainbowapi"
 	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/reqparser/scan"
-	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/resp_format"
+	_ "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/resphandler"
 	"github.com/sirupsen/logrus"
 
 	pconfig "github.com/apache/apisix-go-plugin-runner/cmd/go-runner/plugins/config"
