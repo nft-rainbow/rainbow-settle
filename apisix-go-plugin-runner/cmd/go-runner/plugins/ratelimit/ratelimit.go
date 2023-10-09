@@ -28,6 +28,7 @@ import (
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 	"github.com/apache/apisix-go-plugin-runner/pkg/plugin"
 	"github.com/nft-rainbow/rainbow-settle/common/constants"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/nft-rainbow/rainbow-settle/common/redis"
 )
 
@@ -91,6 +92,8 @@ func (p *RateLimit) RequestFilter(conf interface{}, w http.ResponseWriter, r pkg
 		costType := r.Header().Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
 		userId := r.Header().Get(constants.RAINBOW_USER_ID_HEADER_KEY)
 
+		removeLimiterIfUpdate(userId, serverType, costType)
+
 		c := conf.(RateLimitConf)
 		ctx := context.WithValue(context.Background(), constants.RAINBOW_USER_ID_HEADER_KEY, userId)
 		switch c.Mode {
@@ -135,4 +138,27 @@ func (p *RateLimit) RequestFilter(conf interface{}, w http.ResponseWriter, r pkg
 	// 		log.Errorf("failed to write: %s", err)
 	// 	}
 	// }
+}
+
+func removeLimiterIfUpdate(userId, serverType, costType string) {
+	_userId, err := redis.ParseUserId(userId)
+	if err != nil {
+		return
+	}
+	_serverType, err := enums.ParseServerType(serverType)
+	if err != nil {
+		return
+	}
+	yes, err := redis.CheckUserPlanUpdatedForQpsPlugin(_userId, *_serverType)
+	if err != nil {
+		return
+	}
+
+	if yes {
+		serverReqRegistry.Remove(serverType, userId)
+		serverCostRegistry.Remove(serverType, userId)
+		costRegistry.Remove(costType, userId)
+
+		redis.DB().Del(context.Background(), redis.UserPlanUpdatedForQpsPluginKey(_userId, *_serverType))
+	}
 }

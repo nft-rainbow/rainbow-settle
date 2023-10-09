@@ -7,18 +7,20 @@ import (
 )
 
 var (
-	userQuotaOperater    *models.UserQuotaOperator
+	userQuotaOperater    *UserQuotaOperator
 	userBillPlanOperater *models.UserBillPlanOperator
 	cmbDepositNoOperator *models.CmbDepositNoOperator
 )
 
 func Init() {
-	userQuotaOperater = models.GetUserQuotaOperator()
+	userQuotaOperater = GetUserQuotaOperator()
 
 	userBillPlanOperater = models.GetUserBillPlanOperator()
 	userBillPlanOperater.RegisterOnChangedEvent(ResetQuotaOnPlanUpdated)
 
 	cmbDepositNoOperator = &models.CmbDepositNoOperator{}
+
+	InitUserApiQuota()
 }
 
 func Run() {

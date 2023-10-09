@@ -19,4 +19,9 @@ func SetupRouter(c *gin.Engine) {
 		user.GET("quota", getUserApiQuotas)
 		user.GET("bill-plan", getUserWorkingBillPlans)
 	}
+
+	internal := v0.Group("internal")
+	{
+		internal.POST("deposit", depositForUser)
+	}
 }

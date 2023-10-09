@@ -521,7 +521,7 @@ curl $apisix_addr/apisix/admin/routes/3200 -H 'X-API-KEY: edd1c9f034335f136f87ad
     "ext-plugin-pre-req": {
        "conf": [
          {"name":"apikey-auth", "value":"{\"lookup\":\"header\"}"},
-         {"name":"scan-parser", "value":"{\"is_mainnet\":true,\"is_cspace\":true}"},
+         {"name":"scan-parser", "value":"{\"is_mainnet\":true,\"is_cspace\":false}"},
          {"name":"count", "value":"{}"},
          {"name":"rate-limit", "value":"{\"mode\":\"cost_type\"}"}
        ]
@@ -562,7 +562,7 @@ curl $apisix_addr/apisix/admin/routes/3300 -H 'X-API-KEY: edd1c9f034335f136f87ad
     "ext-plugin-pre-req": {
        "conf": [
          {"name":"apikey-auth", "value":"{\"lookup\":\"header\"}"},
-         {"name":"scan-parser", "value":"{\"is_mainnet\":false,\"is_cspace\":true}"},
+         {"name":"scan-parser", "value":"{\"is_mainnet\":false,\"is_cspace\":false}"},
          {"name":"count", "value":"{}"},
          {"name":"rate-limit", "value":"{\"mode\":\"cost_type\"}"}
        ]

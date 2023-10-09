@@ -75,6 +75,10 @@ type FiatLog struct {
 	RefundLogId *uint                     `gorm:"type:int;index" json:"refund_log_id"` // 退款日志id, 如果某条消费 log 被退款了, 此字段会有值
 }
 
+func (f *FiatLog) AfterCreate(tx *gorm.DB) (err error) {
+	return UpdateUserBalanceOnFiatlog(tx, f)
+}
+
 func FindFiatLogs(userId uint, offset int, limit int) (*[]FiatLog, error) {
 	var logs []FiatLog
 	res := db.Model(&FiatLog{}).

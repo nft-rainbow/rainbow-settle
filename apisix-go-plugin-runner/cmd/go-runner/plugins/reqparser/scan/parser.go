@@ -12,17 +12,19 @@ type ScanParserConf struct {
 }
 
 func (o *ScanParserConf) GetCostType() enums.CostType {
-	if o.IsMainnet {
-		if o.IsCspace {
-			return enums.COST_TYPE_SCAN_MAIN_CSPACE_NORMAL
-		}
-		return enums.COST_TYPE_SCAN_TEST_CSPACE_NORMAL
-	} else {
-		if o.IsCspace {
-			return enums.COST_TYPE_SCAN_MAIN_ESPACE_NORMAL
-		}
-		return enums.COST_TYPE_SCAN_TEST_ESPACE_NORMAL
+	if o.IsMainnet && o.IsCspace {
+		return enums.COST_TYPE_SCAN_MAIN_CSPACE_NORMAL
 	}
+
+	if o.IsMainnet && !o.IsCspace {
+		return enums.COST_TYPE_SCAN_MAIN_ESPACE_NORMAL
+	}
+
+	if !o.IsMainnet && o.IsCspace {
+		return enums.COST_TYPE_SCAN_TEST_CSPACE_NORMAL
+	}
+
+	return enums.COST_TYPE_SCAN_TEST_ESPACE_NORMAL
 }
 
 func (o *ScanParserConf) GetServerType() enums.ServerType {

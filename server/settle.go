@@ -157,7 +157,7 @@ func (s *SettleServer) UserCreated(ctx context.Context, in *proto.UserID) (*prot
 	if err != nil {
 		return nil, err
 	}
-	if err := models.GetUserQuotaOperator().CreateIfNotExists(models.GetDB(), []uint{uint(in.UserId)}, costTypes); err != nil {
+	if err := services.GetUserQuotaOperator().CreateIfNotExists(models.GetDB(), []uint{uint(in.UserId)}, costTypes); err != nil {
 		return nil, err
 	}
 	if err := models.GetUserSettledOperator().CreateIfNotExists(models.GetDB(), []uint{uint(in.UserId)}, costTypes); err != nil {
