@@ -46,7 +46,6 @@ func InitUserBalances() {
 	}
 
 	// init balance_on_fiatlog
-	// update user_balances set balance_on_fiatlog=(select balance from fiat_logs where fiat_logs.user_id=user_balances.user_id);
 	rawQuery := "update user_balances set balance_on_fiatlog=(select balance from fiat_logs where fiat_logs.user_id=user_balances.user_id order by id desc limit 1);"
 	if err := GetDB().Debug().Exec(rawQuery).Error; err != nil {
 		panic(err)
@@ -85,5 +84,5 @@ func GetUserCfxPrice(userId uint) (decimal.Decimal, error) {
 }
 
 func UpdateUserBalanceOnFiatlog(tx *gorm.DB, f *FiatLog) error {
-	return tx.Model(&UserBalance{}).Where("user_id=?", f.UserId).Update("balance_on_fiat_log", f.Balance).Error
+	return tx.Model(&UserBalance{}).Where("user_id=?", f.UserId).Update("balance_on_fiatlog", f.Balance).Error
 }
