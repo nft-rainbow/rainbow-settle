@@ -114,6 +114,9 @@ func determineCount(w pkgHTTP.Response) {
 			log.Infof("failed unmarshal rpc response")
 			return 0
 		}
+		if resp.Error != nil {
+			return 0
+		}
 		return 1
 	})
 }

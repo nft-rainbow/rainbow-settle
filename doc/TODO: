@@ -3,6 +3,16 @@ logger 自动更新文件名服务 加到 logger init 里
 Rainbow api 代付主账号没钱后跳过充代付
 
 Fiatlog invoiceId 跟 refund log 相关逻辑查看。
+
+refundlog 与 fiatlog 对应关系
+merge fiatlogcache 会出现 n-n 的关系
+
+1 fiatlog  rainbow-mint 10，rainbow-deploy 5 | refundlog2 rainbow-mint 10
+2 fiatlog  rainbow-mint 15
+2 refundlog rainbow-mint 20
+
+merge时根据refund数量拆分fiatlog，当前的不足，往前找fiatlog并设置refund-log id；保证fiatlog-refundlog 是1对多的
+
 Fiatlog Fiatlogcahe 对账。
 Scan 返回错误识别
 

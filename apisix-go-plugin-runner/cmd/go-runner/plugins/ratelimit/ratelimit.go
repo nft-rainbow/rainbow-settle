@@ -151,6 +151,7 @@ func removeLimiterIfUpdate(userId, serverType, costType string) {
 	}
 	yes, err := redis.CheckUserPlanUpdatedForQpsPlugin(_userId, *_serverType)
 	if err != nil {
+		log.Errorf("failed to check plan update flag: %v", err)
 		return
 	}
 
