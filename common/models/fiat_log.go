@@ -70,9 +70,9 @@ type FiatLogCore struct {
 type FiatLog struct {
 	BaseModel
 	FiatLogCore
-	CacheIds    datatypes.JSONSlice[uint] `json:"cache_ids"`
-	InvoiceId   *uint                     `gorm:"type:int;index" json:"invoice_id"`    // 发票id, 如果某条消费 log 已开发票, 此字段会有值
-	RefundLogId *uint                     `gorm:"type:int;index" json:"refund_log_id"` // 退款日志id, 如果某条消费 log 被退款了, 此字段会有值
+	CacheIds     datatypes.JSONSlice[uint] `json:"cache_ids"`
+	InvoiceId    *uint                     `gorm:"type:int;index" json:"invoice_id"` // 发票id, 如果某条消费 log 已开发票, 此字段会有值
+	RefundLogIds datatypes.JSONSlice[uint] `json:"refund_log_id"`                    // 退款日志id, 如果某条消费 log 被退款了, 此字段会有值
 }
 
 func (f *FiatLog) AfterCreate(tx *gorm.DB) (err error) {

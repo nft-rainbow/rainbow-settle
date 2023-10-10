@@ -123,12 +123,12 @@ func RefundSponsorWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, spons
 
 func RefundApiFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_API_FEE, models.FiatMetaRefundApiFee{costType, int(count)}, false)
+	return updateUserBalanceWithTx(tx, userId, amount, models.FIAT_LOG_TYPE_REFUND_API_FEE, models.FiatMetaRefundApiFeeForCache{costType, int(count)}, false)
 }
 
 func PayAPIFee(tx *gorm.DB, userId uint, costType enums.CostType, count uint) (uint, error) {
 	amount := models.GetApiPrice(costType).Mul(decimal.NewFromInt(int64(count)))
-	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFee{costType, int(count)}, false)
+	return updateUserBalanceWithTx(tx, userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_PAY_API_FEE, models.FiatMetaPayApiFeeForCache{costType, int(count)}, false)
 }
 
 func PayQuota(tx *gorm.DB, userId uint, costType enums.CostType, countReset int, countRollover int) (uint, error) {

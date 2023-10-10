@@ -35,7 +35,12 @@ type FiatMetaDepositDataBundle struct {
 	Quota
 }
 
-type FiatMetaPayApiFee Quota
+type FiatMetaPayApiFeeForCache Quota
+type FiatMetaPayApiFee struct {
+	Quota
+	RefundedCount  int
+	RefundedAmount decimal.Decimal
+}
 type FiatMetaPayApiQuota struct {
 	CostType      enums.CostType `json:"cost_type"`
 	CountReset    int            `json:"count_reset"`
@@ -49,7 +54,11 @@ type FiatMetaRefundSponsor struct {
 	Reason               string      `json:"reason"`
 }
 
-type FiatMetaRefundApiFee Quota
+type FiatMetaRefundApiFeeForCache Quota
+type FiatMetaRefundApiFee struct {
+	Quota
+	IsPart bool
+}
 type FiatMetaRefundApiQuota FiatMetaPayApiQuota
 
 type FiatMetaResetQuota Quota

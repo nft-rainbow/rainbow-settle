@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	needGroupFiatLogTypes = []FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE, FIAT_LOG_TYPE_PAY_API_QUOTA, FIAT_LOG_TYPE_REFUND_API_QUOTA, FIAT_LOG_TYPE_RESET_API_QUOTA}
-	mergeFiatLogLock      sync.Mutex
+	needGroupFiatLogTypes  = []FiatLogType{FIAT_LOG_TYPE_PAY_API_QUOTA, FIAT_LOG_TYPE_REFUND_API_QUOTA, FIAT_LOG_TYPE_RESET_API_QUOTA}
+	apiRelatedFiatLogTypes = append(needGroupFiatLogTypes, FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_REFUND_API_FEE)
+	mergeFiatLogLock       sync.Mutex
 )
 
 type FiatLogCache struct {
@@ -31,7 +32,7 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 	mergeFiatLogLock.Lock()
 	defer mergeFiatLogLock.Unlock()
 
-	if f.IsMerged || lo.Contains(needGroupFiatLogTypes, f.Type) {
+	if f.IsMerged || lo.Contains(apiRelatedFiatLogTypes, f.Type) {
 		return nil
 	}
 
@@ -122,12 +123,12 @@ func MergeToFiatlog(start, end time.Time) error {
 			apiFeeFls = append(apiFeeFls, &fl)
 		}
 
-		// note: avoid there is unmerged fiat log not in needGroupFiatLogTypes
+		// note: avoid there is unmerged fiat log not in apiRelatedFiatLogTypes
 		var otherFls []*FiatLog
 		err = tx.Model(&FiatLogCache{}).
 			Where("created_at>=? and created_at<?", start, end).
 			Where("is_merged=0").
-			Where("type not in ?", needGroupFiatLogTypes).
+			Where("type not in ?", apiRelatedFiatLogTypes).
 			Select("user_id, amount, type, meta, CONCAT('[' , id, ']') as cache_ids").
 			Scan(&otherFls).Error
 		if err != nil {
@@ -159,6 +160,10 @@ func MergeToFiatlog(start, end time.Time) error {
 			return errors.WithStack(err)
 		}
 
+		// merge pay/refund api fee fiat logs
+		// 先汇总pay api fee
+		// 根据refund api fee的数量往回找 pay api fee fiatlog并设置refund logids，如果fiatlog数量不足refund log则拆分refund log
+
 		// update is_merged flag
 		err = tx.Model(&FiatLogCache{}).
 			Where("created_at>=? and created_at<?", start, end).
@@ -184,19 +189,19 @@ func summaryMetas(fiatLogType FiatLogType, metasJson string) (interface{}, error
 	case FIAT_LOG_TYPE_RESET_API_QUOTA:
 		fallthrough
 	case FIAT_LOG_TYPE_PAY_API_FEE:
-		fms, err := unmarshalType[[]*FiatMetaPayApiFee](metasJson)
+		fms, err := unmarshalType[[]*FiatMetaPayApiFeeForCache](metasJson)
 		if err != nil {
 			logrus.WithField("input", metasJson).Debug("failed unmarshal metas to []*FiatMetaPayApiFee")
 			return nil, err
 		}
-		fmsByAddr := lo.GroupBy(*fms, func(fm *FiatMetaPayApiFee) enums.CostType {
+		fmsByAddr := lo.GroupBy(*fms, func(fm *FiatMetaPayApiFeeForCache) enums.CostType {
 			return fm.CostType
 		})
-		_fms := lo.MapToSlice(fmsByAddr, func(costType enums.CostType, fms []*FiatMetaPayApiFee) *FiatMetaPayApiFee {
-			return lo.Reduce(fms, func(aggr *FiatMetaPayApiFee, item *FiatMetaPayApiFee, index int) *FiatMetaPayApiFee {
+		_fms := lo.MapToSlice(fmsByAddr, func(costType enums.CostType, fms []*FiatMetaPayApiFeeForCache) *FiatMetaPayApiFeeForCache {
+			return lo.Reduce(fms, func(aggr *FiatMetaPayApiFeeForCache, item *FiatMetaPayApiFeeForCache, index int) *FiatMetaPayApiFeeForCache {
 				aggr.Count = aggr.Count + item.Count
 				return aggr
-			}, &FiatMetaPayApiFee{CostType: fms[0].CostType})
+			}, &FiatMetaPayApiFeeForCache{CostType: fms[0].CostType})
 		})
 		return _fms, nil
 	default:

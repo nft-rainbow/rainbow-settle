@@ -1,43 +1,43 @@
-TODO:
-1. 设置Rainbow路由的JwtKey
-2. 挂载config.yaml文件
-
 #######################################################################################################
 # Set your parameters
 #######################################################################################################
 
 # # local
 # # upstreams
-env=local
-upstream_proxy="172.16.100.252:8020"
-upstream_rainbow_app_service="172.16.100.252:8081"
-upstream_logs_service="http://172.16.100.252:8000"
+# env=local
+# upstream_proxy="172.16.100.252:8020"
+# upstream_rainbow_app_service="172.16.100.252:8081"
+# upstream_logs_service="http://172.16.100.252:8000"
 
-apisix_addr=http://127.0.0.1:9180
-servers_domain=nftrainbow.me
-rainbow_api_addr=http://172.16.100.252:8080
-settle_addr=http://172.16.100.252:8091
+# apisix_addr=http://127.0.0.1:9180
+# servers_domain=nftrainbow.me
+# rainbow_api_addr=http://172.16.100.252:8080
+# settle_addr=http://172.16.100.252:8091
 
-apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
-apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
-apikey_scan_main="xxx"
-apikey_scan_test="xxx"
+# apikey_confura_main="xxx"
+# apikey_confura_test="xxx"
+# apikey_scan_main_cspace="xxx"
+# apikey_scan_main_espace="xxx"
+# apikey_scan_test_cspace="xxx"
+# apikey_scan_test_espace="xxx"
 
 # dev
-# env=dev
-# upstream_proxy="172.18.0.1:8020"
-# upstream_rainbow_app_service="172.18.0.1:8081"
-# upstream_logs_service="172.18.0.1:19080"
+env=dev
+upstream_proxy="172.18.0.1:8020"
+upstream_rainbow_app_service="172.18.0.1:8081"
+upstream_logs_service="172.18.0.1:19080"
 
-# apisix_addr=http://dev-apisix-admin.nftrainbow.cn
-# servers_domain=nftrainbow.cn
-# rainbow_api_addr=http://127.0.0.1:8080
-# settle_addr=http://127.0.0.1:8091
+apisix_addr=http://dev-apisix-admin.nftrainbow.cn
+servers_domain=nftrainbow.cn
+rainbow_api_addr=http://127.0.0.1:8080
+settle_addr=http://127.0.0.1:8091
 
-# apikey_confura_main="0rW8CEuqNvDaWNybiukVXK5kJp9GP3rdptimpqxu9bdc"
-# apikey_confura_test="0djrpfkthikrMfSkRzHDdAVD6biYJ42GaWopMkew3t6"
-# apikey_scan_main="xxx"
-# apikey_scan_test="xxx"
+apikey_confura_main="xxx"
+apikey_confura_test="xxx"
+apikey_scan_main_cspace="xxx"
+apikey_scan_main_espace="xxx"
+apikey_scan_test_cspace="xxx"
+apikey_scan_test_espace="xxx"
 
 echo "开始配置apisix路由"
 
@@ -294,7 +294,7 @@ curl $apisix_addr/apisix/admin/routes/2000 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"rpc-resp-format","value":"{}"}
+         {"name":"rpc-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
@@ -333,7 +333,7 @@ curl $apisix_addr/apisix/admin/routes/2100 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"rpc-resp-format","value":"{}"}
+         {"name":"rpc-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
@@ -372,7 +372,7 @@ curl $apisix_addr/apisix/admin/routes/2200 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"rpc-resp-format","value":"{}"}
+         {"name":"rpc-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
@@ -411,7 +411,7 @@ curl $apisix_addr/apisix/admin/routes/2300 -H 'X-API-KEY: edd1c9f034335f136f87ad
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"rpc-resp-format","value":"{}"}
+         {"name":"rpc-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
@@ -447,13 +447,13 @@ curl $apisix_addr/apisix/admin/routes/3000 -H 'X-API-KEY: edd1c9f034335f136f87ad
     "proxy-rewrite": {
       "headers": {
         "X-Rainbow-Target-Addr": "https://api.confluxscan.net",
-        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
-        "apiKey": "'${apikey_scan_main}'"
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main_cspace}'",
+        "apiKey": "'${apikey_scan_main_cspace}'"
       }
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"count", "value":"{}"}
+         {"name":"scan-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
@@ -488,13 +488,13 @@ curl $apisix_addr/apisix/admin/routes/3100 -H 'X-API-KEY: edd1c9f034335f136f87ad
     "proxy-rewrite": {
       "headers": {
         "X-Rainbow-Target-Addr": "https://api-testnet.confluxscan.net",
-        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
-        "apiKey": "'${apikey_scan_main}'"
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_test_cspace}'",
+        "apiKey": "'${apikey_scan_test_cspace}'"
       }
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"count", "value":"{}"}
+         {"name":"scan-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
@@ -529,13 +529,13 @@ curl $apisix_addr/apisix/admin/routes/3200 -H 'X-API-KEY: edd1c9f034335f136f87ad
     "proxy-rewrite": {
       "headers": {
         "X-Rainbow-Target-Addr": "https://evmapi.confluxscan.net",
-        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
-        "apiKey": "'${apikey_scan_main}'"
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main_espace}'",
+        "apiKey": "'${apikey_scan_main_espace}'"
       }
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"count", "value":"{}"}
+         {"name":"scan-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
@@ -570,13 +570,13 @@ curl $apisix_addr/apisix/admin/routes/3300 -H 'X-API-KEY: edd1c9f034335f136f87ad
     "proxy-rewrite": {
       "headers": {
         "X-Rainbow-Target-Addr": "https://evmapi-testnet.confluxscan.net",
-        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_main}'",
-        "apiKey": "'${apikey_scan_main}'"
+        "X-Rainbow-Append-Query": "'apiKey=${apikey_scan_test_espace}'",
+        "apiKey": "'${apikey_scan_test_espace}'"
       }
     },
     "ext-plugin-post-resp": {
        "conf": [
-         {"name":"count", "value":"{}"}
+         {"name":"scan-resp-handler","value":"{}"}
        ]
     },
     "http-logger": {
