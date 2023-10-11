@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -9,7 +10,6 @@ import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/server/services"
-	"github.com/pingcap/errors"
 	"github.com/samber/lo"
 )
 
