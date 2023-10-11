@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conflux-fans/ginmetrics"
 	"github.com/gin-gonic/gin"
 	"github.com/nft-rainbow/conflux-gin-helper/middlewares"
 	"github.com/nft-rainbow/rainbow-settle/server/config"
@@ -14,7 +13,7 @@ import (
 
 func initGin() *gin.Engine {
 	engine := gin.New()
-	ginmetrics.GetMonitor().Use(engine)
+	// ginmetrics.GetMonitor().Use(engine)
 
 	engine.Use(gin.Logger())
 	engine.Use(middlewares.Logger(nil))
