@@ -1,5 +1,0 @@
-environment: development
-redis:
-  host: 172.16.100.252
-  port: 6379
-  password: ""

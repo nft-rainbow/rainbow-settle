@@ -1,27 +1,19 @@
 TODO:
 logger 自动更新文件名服务 加到 logger init 里
 Rainbow api 代付主账号没钱后跳过充代付
-
-Fiatlog invoiceId 跟 refund log 相关逻辑查看。
-
-refundlog 与 fiatlog 对应关系
-merge fiatlogcache 会出现 n-n 的关系
-
-1 fiatlog  rainbow-mint 10，rainbow-deploy 5 | refundlog2 rainbow-mint 10
-2 fiatlog  rainbow-mint 15
-2 refundlog rainbow-mint 20
-
-merge时根据refund数量拆分fiatlog，当前的不足，往前找fiatlog并设置refund-log id；保证fiatlog-refundlog 是1对多的
-
 Fiatlog Fiatlogcahe 对账。
-Scan 返回错误识别； 0或1 成功，其它失败
+Scan/Confura 在apisix request plugin里因错误返回时的处理。
 
+TODO DONE:
+refundlog 与 fiatlog 对应关系
+merge时根据refund数量拆分refundfiatlog，当前的不足，往前找fiatlog并设置refund-log id；保证fiatlog-refundlog 是1对多的
+
+Scan 返回错误识别； 0或1 成功，其它失败
 
 rate limit 后格式不对  --- 暂不处理。 APISIX功能不足，post resp只有在pre request执行后有效
 
 pending count 超时后减去。 --- 由于在pre request插件中失败的请求不会执行post resp插件，这些count将永久在pengding count中不会消失，导致pending count不断增大，而使计数器失效。 暂时处理：检查balance是否足够时，不计入pending 
 count，根据rich判断，settle服务需要加监控
-
 
 BUG DONE:
 购买新服务后 qps没有刷新 DONE
