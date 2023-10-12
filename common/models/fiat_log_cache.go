@@ -144,6 +144,10 @@ func mergeApiQuotaFiatlogs(tx *gorm.DB, start, end time.Time) error {
 		apiFeeFls = append(apiFeeFls, &fl)
 	}
 
+	if len(apiFeeFls) == 0 {
+		return nil
+	}
+
 	// note: avoid there is unmerged fiat log not in apiRelatedFiatLogTypes
 	// var otherFls []*FiatLog
 	// err = tx.Model(&FiatLogCache{}).
@@ -161,9 +165,9 @@ func mergeApiQuotaFiatlogs(tx *gorm.DB, start, end time.Time) error {
 	// 	return nil
 	// }
 
-	allFls := apiFeeFls
+	// allFls := apiFeeFls
 	lastBalances := make(map[uint]decimal.Decimal)
-	for _, fl := range allFls {
+	for _, fl := range apiFeeFls {
 		if _, ok := lastBalances[fl.UserId]; !ok {
 			lastBalance, err := GetLastBlanceByFiatlog(tx, fl.UserId)
 			if err != nil {
@@ -177,18 +181,15 @@ func mergeApiQuotaFiatlogs(tx *gorm.DB, start, end time.Time) error {
 
 		logrus.WithField("user", fl.UserId).WithField("val", lastBalances[fl.UserId]).WithField("amount", fl.Amount).Debug("updated last balance")
 	}
-	logrus.WithField("all fls", allFls).Debug("save fiat logs")
-	if err := tx.Debug().Save(&allFls).Error; err != nil {
+	logrus.WithField("all fls", apiFeeFls).Debug("save fiat logs")
+	if err := tx.Debug().Save(&apiFeeFls).Error; err != nil {
 		return errors.WithStack(err)
 	}
-
-	// merge pay/refund api fee fiat logs
-	// 先汇总pay api fee
-	// 根据refund api fee的数量往回找 pay api fee fiatlog并设置refund logids，如果fiatlog数量不足refund log则拆分refund log
 
 	// update is_merged flag
 	err = tx.Model(&FiatLogCache{}).
 		Where("created_at>=? and created_at<?", start, end).
+		Where("type in ?", apiQuotaRelatedFiatLogTypes).
 		Where("is_merged=0").Update("is_merged", true).Error
 	if err != nil {
 		return errors.WithStack(err)
