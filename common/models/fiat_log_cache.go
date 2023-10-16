@@ -38,6 +38,7 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 	if f.IsMerged || lo.Contains(apiRelatedFiatLogTypes, f.Type) {
 		return nil
 	}
+	f.IsMerged = true
 
 	// get user last fiat log and calc balance
 	lastBalance, err := GetLastBlanceByFiatlog(tx, f.UserId)
@@ -50,12 +51,6 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 		CacheIds:    datatypes.JSONSlice[uint]{f.ID},
 	}
 	fl.Balance = lastBalance.Add(f.Amount)
-	f.IsMerged = true
-
-	if err := tx.Save(f).Error; err != nil {
-		return err
-	}
-
 	return tx.Save(fl).Error
 }
 
