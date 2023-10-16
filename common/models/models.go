@@ -111,7 +111,8 @@ func ConnectDB(dbConfig config.Mysql) {
 
 func MigrateSchemas() error {
 	// Migrate the schema
-	return db.AutoMigrate(
+	logrus.Info("start Migrating schemas")
+	err := db.AutoMigrate(
 		&User{},
 		&ApiProfile{},
 		&BillPlan{},
@@ -128,6 +129,11 @@ func MigrateSchemas() error {
 		&DepositOrder{},
 		&CmbDepositNo{},
 	)
+	if err != nil {
+		return (err)
+	}
+	logrus.Info("migrate schemas done")
+	return nil
 }
 
 func GetDB() *gorm.DB {
