@@ -85,11 +85,11 @@ func initConfigs(_mysqlConfig config.Mysql, _fee config.Fee, _cfxPrice float64) 
 
 func UseDB(_db *gorm.DB) {
 	db = _db
-	err := MigrateSchemas()
+	// err := MigrateSchemas()
 
-	if err != nil {
-		panic(err)
-	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 func ConnectDB(dbConfig config.Mysql) {
