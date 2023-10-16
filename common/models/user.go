@@ -20,6 +20,16 @@ const (
 	USER_TYPE_COMPANY
 )
 
+var (
+	useCreatedHandlers []UserCreatedHandler
+)
+
+type UserCreatedHandler func(tx *gorm.DB, user *User) error
+
+func RegisterUserCreatedEvent(handler UserCreatedHandler) {
+	useCreatedHandlers = append(useCreatedHandlers, handler)
+}
+
 type User struct {
 	BaseModel
 	Email         string            `gorm:"uniqueIndex;type:varchar(64)" json:"email"`
@@ -79,6 +89,11 @@ func KycReviewCount() int64 {
 func (u *User) AfterCreate(tx *gorm.DB) (err error) {
 	if err := tx.Create(NewUserBalance(u.ID)).Error; err != nil {
 		return err
+	}
+	for _, h := range useCreatedHandlers {
+		if err := h(tx, u); err != nil {
+			return err
+		}
 	}
 	return nil
 }

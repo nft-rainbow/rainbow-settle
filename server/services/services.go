@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"gorm.io/gorm"
 )
 
 var (
@@ -14,13 +15,30 @@ var (
 
 func Init() {
 	userQuotaOperater = GetUserQuotaOperator()
-
 	userBillPlanOperater = models.GetUserBillPlanOperator()
-	userBillPlanOperater.RegisterOnChangedEvent(ResetQuotaOnPlanUpdated)
-
 	cmbDepositNoOperator = &models.CmbDepositNoOperator{}
 
 	InitUserApiQuota()
+	RegisterEvents()
+}
+
+func RegisterEvents() {
+	userBillPlanOperater.RegisterOnChangedEvent(ResetQuotaOnPlanUpdated)
+
+	h := models.UserCreatedHandler(func(tx *gorm.DB, user *models.User) error {
+		costTypes, err := models.GetAllCostTypes()
+		if err != nil {
+			return err
+		}
+		if err := userQuotaOperater.CreateIfNotExists(tx, []uint{user.ID}, costTypes); err != nil {
+			return err
+		}
+		if err := models.GetUserSettledOperator().CreateIfNotExists(tx, []uint{user.ID}, costTypes); err != nil {
+			return err
+		}
+		return nil
+	})
+	models.RegisterUserCreatedEvent(h)
 }
 
 func Run() {
