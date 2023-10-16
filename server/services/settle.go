@@ -40,6 +40,7 @@ func LoopSettle(interval time.Duration) {
 //  3. TODO: 发现余额<=0且free quota为0后置标记 USER-COSTTYPE-RICH 为false
 //  4. 写fiat log cache
 func settle() error {
+	logrus.Debug("settle start")
 	settleLock.Lock()
 	defer settleLock.Unlock()
 
