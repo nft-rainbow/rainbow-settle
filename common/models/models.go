@@ -48,6 +48,21 @@ func NewItemsWithCount[T any](items []T) *ItemsWithCount[T] {
 	}
 }
 
+func InitWithCreatedDB(_db *gorm.DB, _fee config.Fee, _cfxPrice float64) {
+	fee = &_fee
+	cfxPrice = _cfxPrice
+	UseDB(_db)
+	logrus.Info("connect db done")
+	InitApiProfile()
+	logrus.Info("init api profiles done")
+	InitUserBalances()
+	logrus.Info("init user balance done")
+	InitUserSettleds()
+	logrus.Info("init user settles done")
+	InitBillPlan()
+	logrus.Info("init bill plans done")
+}
+
 func Init(mysqlConfig config.Mysql, fee config.Fee, cfxPrice float64) {
 	initConfigs(mysqlConfig, fee, cfxPrice)
 	ConnectDB(mysqlConfig)
