@@ -35,6 +35,7 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 	mergeFiatLogLock.Lock()
 	defer mergeFiatLogLock.Unlock()
 
+	logrus.Debug("debug fiatlog cache create: start hook after create fiat_log_cache")
 	if f.IsMerged || lo.Contains(apiRelatedFiatLogTypes, f.Type) {
 		return nil
 	}
@@ -45,13 +46,16 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 	if err != nil {
 		return err
 	}
+	logrus.Debug("debug fiatlog cache create: get last balance by fiat log")
 
 	fl := &FiatLog{
 		FiatLogCore: f.FiatLogCore,
 		CacheIds:    datatypes.JSONSlice[uint]{f.ID},
 	}
 	fl.Balance = lastBalance.Add(f.Amount)
-	return tx.Save(fl).Error
+	err = tx.Save(fl).Error
+	logrus.Debug("debug fiatlog cache create: save fiat log and update users.fiat_log_balance")
+	return err
 }
 
 func FindSponsorFiatlogByTxid(txId uint) (*FiatLogCache, error) {
