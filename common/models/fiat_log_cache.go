@@ -25,13 +25,15 @@ var (
 )
 
 func lockMergeFiatLogMutex() {
+	logrus.Debug("start lock merge fiat log mutex")
 	mergeFiatLogLock.Lock()
-	logrus.Debug("lock merge fiat log mutex")
+	logrus.Debug("merge fiat log mutex locked")
 }
 
 func unlockMergeFiatLogMutex() {
+	logrus.Debug("start unlock merge fiat log mutex")
 	mergeFiatLogLock.Unlock()
-	logrus.Debug("unlock merge fiat log mutex")
+	logrus.Debug("merge fiat log mutex unlocked")
 }
 
 type FiatLogCache struct {
