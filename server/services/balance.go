@@ -19,6 +19,18 @@ var (
 	balanceMu sync.Mutex
 )
 
+func lockBalanceMu() {
+	logrus.Debug("lock balance mutex")
+	balanceMu.Lock()
+	logrus.Debug("balance mutex locked")
+}
+
+func unlockBalanceMu() {
+	logrus.Debug("unlock balance mutex")
+	balanceMu.Unlock()
+	logrus.Debug("balance mutex unlocked")
+}
+
 func DepositBalance(userId uint, amount decimal.Decimal, depositOrderId uint, logType models.FiatLogType) (uint, error) {
 	return updateUserBalance(userId, amount, logType, models.FiatMetaDeposit{depositOrderId})
 }
@@ -158,8 +170,8 @@ func updateUserBalance(userId uint, amount decimal.Decimal, logType models.FiatL
 }
 
 func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, logType models.FiatLogType, meta interface{}, checkBalance ...bool) (uint, error) {
-	balanceMu.Lock()
-	defer balanceMu.Unlock()
+	lockBalanceMu()
+	defer unlockBalanceMu()
 
 	// 找 logtype 上一条记录的unsettle
 	flc, err := models.FindLastFiatLogCache(userId, logType)
