@@ -44,11 +44,6 @@ type FiatLogCache struct {
 }
 
 func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
-	logrus.Debug("debug fiatlog cache create: start hook after create fiat_log_cache")
-	// lockMergeFiatLogMutex()
-	// defer unlockMergeFiatLogMutex()
-
-	logrus.Debug("debug fiatlog cache create: locked")
 	if f.IsMerged || lo.Contains(apiRelatedFiatLogTypes, f.Type) {
 		return nil
 	}

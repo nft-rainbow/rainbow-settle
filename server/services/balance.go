@@ -183,7 +183,7 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 		}
 	}
 
-	logrus.Debug("aaaa")
+	// logrus.Debug("aaaa")
 
 	// 小于1分的零头只记录，等凑齐1分以上才结算
 	_amount := amount.Add(flc.UnsettleAmount)
@@ -198,7 +198,7 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 		if err != nil {
 			return 0, err
 		}
-		logrus.Debug("bbbb")
+		// logrus.Debug("bbbb")
 
 		if (len(checkBalance) == 0 || checkBalance[0]) && userBalance.Balance.Add(userBalance.ArrearsQuota).Add(amount).Cmp(decimal.Zero) < 0 {
 			return 0, errors.New("insufficient balance")
@@ -219,13 +219,13 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 		if err := tx.Create(&l).Error; err != nil {
 			return 0, err
 		}
-		logrus.Debug("cccc")
+		// logrus.Debug("cccc")
 
 		userBalance.Balance = userBalance.Balance.Add(amount)
 		return l.ID, tx.Save(&userBalance).Error
 	}()
 
-	logrus.Debug("dddd")
+	// logrus.Debug("dddd")
 
 	logrus.WithFields(logrus.Fields{
 		"userId":    userId,
