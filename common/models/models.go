@@ -68,6 +68,15 @@ func initConfigs(_mysqlConfig config.Mysql, _fee config.Fee, _cfxPrice float64) 
 	cfxPrice = _cfxPrice
 }
 
+func UseDB(_db *gorm.DB) {
+	db = _db
+	err := MigrateSchemas()
+
+	if err != nil {
+		panic(err)
+	}
+}
+
 func ConnectDB(dbConfig config.Mysql) {
 	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
 	var err error
@@ -78,8 +87,16 @@ func ConnectDB(dbConfig config.Mysql) {
 		panic(err)
 	}
 
+	err = MigrateSchemas()
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func MigrateSchemas() error {
 	// Migrate the schema
-	err = db.AutoMigrate(
+	return db.AutoMigrate(
 		&User{},
 		&ApiProfile{},
 		&BillPlan{},
@@ -96,10 +113,6 @@ func ConnectDB(dbConfig config.Mysql) {
 		&DepositOrder{},
 		&CmbDepositNo{},
 	)
-
-	if err != nil {
-		panic(err)
-	}
 }
 
 func GetDB() *gorm.DB {
