@@ -157,15 +157,19 @@ func (s *SettleServer) UserCreated(ctx context.Context, in *proto.UserID) (*prot
 	if err != nil {
 		return nil, err
 	}
+	logrus.Debug("on user created: get all cost types done")
 	if err := services.GetUserQuotaOperator().CreateIfNotExists(models.GetDB(), []uint{uint(in.UserId)}, costTypes); err != nil {
 		return nil, err
 	}
+	logrus.Debug("on user created: create user_api_quota done")
 	if err := models.GetUserSettledOperator().CreateIfNotExists(models.GetDB(), []uint{uint(in.UserId)}, costTypes); err != nil {
 		return nil, err
 	}
+	logrus.Debug("on user created: create user_settleds done")
 	if err := services.ResetQuotaOnUserCreated(uint(in.UserId)); err != nil {
 		return nil, err
 	}
+	logrus.Debug("on user created: reset user api quota done")
 	return &proto.Empty{}, nil
 }
 
