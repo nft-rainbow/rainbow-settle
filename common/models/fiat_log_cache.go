@@ -138,7 +138,7 @@ func mergeApiQuotaFiatlogs(tx *gorm.DB, start, end time.Time) error {
 	for _, tmpFl := range apiQuotaTmpFls {
 		fl := tmpFl.FiatLog
 
-		logrus.WithField("metas", fmt.Sprintf("[%s]", tmpFl.Meta)).Debug("rat metas string")
+		// logrus.WithField("metas", fmt.Sprintf("[%s]", tmpFl.Meta)).Debug("rat metas string")
 
 		// TODO: 这里由于meta是截断后的结果，暂时不存meta，需要处理
 		metas, err := summaryMetas(fl.Type, fmt.Sprintf("[%s]", "")) //tmpFl.Meta))
@@ -193,7 +193,7 @@ func mergeApiQuotaFiatlogs(tx *gorm.DB, start, end time.Time) error {
 
 		logrus.WithField("user", fl.UserId).WithField("val", lastBalances[fl.UserId]).WithField("amount", fl.Amount).Debug("updated last balance")
 	}
-	logrus.WithField("all fls", apiFeeFls).Debug("save fiat logs")
+	logrus.WithField("all fls", GetIds(apiFeeFls)).Debug("save fiat logs")
 	if err := tx.Debug().Save(&apiFeeFls).Error; err != nil {
 		return errors.WithStack(err)
 	}
