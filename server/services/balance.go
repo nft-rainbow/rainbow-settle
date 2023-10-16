@@ -174,7 +174,7 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 	defer unlockBalanceMu()
 
 	// 找 logtype 上一条记录的unsettle
-	flc, err := models.FindLastFiatLogCache(userId, logType)
+	flc, err := models.FindLastFiatLogCache(tx, userId, logType)
 	if err != nil {
 		if gormutils.IsRecordNotFoundError(err) {
 			flc = &models.FiatLogCache{}
@@ -182,6 +182,8 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 			return 0, err
 		}
 	}
+
+	logrus.Debug("aaaa")
 
 	// 小于1分的零头只记录，等凑齐1分以上才结算
 	_amount := amount.Add(flc.UnsettleAmount)
@@ -196,6 +198,7 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 		if err != nil {
 			return 0, err
 		}
+		logrus.Debug("bbbb")
 
 		if (len(checkBalance) == 0 || checkBalance[0]) && userBalance.Balance.Add(userBalance.ArrearsQuota).Add(amount).Cmp(decimal.Zero) < 0 {
 			return 0, errors.New("insufficient balance")
@@ -216,10 +219,13 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 		if err := tx.Create(&l).Error; err != nil {
 			return 0, err
 		}
+		logrus.Debug("cccc")
 
 		userBalance.Balance = userBalance.Balance.Add(amount)
 		return l.ID, tx.Save(&userBalance).Error
 	}()
+
+	logrus.Debug("dddd")
 
 	logrus.WithFields(logrus.Fields{
 		"userId":    userId,

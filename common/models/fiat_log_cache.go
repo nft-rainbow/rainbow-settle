@@ -69,9 +69,9 @@ func FindSponsorFiatlogByTxid(txId uint) (*FiatLogCache, error) {
 	return &fl, nil
 }
 
-func FindLastFiatLogCache(userId uint, logType FiatLogType) (*FiatLogCache, error) {
+func FindLastFiatLogCache(tx *gorm.DB, userId uint, logType FiatLogType) (*FiatLogCache, error) {
 	var fl FiatLogCache
-	if err := db.Model(&FiatLogCache{}).
+	if err := tx.Model(&FiatLogCache{}).
 		Where("user_id=? and type =?", userId, logType).
 		Order("id desc").
 		First(&fl).Error; err != nil {
