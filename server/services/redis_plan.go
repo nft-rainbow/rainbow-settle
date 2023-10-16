@@ -24,7 +24,7 @@ func SetPlanToRedis() {
 	logrus.Info("set plans related to redis")
 }
 
-func setUserPlansToRedis(userIds []uint, setUpdateFlag bool) error {
+func SetUserPlansToRedis(userIds []uint, setUpdateFlag bool) error {
 	logrus.WithField("users", userIds).Info("refresh user plans to redis")
 	userPlansMap, err := models.GetUserBillPlanOperator().FindUsersEffectivePlans(userIds)
 	if err != nil {
@@ -57,7 +57,7 @@ func setAllUserPlansToRedis() error {
 	if err != nil {
 		return err
 	}
-	return setUserPlansToRedis(allUserIds, false)
+	return SetUserPlansToRedis(allUserIds, false)
 }
 
 func setPlansToRedis() error {

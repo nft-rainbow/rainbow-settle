@@ -170,6 +170,9 @@ func (s *SettleServer) UserCreated(ctx context.Context, in *proto.UserID) (*prot
 		return nil, err
 	}
 	logrus.Debug("on user created: reset user api quota done")
+	if err := services.SetUserPlansToRedis([]uint{uint(in.UserId)}, false); err != nil {
+		return nil, err
+	}
 	return &proto.Empty{}, nil
 }
 
