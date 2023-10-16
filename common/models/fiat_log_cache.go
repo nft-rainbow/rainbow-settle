@@ -24,6 +24,16 @@ var (
 	mergeFiatLogLock            sync.Mutex
 )
 
+func lockMergeFiatLogMutex() {
+	mergeFiatLogLock.Lock()
+	logrus.Debug("lock merge fiat log mutex")
+}
+
+func unlockMergeFiatLogMutex() {
+	mergeFiatLogLock.Unlock()
+	logrus.Debug("unlock merge fiat log mutex")
+}
+
 type FiatLogCache struct {
 	BaseModel
 	FiatLogCore
@@ -33,8 +43,8 @@ type FiatLogCache struct {
 
 func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 	logrus.Debug("debug fiatlog cache create: start hook after create fiat_log_cache")
-	mergeFiatLogLock.Lock()
-	defer mergeFiatLogLock.Unlock()
+	lockMergeFiatLogMutex()
+	defer unlockMergeFiatLogMutex()
 
 	logrus.Debug("debug fiatlog cache create: locked")
 	if f.IsMerged || lo.Contains(apiRelatedFiatLogTypes, f.Type) {
@@ -81,8 +91,8 @@ func FindLastFiatLogCache(tx *gorm.DB, userId uint, logType FiatLogType) (*FiatL
 }
 
 func MergeToFiatlog(start, end time.Time) error {
-	mergeFiatLogLock.Lock()
-	defer mergeFiatLogLock.Unlock()
+	lockMergeFiatLogMutex()
+	defer unlockMergeFiatLogMutex()
 
 	err := GetDB().Transaction(func(tx *gorm.DB) error {
 		if err := mergeApiQuotaFiatlogs(tx, start, end); err != nil {
