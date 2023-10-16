@@ -91,6 +91,7 @@ func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costT
 
 // force为 true 则即使 此时在nextResetTime之前 也会强制更新（当升级套餐时需要force reset）
 func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[enums.CostType]int, nextResetTime time.Time, force bool) error {
+	logrus.WithField("user id", userIds).WithField("force", force).Debug("start reset user quota")
 	err := func() error {
 		var matched []*models.UserApiQuota
 
@@ -128,7 +129,7 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 		}
 		return nil
 	}()
-
+	logrus.WithField("user id", userIds).WithField("force", force).WithError(err).Debug("reset user quota done")
 	return err
 }
 
