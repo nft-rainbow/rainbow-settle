@@ -55,7 +55,7 @@ func RenewPlans() error {
 func ResetUsersQuotas(userIds []uint) error {
 	logrus.WithField("users", userIds).Info("reset users quotas")
 	userPlans, err := models.GetUserBillPlanOperator().FindUsersEffectivePlans(userIds)
-	logrus.WithField("result", userPlans).WithError(err).Trace("find all user effective plans")
+	logrus.WithField("result", userPlans).WithField("user ids", userIds).WithError(err).Debug("debug on reset user quotas: find user effective plans")
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,9 @@ func ResetUsersQuotas(userIds []uint) error {
 		if err != nil {
 			return err
 		}
-		if err := resetQuotaByPlan(plan, userIds); err != nil {
+		err = resetQuotaByPlan(plan, userIds)
+		logrus.Debug("debug on reset user quotas: reset quota by plan done")
+		if err != nil {
 			return err
 		}
 	}
