@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/nft-rainbow/rainbow-settle/common/config"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -50,10 +51,15 @@ func NewItemsWithCount[T any](items []T) *ItemsWithCount[T] {
 func Init(mysqlConfig config.Mysql, fee config.Fee, cfxPrice float64) {
 	initConfigs(mysqlConfig, fee, cfxPrice)
 	ConnectDB(mysqlConfig)
+	logrus.Info("connect db done")
 	InitApiProfile()
+	logrus.Info("init api profiles done")
 	InitUserBalances()
+	logrus.Info("init user balance done")
 	InitUserSettleds()
+	logrus.Info("init user settles done")
 	InitBillPlan()
+	logrus.Info("init bill plans done")
 }
 
 func initConfigs(_mysqlConfig config.Mysql, _fee config.Fee, _cfxPrice float64) {
