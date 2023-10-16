@@ -93,6 +93,7 @@ func (u *UserQuotaOperator) CreateIfNotExists(tx *gorm.DB, userIds []uint, costT
 func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[enums.CostType]int, nextResetTime time.Time, force bool) error {
 	logrus.WithField("user id", userIds).WithField("force", force).Debug("start reset user quota")
 	err := func() error {
+		logrus.Debug("aaa")
 		var matched []*models.UserApiQuota
 
 		where := tx.
@@ -102,6 +103,7 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 		if !force {
 			where = where.Where("next_reset_count_time<?", nextResetTime)
 		}
+		logrus.Debug("bbb")
 
 		if err := tx.Table("user_api_quota").
 			Where(where).
@@ -112,6 +114,8 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 			return nil
 		}
 
+		logrus.Debug("ccc")
+
 		for _, uaq := range matched {
 			uaq.CountReset = resetQuotas[uaq.CostType]
 			uaq.NextResetCountTime = nextResetTime
@@ -119,6 +123,8 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 		if err := tx.Save(&matched).Error; err != nil {
 			return err
 		}
+
+		logrus.Debug("ddd")
 
 		for _, uaq := range matched {
 			fl, err := ResetQuota(tx, uaq.UserId, uaq.CostType, uint(resetQuotas[uaq.CostType]))
