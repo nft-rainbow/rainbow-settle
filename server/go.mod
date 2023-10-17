@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/influxdata/influxdb v1.11.2
-	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04
+	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231017081902-c0574f1ba21b
 	github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825032716-12ed0997c882
 	github.com/nft-rainbow/rainbow-settle/proto v0.0.0-20230825103155-7a1bb119bf40
 	github.com/pkg/errors v0.9.1

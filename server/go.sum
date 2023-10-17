@@ -492,6 +492,7 @@ github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.5/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/googleapis/enterprise-certificate-proxy v0.2.3 h1:yk9/cqRKtT9wXZSsRH9aurXEpJX+U6FLtpYTdC3R06k=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
@@ -756,6 +757,10 @@ github.com/nats-io/nkeys v0.1.3/go.mod h1:xpnFELMwJABBLVhffcfd1MZx6VsNRFpEugbxzi
 github.com/nats-io/nuid v1.0.1/go.mod h1:19wcPz3Ph3q0Jbyiqsd0kePYG7A95tJPxeL+1OSON2c=
 github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04 h1:u7PtHBJHrZKCGtpcXq9jntZeb0ndJ0zGaKLtFVfjd/I=
 github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230824024404-0f2d49308d04/go.mod h1:RJW+fvqb57QZYFItAxV55Y+KUM9PlGh6vayw+nuH9fU=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231017081402-f19a70a203a3 h1:ARp6elJeFh2l9/NzL1dVWCpUAR7KzhfME1jotoLAAtI=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231017081402-f19a70a203a3/go.mod h1:RJW+fvqb57QZYFItAxV55Y+KUM9PlGh6vayw+nuH9fU=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231017081902-c0574f1ba21b h1:AaogCYJgszHh0OZo6+C3tuCtb7Mv5Ws422qmF65ckfQ=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231017081902-c0574f1ba21b/go.mod h1:RJW+fvqb57QZYFItAxV55Y+KUM9PlGh6vayw+nuH9fU=
 github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825032716-12ed0997c882 h1:C1rHuA+fgZ1kVoqnUQ9eSZlcLGcX03P9C7Chrk4nXCs=
 github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825032716-12ed0997c882/go.mod h1:kQhFPcrGb4pkOGcpPPue7u0Dh22U9HRjQyIPpehN7MM=
 github.com/nft-rainbow/rainbow-settle/proto v0.0.0-20230825103155-7a1bb119bf40 h1:522Z+dncqyTLWj54xjIdEPRz/hVF+3T69w6vpB0YPkY=
