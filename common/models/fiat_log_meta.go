@@ -57,7 +57,7 @@ type FiatMetaRefundSponsor struct {
 type FiatMetaRefundApiFeeForCache Quota
 type FiatMetaRefundApiFee struct {
 	Quota
-	IsPart bool
+	IsPart bool // 一条Refund可能会拆分成多条，目的是为了每一条refund_api_fee_log都最多对应一条 pay_api_fee_fiat_log
 }
 type FiatMetaRefundApiQuota FiatMetaPayApiQuota
 

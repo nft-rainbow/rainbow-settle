@@ -26,7 +26,7 @@ func setup() {
 	})
 }
 
-func _TestGroupPayAndRefundApiFeeFiatlog(t *testing.T) {
+func _TestMergeApiFeeFiatlog(t *testing.T) {
 	err := GetDB().Transaction(func(tx *gorm.DB) error {
 
 		if err := mergePayApiFeeFiatlogs(tx, time.Now().AddDate(0, 0, -1), time.Now()); err != nil {
@@ -40,5 +40,13 @@ func _TestGroupPayAndRefundApiFeeFiatlog(t *testing.T) {
 		return nil
 
 	})
+	assert.NoError(t, err)
+}
+
+func _TestMergeApiQuotaFiatlog(t *testing.T) {
+	err := GetDB().Transaction(func(tx *gorm.DB) error {
+		return mergeApiQuotaFiatlogs(tx, time.Now().AddDate(0, 0, -1), time.Now())
+	})
+
 	assert.NoError(t, err)
 }
