@@ -47,6 +47,9 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 		return nil
 	}
 	f.IsMerged = true
+	if err := tx.Save(f).Error; err != nil {
+		return err
+	}
 
 	// get user last fiat log and calc balance
 	lastBalance, err := GetLastBlanceByFiatlog(tx, f.UserId)
