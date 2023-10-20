@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -21,8 +23,10 @@ const (
 	HEADER_KEY_APPEND_QUERY = "X-Rainbow-Append-Query"
 )
 
+var logConfig = logger.LogConfig{Level: "trace", Folder: ".log", Format: "json"}
+
 func main() {
-	logger.Init(logger.LogConfig{Level: "trace", Folder: ".log", Format: "json"}, "========== PROXY =============")
+	logger.Init(logConfig, "========== PROXY =============")
 	// 创建代理服务器的 HTTP 处理函数
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
@@ -91,6 +95,9 @@ func initGin() *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Logger())
 	engine.Use(middlewares.Logger(&middlewares.LogOptions{HeaderLogger: headerLog}))
+	if logConfig.Level == "trace" {
+		engine.Use(rpcLogger)
+	}
 	return engine
 }
 
@@ -109,6 +116,30 @@ func headerLog(header http.Header) interface{} {
 		result[HEADER_KEY_APPEND_QUERY] = appendQuery
 	}
 	return result
+}
+
+func rpcLogger(g *gin.Context) {
+	userId := g.Request.Header.Get(constants.RAINBOW_USER_ID_HEADER_KEY)
+	costType := g.Request.Header.Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
+	serverType := g.Request.Header.Get(constants.RAINBOW_SERVER_TYPE_HEADER_KEY)
+	requestId := g.Request.Header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
+	_time := time.Now()
+
+	fileName := fmt.Sprintf(".request_log/%s_%s.log", userId, costType)
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+	if err != nil {
+		logrus.WithField("file name", fileName).Error("failed to open file")
+		return
+	}
+
+	defer file.Close()
+
+	msg := fmt.Sprintf("%s, %s, %s, %s, %s\n", _time.Format(time.StampMilli), userId, costType, serverType, requestId)
+	_, err2 := file.WriteString(msg)
+	if err2 != nil {
+		logrus.WithField("msg", msg).Error("failed to write request info")
+	}
 }
 
 func RunWithGin(proxyAddr string, handlerFunc http.HandlerFunc) {
