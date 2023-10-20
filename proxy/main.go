@@ -123,8 +123,6 @@ func headerLog(header http.Header) interface{} {
 var rpcLogMu sync.Mutex
 
 func rpcLogger(c *gin.Context) {
-	rpcLogMu.Lock()
-	defer rpcLogMu.Unlock()
 
 	userId := c.Request.Header.Get(constants.RAINBOW_USER_ID_HEADER_KEY)
 	costType := c.Request.Header.Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
@@ -135,6 +133,10 @@ func rpcLogger(c *gin.Context) {
 	c.Next()
 
 	responseSize := c.Writer.Size()
+
+	// write file
+	rpcLogMu.Lock()
+	defer rpcLogMu.Unlock()
 
 	fileName := fmt.Sprintf(".request_log/%s_%s.log", userId, costType)
 	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
