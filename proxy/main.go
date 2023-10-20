@@ -7,6 +7,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -118,7 +119,13 @@ func headerLog(header http.Header) interface{} {
 	return result
 }
 
+// NOTE: temporarily use lock to avoid concurrent write file problems
+var rpcLogMu sync.Mutex
+
 func rpcLogger(g *gin.Context) {
+	rpcLogMu.Lock()
+	defer rpcLogMu.Unlock()
+
 	userId := g.Request.Header.Get(constants.RAINBOW_USER_ID_HEADER_KEY)
 	costType := g.Request.Header.Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
 	serverType := g.Request.Header.Get(constants.RAINBOW_SERVER_TYPE_HEADER_KEY)
