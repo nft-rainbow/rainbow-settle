@@ -122,15 +122,19 @@ func headerLog(header http.Header) interface{} {
 // NOTE: temporarily use lock to avoid concurrent write file problems
 var rpcLogMu sync.Mutex
 
-func rpcLogger(g *gin.Context) {
+func rpcLogger(c *gin.Context) {
 	rpcLogMu.Lock()
 	defer rpcLogMu.Unlock()
 
-	userId := g.Request.Header.Get(constants.RAINBOW_USER_ID_HEADER_KEY)
-	costType := g.Request.Header.Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
-	serverType := g.Request.Header.Get(constants.RAINBOW_SERVER_TYPE_HEADER_KEY)
-	requestId := g.Request.Header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
+	userId := c.Request.Header.Get(constants.RAINBOW_USER_ID_HEADER_KEY)
+	costType := c.Request.Header.Get(constants.RAINBOW_COST_TYPE_HEADER_KEY)
+	serverType := c.Request.Header.Get(constants.RAINBOW_SERVER_TYPE_HEADER_KEY)
+	requestId := c.Request.Header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 	_time := time.Now()
+
+	c.Next()
+
+	responseSize := c.Writer.Size()
 
 	fileName := fmt.Sprintf(".request_log/%s_%s.log", userId, costType)
 	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -142,7 +146,7 @@ func rpcLogger(g *gin.Context) {
 
 	defer file.Close()
 
-	msg := fmt.Sprintf("%s, %s, %s, %s, %s\n", _time.Format(time.StampMilli), userId, costType, serverType, requestId)
+	msg := fmt.Sprintf("%s, %s, %s, %s, %s, %d\n", _time.Format(time.StampMilli), userId, costType, serverType, requestId, responseSize)
 	_, err2 := file.WriteString(msg)
 	if err2 != nil {
 		logrus.WithField("msg", msg).Error("failed to write request info")
