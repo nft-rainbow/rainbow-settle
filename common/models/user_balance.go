@@ -87,5 +87,13 @@ func GetUserCfxPrice(userId uint) (decimal.Decimal, error) {
 func UpdateUserBalanceOnFiatlog(tx *gorm.DB, f *FiatLog) error {
 	err := tx.Debug().Model(&UserBalance{}).Where("user_id=?", f.UserId).Update("balance_on_fiatlog", f.Balance).Error
 	logrus.WithError(err).WithField("user_id", f.UserId).WithField("balance_on_fiatlog", f.Balance).Debug("update user balance_on_fiatlog")
+	if err != nil {
+		return err
+	}
+	ub, err := GetUserBalance(tx, f.UserId)
+	if err != nil {
+		return err
+	}
+	logrus.WithField("ub", ub).Debug("after update user balance_on_fiatlog")
 	return err
 }
