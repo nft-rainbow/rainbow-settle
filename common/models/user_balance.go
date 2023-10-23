@@ -84,16 +84,22 @@ func GetUserCfxPrice(userId uint) (decimal.Decimal, error) {
 	return ub.CfxPrice, nil
 }
 
-func UpdateUserBalanceOnFiatlog(tx *gorm.DB, f *FiatLog) error {
-	err := tx.Debug().Model(&UserBalance{}).Where("user_id=?", f.UserId).Update("balance_on_fiatlog", f.Balance).Error
-	logrus.WithError(err).WithField("user_id", f.UserId).WithField("balance_on_fiatlog", f.Balance).Debug("update user balance_on_fiatlog")
+func UpdateUserBalanceOnFiatlog(tx *gorm.DB, userId uint, balanceOnFiatlog decimal.Decimal) error {
+	err := tx.Debug().Model(&UserBalance{}).Where("user_id=?", userId).Update("balance_on_fiatlog", balanceOnFiatlog).Error
+	logrus.WithError(err).WithField("user_id", userId).WithField("balance_on_fiatlog", balanceOnFiatlog).Debug("update user balance_on_fiatlog")
 	if err != nil {
 		return err
 	}
-	ub, err := GetUserBalance(tx, f.UserId)
+	ub, err := GetUserBalance(tx, userId)
 	if err != nil {
 		return err
 	}
 	logrus.WithField("ub", ub).Debug("after update user balance_on_fiatlog")
+	return err
+}
+
+func UpdateUserBalance(tx *gorm.DB, userId uint, balance decimal.Decimal) error {
+	err := tx.Debug().Model(&UserBalance{}).Where("user_id=?", userId).Update("balance", balance).Error
+	logrus.WithError(err).WithField("user_id", userId).WithField("balance", balance).Debug("update user balance")
 	return err
 }

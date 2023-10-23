@@ -76,7 +76,7 @@ type FiatLog struct {
 }
 
 func (f *FiatLog) AfterCreate(tx *gorm.DB) (err error) {
-	return UpdateUserBalanceOnFiatlog(tx, f)
+	return UpdateUserBalanceOnFiatlog(tx, f.UserId, f.Balance)
 }
 
 func FindFiatLogs(userId uint, offset int, limit int) (*[]FiatLog, error) {

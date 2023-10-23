@@ -219,10 +219,13 @@ func updateUserBalanceWithTx(tx *gorm.DB, userId uint, amount decimal.Decimal, l
 		if err := tx.Create(&l).Error; err != nil {
 			return 0, err
 		}
-		// logrus.Debug("cccc")
+		// userBalance.Balance = userBalance.Balance.Add(amount)
 
-		userBalance.Balance = userBalance.Balance.Add(amount)
-		return l.ID, tx.Save(&userBalance).Error
+		if err = models.UpdateUserBalance(tx, userId, l.Balance); err != nil {
+			return 0, err
+		}
+
+		return l.ID, nil
 	}()
 
 	// logrus.Debug("dddd")
