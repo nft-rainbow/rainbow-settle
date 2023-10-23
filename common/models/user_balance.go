@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -84,5 +85,7 @@ func GetUserCfxPrice(userId uint) (decimal.Decimal, error) {
 }
 
 func UpdateUserBalanceOnFiatlog(tx *gorm.DB, f *FiatLog) error {
-	return tx.Model(&UserBalance{}).Where("user_id=?", f.UserId).Update("balance_on_fiatlog", f.Balance).Error
+	err := tx.Debug().Model(&UserBalance{}).Where("user_id=?", f.UserId).Update("balance_on_fiatlog", f.Balance).Error
+	logrus.WithError(err).WithField("user_id", f.UserId).WithField("balance_on_fiatlog", f.Balance).Debug("update user balance_on_fiatlog")
+	return err
 }
