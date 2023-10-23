@@ -350,8 +350,8 @@ func groupFlcByUserAndCosttype(source []*FiatLogCache, fiatLogType FiatLogType) 
 	return userPayFees, nil
 }
 
-func convertGroupedFlcToFiatlogs(tx *gorm.DB, groupedUserApiCosts map[uint]map[enums.CostType](*ApiInfoAggregated), fiatLogType FiatLogType) ([]FiatLog, error) {
-	var userPayFiatlogs []FiatLog
+func convertGroupedFlcToFiatlogs(tx *gorm.DB, groupedUserApiCosts map[uint]map[enums.CostType](*ApiInfoAggregated), fiatLogType FiatLogType) ([]*FiatLog, error) {
+	var userPayFiatlogs []*FiatLog
 	for userId, payFees := range groupedUserApiCosts {
 		lastBalance, err := GetLastBlanceByFiatlog(tx, userId)
 		if err != nil {
@@ -364,7 +364,7 @@ func convertGroupedFlcToFiatlogs(tx *gorm.DB, groupedUserApiCosts map[uint]map[e
 				CostType: costType,
 				Count:    apiAggre.Count,
 			})
-			userPayFiatlogs = append(userPayFiatlogs, FiatLog{
+			userPayFiatlogs = append(userPayFiatlogs, &FiatLog{
 				FiatLogCore: FiatLogCore{
 					UserId:  userId,
 					Amount:  apiAggre.Amount,
