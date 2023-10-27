@@ -441,10 +441,10 @@ func getHasChangesUserIds(cond FiatlogSummaryFilter, offset, limit int) (userIds
 }
 
 func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, error) {
-	idsQuery := db.Debug().Model(&FiatLog{}).Select("max(created_at) as created_at").Where("created_at<=?", date).Group("user_id")
+	idsQuery := db.Debug().Model(&FiatLog{}).Select("max(id) as id").Where("created_at<=?", date).Group("user_id")
 
 	var fiatLogs []*FiatLog
-	if err := db.Debug().Model(&FiatLog{}).Where("created_at in (?)", idsQuery).Find(&fiatLogs).Error; err != nil {
+	if err := db.Debug().Model(&FiatLog{}).Where("id in (?)", idsQuery).Find(&fiatLogs).Error; err != nil {
 		return nil, err
 	}
 
