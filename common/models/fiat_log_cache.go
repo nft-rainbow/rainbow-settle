@@ -63,19 +63,21 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 		CacheIds:    datatypes.JSONSlice[uint]{f.ID},
 	}
 	fl.Balance = lastBalance.Add(f.Amount)
+	// switch fl.Type {
+	// case FIAT_LOG_TYPE_REFUND_SPONSOR:
+	// 	// find related fiat log and set meta
+	// 	var meta FiatMetaRefundSponsor
+	// 	if err := json.Unmarshal(fl.Meta, &meta); err != nil {
+	// 		return err
+	// 	}
+
+	// 	FindSponsorFiatlogCacheByTxid(meta.TxId)
+
+	// }
+
 	err = tx.Save(fl).Error
 	logrus.Debug("debug fiatlog cache create: save fiat log and update users.fiat_log_balance")
 	return err
-}
-
-func FindSponsorFiatlogByTxid(txId uint) (*FiatLogCache, error) {
-	var fl FiatLogCache
-	if err := db.Model(&FiatLogCache{}).Where("meta->'$.tx_id'=?", txId).
-		Where("type =? or type=?", FIAT_LOG_TYPE_BUY_GAS, FIAT_LOG_TYPE_BUY_STORAGE).
-		First(&fl).Error; err != nil {
-		return nil, err
-	}
-	return &fl, nil
 }
 
 func FindLastFiatLogCache(tx *gorm.DB, userId uint, logType FiatLogType) (*FiatLogCache, error) {
@@ -143,7 +145,7 @@ func mergeRefundApiFeeFiatlogs(tx *gorm.DB, start, end time.Time) error {
 
 	var refundFiatlogCaches []*FiatLogCache
 
-	err := tx.Debug().Model(&FiatLogCache{}).
+	err := tx.Model(&FiatLogCache{}).
 		Where("created_at>=? and created_at<?", start, end).
 		Where("type=?", FIAT_LOG_TYPE_REFUND_API_FEE).
 		Where("is_merged=?", false).
@@ -286,7 +288,7 @@ func mergeApiFiatlogs(tx *gorm.DB, fiatLogType FiatLogType, start, end time.Time
 	}
 
 	var fiatlogCaches []*FiatLogCache
-	err := tx.Debug().Model(&FiatLogCache{}).
+	err := tx.Model(&FiatLogCache{}).
 		Where("created_at>=? and created_at<?", start, end).
 		Where("type=?", fiatLogType).
 		Where("is_merged=?", false).
@@ -295,7 +297,7 @@ func mergeApiFiatlogs(tx *gorm.DB, fiatLogType FiatLogType, start, end time.Time
 		return err
 	}
 
-	fmt.Println(fiatlogCaches)
+	// fmt.Println(fiatlogCaches)
 
 	if len(fiatlogCaches) == 0 {
 		return nil

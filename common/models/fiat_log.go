@@ -93,6 +93,16 @@ func FindUserFiatLogsByIds(userId uint, logIds []uint) (*[]FiatLog, error) {
 	return &logs, res.Error
 }
 
+func FindSponsorFiatlogByTxid(txId uint) (*FiatLog, error) {
+	var fl FiatLog
+	if err := db.Model(&FiatLog{}).Where("meta->'$.tx_id'=?", txId).
+		Where("type =? or type=?", FIAT_LOG_TYPE_BUY_GAS, FIAT_LOG_TYPE_BUY_STORAGE).
+		First(&fl).Error; err != nil {
+		return nil, err
+	}
+	return &fl, nil
+}
+
 // If not found, return default FiatLog
 func GetLastFiatLog(tx *gorm.DB, userId uint) (*FiatLog, error) {
 	var lastFiatLog FiatLog
@@ -281,6 +291,8 @@ type FiatlogChangesItem struct {
 	Withdraw         decimal.Decimal `json:"withdraw"`
 	Gas              decimal.Decimal `json:"gas"`
 	Storage          decimal.Decimal `json:"storage"`
+	BillPlan         decimal.Decimal `json:"bill_plan"`
+	DataBundle       decimal.Decimal `json:"data_bundle"`
 	ApiFee           decimal.Decimal `json:"api_fee"`
 	CmbDeposit       decimal.Decimal `json:"cmb_deposit"`
 	RefundForSponsor decimal.Decimal `json:"refund_for_sponsor"`
@@ -326,6 +338,10 @@ func FiatlogOfBalanceChanges(cond FiatlogSummaryFilter, offset, limit int) ([]*F
 			userChanges[userId].Storage = summaryItem.Amount
 		case FIAT_LOG_TYPE_PAY_API_FEE:
 			userChanges[userId].ApiFee = summaryItem.Amount
+		case FIAT_LOG_TYPE_BUY_BILLPLAN:
+			userChanges[userId].BillPlan = summaryItem.Amount
+		case FIAT_LOG_TYPE_BUY_DATABUNDLE:
+			userChanges[userId].DataBundle = summaryItem.Amount
 		case FIAT_LOG_TYPE_CMB_CHARGE: // 招行对公充值
 			userChanges[userId].CmbDeposit = summaryItem.Amount
 		case FIAT_LOG_TYPE_REFUND_API_FEE:
