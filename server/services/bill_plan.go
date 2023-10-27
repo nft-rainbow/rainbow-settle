@@ -5,6 +5,7 @@ import (
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -116,15 +117,31 @@ func ResetQuotaOnPlanUpdated(old, new *models.UserBillPlan) {
 		if err != nil {
 			return err
 		}
+
+		// update if current quota small than new plan
 		newPlan := allPlansMap[new.PlanId]
-		if old == nil || newPlan.Priority > allPlansMap[old.PlanId].Priority {
-			nextRefreshTime, err := newPlan.NextRefreshQuotaTime()
-			if err != nil {
-				return err
-			}
-			return GetUserQuotaOperator().Reset(models.GetDB(), []uint{new.UserId}, newPlan.GetQuotas(), nextRefreshTime, true)
+		newQuotas := newPlan.GetQuotas()
+		userQuotasMap, err := GetUserQuotaOperator().GetUserQuotasMap(new.UserId)
+		if err != nil {
+			return err
 		}
-		return nil
+
+		needUpdates := make(map[enums.CostType]int)
+		for costType, newCount := range newQuotas {
+			if userQuotasMap[costType].CountReset < newCount {
+				needUpdates[costType] = newCount
+			}
+		}
+
+		if len(needUpdates) == 0 {
+			return nil
+		}
+
+		nextRefreshTime, err := newPlan.NextRefreshQuotaTime()
+		if err != nil {
+			return err
+		}
+		return GetUserQuotaOperator().Reset(models.GetDB(), []uint{new.UserId}, needUpdates, nextRefreshTime, true)
 	})
 	logrus.WithError(err).WithField("old", old).WithField("new", new).Info("reset quota on plan updated")
 }
