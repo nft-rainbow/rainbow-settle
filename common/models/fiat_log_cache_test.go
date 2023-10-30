@@ -1,11 +1,13 @@
 package models
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/nft-rainbow/rainbow-settle/common/config"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
@@ -48,5 +50,24 @@ func _TestMergeApiQuotaFiatlog(t *testing.T) {
 		return mergeApiQuotaFiatlogs(tx, time.Now().AddDate(0, 0, -1), time.Now())
 	})
 
+	assert.NoError(t, err)
+}
+
+func _TestRelateBuySponsorFiatlog(t *testing.T) {
+	meta, _ := json.Marshal(FiatMetaRefundSponsor{
+		RefundForFiatlogId:   4550,
+		RefundForFiatlogType: FIAT_LOG_TYPE_BUY_STORAGE,
+		TxId:                 259435,
+		Reason:               "no",
+	})
+	err := GetDB().Save(&FiatLogCache{
+		FiatLogCore: FiatLogCore{
+			UserId:  1,
+			Type:    FIAT_LOG_TYPE_REFUND_SPONSOR,
+			Amount:  decimal.NewFromInt(1),
+			Meta:    meta,
+			OrderNO: RandomOrderNO(),
+		},
+	}).Error
 	assert.NoError(t, err)
 }

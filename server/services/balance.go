@@ -40,11 +40,11 @@ func WithdrawBalance(userId uint, amount decimal.Decimal) (uint, error) {
 }
 
 func BuyGas(userId uint, amount decimal.Decimal, txId uint, address string, price decimal.Decimal) (uint, error) {
-	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_BUY_GAS, models.FiatMetaBuySponsor{address, txId, price})
+	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_BUY_GAS, models.FiatMetaBuySponsor{address, txId, price, decimal.Zero})
 }
 
 func BuyStorage(userId uint, amount decimal.Decimal, txId uint, address string, price decimal.Decimal) (uint, error) {
-	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_BUY_STORAGE, models.FiatMetaBuySponsor{address, txId, price})
+	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_BUY_STORAGE, models.FiatMetaBuySponsor{address, txId, price, decimal.Zero})
 }
 
 func BuyBillPlan(userId uint, planId uint, isAutoRenewal bool) (fiatlogId uint, userBillPlan *models.UserBillPlan, err error) {

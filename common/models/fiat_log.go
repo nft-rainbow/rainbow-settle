@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/gormutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/datatypes"
@@ -135,6 +137,43 @@ func UserFiatLogCount(userId uint) int64 {
 	var count int64
 	GetDB().Model(&FiatLog{}).Where("user_id = ? AND amount != 0", userId).Count(&count)
 	return count
+}
+
+func RelateBuySponsorFiatlog(tx *gorm.DB, refundSponsorFl *FiatLog) error {
+	switch refundSponsorFl.Type {
+	case FIAT_LOG_TYPE_REFUND_SPONSOR:
+		// find related fiat log and set refundMeta
+		var refundMeta FiatMetaRefundSponsor
+		if err := json.Unmarshal(refundSponsorFl.Meta, &refundMeta); err != nil {
+			return err
+		}
+
+		var relatedFiatlog FiatLog
+		if err := tx.Model(&FiatLog{}).Where("id=?", refundMeta.RefundForFiatlogId).First(&relatedFiatlog).Error; err != nil {
+			return err
+		}
+
+		if lo.Contains(relatedFiatlog.RefundLogIds, refundSponsorFl.ID) {
+			return nil
+		}
+
+		relatedFiatlog.RefundLogIds = append(relatedFiatlog.RefundLogIds, refundSponsorFl.ID)
+
+		var sponsorMeta FiatMetaBuySponsor
+		if err := json.Unmarshal(relatedFiatlog.Meta, &sponsorMeta); err != nil {
+			return err
+		}
+
+		sponsorMeta.RefundedAmount = refundSponsorFl.Amount
+		sponsorMetaStr, _ := json.Marshal(sponsorMeta)
+		relatedFiatlog.Meta = sponsorMetaStr
+		err := tx.Save(&relatedFiatlog).Error
+		logrus.WithError(err).WithField("pay_sponsor_fiatlog", relatedFiatlog.ID).WithField("refund_sponsor_fiatlog", refundSponsorFl.ID).WithField("pay fiatlog meta", string(sponsorMetaStr)).Info("relate refund with pay sponsor fiatlog")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type FiatLogWithDetails struct {

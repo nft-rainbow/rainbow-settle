@@ -6,17 +6,18 @@ import (
 )
 
 type Quota struct {
-	CostType enums.CostType `json:"cost_type"`
-	Count    int            `json:"count"`
+	CostType enums.CostType `json:"cost_type,omitempty"`
+	Count    int            `json:"count,omitempty"`
 }
 type FiatMetaDeposit struct {
 	DepositOrderId uint `json:"deposit_order_id"`
 }
 
 type FiatMetaBuySponsor struct {
-	Address string          `json:"address"`
-	TxId    uint            `json:"tx_id"`
-	Price   decimal.Decimal `json:"price"`
+	Address        string          `json:"address"`
+	TxId           uint            `json:"tx_id"`
+	Price          decimal.Decimal `json:"price"`
+	RefundedAmount decimal.Decimal `json:"refunded_amount"`
 }
 
 type FiatMetaBuyBillplan struct {
@@ -38,8 +39,8 @@ type FiatMetaDepositDataBundle struct {
 type FiatMetaPayApiFeeForCache Quota
 type FiatMetaPayApiFee struct {
 	Quota
-	RefundedCount  int
-	RefundedAmount decimal.Decimal
+	RefundedCount  int             `json:"refunded_count"`
+	RefundedAmount decimal.Decimal `json:"refunded_amount"`
 }
 type FiatMetaPayApiQuota struct {
 	CostType      enums.CostType `json:"cost_type"`

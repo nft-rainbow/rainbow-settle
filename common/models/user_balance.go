@@ -58,7 +58,7 @@ func GetUserBalance(tx *gorm.DB, userId uint) (*UserBalance, error) {
 	if err := tx.Where("user_id = ?", userId).First(&ub).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ub = UserBalance{UserId: userId, Balance: decimal.Zero}
-			if err = GetDB().Create(&ub).Error; err != nil {
+			if err = tx.Create(&ub).Error; err != nil {
 				return nil, err
 			}
 		} else {

@@ -50,34 +50,34 @@ func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
 	if err := tx.Save(f).Error; err != nil {
 		return err
 	}
+	if err := f.copyToFiatLog(tx); err != nil {
+		return err
+	}
 
+	logrus.Debug("debug fiatlog cache create: save fiat log and update users.fiat_log_balance")
+	return nil
+}
+
+func (f *FiatLogCache) copyToFiatLog(tx *gorm.DB) error {
 	// get user last fiat log and calc balance
 	lastBalance, err := GetLastBlanceByFiatlog(tx, f.UserId)
 	if err != nil {
 		return err
 	}
 	logrus.Debug("debug fiatlog cache create: get last balance by fiat log")
-
 	fl := &FiatLog{
 		FiatLogCore: f.FiatLogCore,
 		CacheIds:    datatypes.JSONSlice[uint]{f.ID},
 	}
 	fl.Balance = lastBalance.Add(f.Amount)
-	// switch fl.Type {
-	// case FIAT_LOG_TYPE_REFUND_SPONSOR:
-	// 	// find related fiat log and set meta
-	// 	var meta FiatMetaRefundSponsor
-	// 	if err := json.Unmarshal(fl.Meta, &meta); err != nil {
-	// 		return err
-	// 	}
+	if err := tx.Save(fl).Error; err != nil {
+		return err
+	}
 
-	// 	FindSponsorFiatlogCacheByTxid(meta.TxId)
-
-	// }
-
-	err = tx.Save(fl).Error
-	logrus.Debug("debug fiatlog cache create: save fiat log and update users.fiat_log_balance")
-	return err
+	if err := RelateBuySponsorFiatlog(tx, fl); err != nil {
+		return err
+	}
+	return nil
 }
 
 func FindLastFiatLogCache(tx *gorm.DB, userId uint, logType FiatLogType) (*FiatLogCache, error) {

@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230915100348-2887096113a3
 	github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230914033515-7ef720d6b97a
+	github.com/sirupsen/logrus v1.9.3
 )
 
 require (
@@ -45,7 +46,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/royeo/dingrobot v1.0.1-0.20191230075228-c90a788ca8fd // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
