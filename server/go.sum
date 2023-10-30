@@ -565,6 +565,8 @@ github.com/naoina/go-stringutil v0.1.0/go.mod h1:XJ2SJL9jCtBh+P9q5btrd/Ylo8XwT/h
 github.com/naoina/toml v0.1.2-0.20170918210437-9fafd6967416/go.mod h1:NBIhNtsFMo3G2szEBne+bO4gS192HuIYRqfvOWb4i1E=
 github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231017081902-c0574f1ba21b h1:AaogCYJgszHh0OZo6+C3tuCtb7Mv5Ws422qmF65ckfQ=
 github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231017081902-c0574f1ba21b/go.mod h1:RJW+fvqb57QZYFItAxV55Y+KUM9PlGh6vayw+nuH9fU=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231030073644-e589a5156f84 h1:yoDWQTVvhuThUIUTwDCmmc/yCUwXCCO0dycKMJd57Yc=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231030073644-e589a5156f84/go.mod h1:RJW+fvqb57QZYFItAxV55Y+KUM9PlGh6vayw+nuH9fU=
 github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825032716-12ed0997c882 h1:C1rHuA+fgZ1kVoqnUQ9eSZlcLGcX03P9C7Chrk4nXCs=
 github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230825032716-12ed0997c882/go.mod h1:kQhFPcrGb4pkOGcpPPue7u0Dh22U9HRjQyIPpehN7MM=
 github.com/nft-rainbow/rainbow-settle/proto v0.0.0-20230825103155-7a1bb119bf40 h1:522Z+dncqyTLWj54xjIdEPRz/hVF+3T69w6vpB0YPkY=

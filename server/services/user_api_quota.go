@@ -8,6 +8,7 @@ import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -129,13 +130,13 @@ func (u *UserQuotaOperator) Reset(tx *gorm.DB, userIds []uint, resetQuotas map[e
 		for _, uaq := range matched {
 			fl, err := ResetQuota(tx, uaq.UserId, uaq.CostType, uint(resetQuotas[uaq.CostType]))
 			if err != nil {
-				return err
+				return errors.WithMessagef(err, "failed reset quota with fiat_log_cache, user_id %d, cost_type %s", uaq.UserId, uaq.CostType)
 			}
 			logrus.WithField("fiat log cache", fl).WithField("user", uaq.UserId).WithField("cost type", uaq.CostType).WithField("count", resetQuotas[uaq.CostType]).Info("reset quota done")
 		}
 		return nil
 	}()
-	logrus.WithField("user id", userIds).WithField("force", force).WithError(err).Debug("reset user quota done")
+	logrus.WithField("user_id", userIds).WithField("reset_quotas", resetQuotas).WithField("next_reset_time", nextResetTime).WithField("force", force).WithError(err).Debug("reset user quota done")
 	return err
 }
 
