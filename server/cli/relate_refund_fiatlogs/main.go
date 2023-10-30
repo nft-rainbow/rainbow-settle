@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/nft-rainbow/conflux-gin-helper/logger"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/server/config"
 	"github.com/sirupsen/logrus"
@@ -31,6 +32,8 @@ func relateAllRefundSponsorFiatlogs() error {
 func init() {
 	config.InitByFile("../../config.yaml")
 	models.ConnectDB(config.Get().Mysql)
+
+	logger.Init(config.Get().Log, "====== CLI: Relate Refund Sponsor Fiatlogs ========")
 }
 
 func main() {
