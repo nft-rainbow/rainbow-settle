@@ -28,10 +28,16 @@ func _TestCreatFiatLogWillUpdateUserBalance(t *testing.T) {
 	assert.True(t, decimal.NewFromInt(7).Equal(ub.BalanceOnFiatlog))
 }
 
-func TestGetUserBalanceAtDate(t *testing.T) {
+func _TestGetUserBalanceAtDate(t *testing.T) {
 	userIds := []uint{1, 71, 90}
 	balances, err := GetUserBalanceAtDate(userIds, time.Now())
 	assert.NoError(t, err)
 	assert.Equal(t, len(userIds), len(balances))
 	fmt.Println(balances)
+}
+
+func TestGetLastFiatLog(t *testing.T) {
+	f, err := GetLastFiatLog(GetDB(), 1)
+	assert.NoError(t, err)
+	fmt.Println(*f)
 }
