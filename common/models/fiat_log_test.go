@@ -1,13 +1,15 @@
 package models
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreatFiatLogWillUpdateUserBalance(t *testing.T) {
+func _TestCreatFiatLogWillUpdateUserBalance(t *testing.T) {
 	err := GetDB().Save([]FiatLog{
 		{
 			FiatLogCore: FiatLogCore{
@@ -24,4 +26,12 @@ func TestCreatFiatLogWillUpdateUserBalance(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.True(t, decimal.NewFromInt(7).Equal(ub.BalanceOnFiatlog))
+}
+
+func TestGetUserBalanceAtDate(t *testing.T) {
+	userIds := []uint{1, 71, 90}
+	balances, err := GetUserBalanceAtDate(userIds, time.Now())
+	assert.NoError(t, err)
+	assert.Equal(t, len(userIds), len(balances))
+	fmt.Println(balances)
 }

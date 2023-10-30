@@ -479,19 +479,33 @@ func getHasChangesUserIds(cond FiatlogSummaryFilter, offset, limit int) (userIds
 	return userIds, count, nil
 }
 
+// group by user_id and select the max id of max creted_at desc order by id,
+// that's becasue manual added records exists with large id but small created_at.
 func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, error) {
-	idsQuery := db.Debug().Model(&FiatLog{}).Select("max(id) as id").Where("created_at<=?", date).Group("user_id")
 
-	var fiatLogs []*FiatLog
-	if err := db.Debug().Model(&FiatLog{}).Where("id in (?)", idsQuery).Find(&fiatLogs).Error; err != nil {
+	type userMaxCreatedat struct {
+		UserId    uint
+		CreatedAt time.Time
+	}
+
+	// select user_id,max(created_at) from fiat_logs group by user_id where created_at<date;
+	var userMaxCreatedats []*userMaxCreatedat
+	err := db.Debug().Model(&FiatLog{}).Where("created_at<=?", date).Group("user_id").Select("user_id,max(created_at) as created_at").Scan(&userMaxCreatedats).Error
+	if err != nil {
 		return nil, err
 	}
 
 	balances := make([]decimal.Decimal, len(userIds))
 	for i, userId := range userIds {
-		for _, l := range fiatLogs {
-			if userId == l.UserId {
-				balances[i] = l.Balance
+		for _, v := range userMaxCreatedats {
+			if v.UserId == userId {
+				// select * from fiat_logs where created_at="2023-10-27 18:14:48.582" and user_id=1 order by id desc limit 1;
+				var fl FiatLog
+				err := db.Debug().Model(&FiatLog{}).Where("created_at=? and user_id=?", v.CreatedAt, v.UserId).Order("id desc").First(&fl).Error
+				if err != nil {
+					return nil, err
+				}
+				balances[i] = fl.Balance
 				break
 			}
 		}
