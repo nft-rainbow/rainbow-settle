@@ -108,7 +108,7 @@ func FindSponsorFiatlogByTxid(txId uint) (*FiatLog, error) {
 // If not found, return default FiatLog
 func GetLastFiatLog(tx *gorm.DB, userId uint) (*FiatLog, error) {
 	var lastFiatLog FiatLog
-	if err := tx.Model(&FiatLog{}).Where("user_id=?", userId).Order("created_at,id desc").First(&lastFiatLog).Error; err != nil {
+	if err := tx.Model(&FiatLog{}).Where("user_id=?", userId).Order("created_at desc,id desc").First(&lastFiatLog).Error; err != nil {
 		return nil, err
 	}
 	return &lastFiatLog, nil
