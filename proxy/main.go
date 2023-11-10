@@ -54,7 +54,7 @@ func main() {
 					if err != nil {
 						log.Panicf("failed parse target addr %s, %v: ", targetAddr, err.Error())
 					}
-					logrus.WithField("target addr", targetURL).Info("parse target addr")
+					logrus.WithField("target addr", targetAddr).Info("parse target addr")
 					req.URL.Scheme = targetURL.Scheme
 					req.URL.Host = targetURL.Host
 					req.Host = targetURL.Host
