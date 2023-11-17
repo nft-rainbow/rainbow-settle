@@ -7,7 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.20
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230910134153-65f220439ecb
+	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231117093615-074ff9e13c1b
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.1.0
 	github.com/samber/lo v1.38.1

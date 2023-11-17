@@ -557,6 +557,8 @@ github.com/naoina/go-stringutil v0.1.0/go.mod h1:XJ2SJL9jCtBh+P9q5btrd/Ylo8XwT/h
 github.com/naoina/toml v0.1.2-0.20170918210437-9fafd6967416/go.mod h1:NBIhNtsFMo3G2szEBne+bO4gS192HuIYRqfvOWb4i1E=
 github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230910134153-65f220439ecb h1:fCbOYHFy3K+1sVM3haahxgaPnl4fdU6l90dSOfOEM7Q=
 github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230910134153-65f220439ecb/go.mod h1:RJW+fvqb57QZYFItAxV55Y+KUM9PlGh6vayw+nuH9fU=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231117093615-074ff9e13c1b h1:GzIQQoEK6grUSI2kgpS5DatlWno4xoGh4z9xSv2neVM=
+github.com/nft-rainbow/conflux-gin-helper v0.0.0-20231117093615-074ff9e13c1b/go.mod h1:WbuC0UO0ZDSzNV/ueap7fUKUTWHiaIt2WacjoobdoDE=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
