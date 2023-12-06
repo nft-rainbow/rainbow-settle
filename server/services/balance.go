@@ -35,8 +35,8 @@ func DepositBalance(userId uint, amount decimal.Decimal, depositOrderId uint, lo
 	return updateUserBalance(userId, amount, logType, models.FiatMetaDeposit{depositOrderId})
 }
 
-func WithdrawBalance(userId uint, amount decimal.Decimal) (uint, error) {
-	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_WITHDRAW, nil)
+func WithdrawBalance(userId uint, amount decimal.Decimal, reason string) (uint, error) {
+	return updateUserBalance(userId, decimal.Zero.Sub(amount), models.FIAT_LOG_TYPE_WITHDRAW, models.FiatMetaWithdraw{reason})
 }
 
 func BuyGas(userId uint, amount decimal.Decimal, txId uint, address string, price decimal.Decimal) (uint, error) {

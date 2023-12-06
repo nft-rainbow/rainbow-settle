@@ -13,6 +13,10 @@ type FiatMetaDeposit struct {
 	DepositOrderId uint `json:"deposit_order_id"`
 }
 
+type FiatMetaWithdraw struct {
+	Reason string `json:"reason,omitempty"`
+}
+
 type FiatMetaBuySponsor struct {
 	Address        string          `json:"address"`
 	TxId           uint            `json:"tx_id"`

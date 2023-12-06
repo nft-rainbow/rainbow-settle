@@ -23,5 +23,6 @@ func SetupRouter(c *gin.Engine) {
 	internal := v0.Group("internal")
 	{
 		internal.POST("deposit", depositForUser)
+		internal.POST("withdraw", withdrawForUser)
 	}
 }

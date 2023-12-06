@@ -9,8 +9,9 @@ message Empty {}
 message UserBalance {
   uint32 UserId = 1;
   float Balance = 2;
-  float ArrearsQuota = 3;
-  float CfxPrice = 4;
+  float BalanceOnFiatlog = 3;
+  float ArrearsQuota = 4;
+  float CfxPrice = 5;
 }
 
 message UserApiQuotas { map<string, UserApiQuota> Items = 1; }
@@ -63,6 +64,12 @@ message DepositRequest {
   uint32 UserId = 1;
   float Amount = 2;
   string Description = 3;
+}
+
+message WithdrawRequest {
+  uint32 UserId = 1;
+  float Amount = 2;
+  string Reason = 3;
 }
 
 message ModelsCmbRecord {
@@ -129,7 +136,7 @@ message UserDataBundle {
   uint32 ID = 1;
   uint32 UserId = 2;
   uint32 DataBundleId = 3;
-  uint32 Count=4;
+  uint32 Count = 4;
   string BoughtTime = 5;
 }
 
@@ -153,17 +160,18 @@ message UpdateUpdateBillPlanRenewRequest {
   bool IsAutoRenewal = 3;
 }
 
-message ApiKeyUpdated{
-  string Old =1;
-  string New=2;
-  uint32 UserId=3;
-  uint32 AppId=4;
+message ApiKeyUpdated {
+  string Old = 1;
+  string New = 2;
+  uint32 UserId = 3;
+  uint32 AppId = 4;
 }
 
 message QueryRecentCmbHistoryResponse { repeated ModelsCmbRecord List = 1; }
 
 service Settle {
   rpc Deposite(DepositRequest) returns (WxOrder);
+  rpc Withdraw(WithdrawRequest) returns (UserBalance);
   rpc GetDepositeOrder(ID) returns (DepositOrder);
 
   rpc BuyGas(BuySponsorRequest) returns (Empty);
@@ -178,8 +186,8 @@ service Settle {
 
   rpc GetUserBalance(UserID) returns (UserBalance);
   // rpc GetUserApiQuota(UserID) returns (UserApiQuotas);
-  rpc UserCreated(UserID)returns(Empty);
-  rpc ApikeyUpdated(ApiKeyUpdated)returns(Empty);
+  rpc UserCreated(UserID) returns (Empty);
+  rpc ApikeyUpdated(ApiKeyUpdated) returns (Empty);
 
   rpc CreateCmcDepositNo(CreateCmcDepositNoReqeust) returns (Empty);
   rpc GetCmcDepositNo(UserID) returns (CmbDepositNo);

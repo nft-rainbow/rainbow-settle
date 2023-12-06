@@ -31,6 +31,19 @@ func (s *SettleServer) Deposite(ctx context.Context, in *proto.DepositRequest) (
 	}, nil
 }
 
+func (s *SettleServer) Withdraw(ctx context.Context, in *proto.WithdrawRequest) (*proto.UserBalance, error) {
+	fl, err := services.WithdrawBalance(uint(in.UserId), decimal.NewFromFloat32(in.Amount), in.Reason)
+	if err != nil {
+		return nil, err
+	}
+	logrus.WithField("fiatlog", fl).Info("withdraw completed")
+	ub, err := models.GetUserBalance(models.GetDB(), uint(in.UserId))
+	if err != nil {
+		return nil, err
+	}
+	return protoUserBalance(ub), nil
+}
+
 func (s *SettleServer) GetDepositeOrder(ctx context.Context, in *proto.ID) (*proto.DepositOrder, error) {
 	o, err := models.FindDepositOrderById(uint(in.Id))
 	if err != nil {
@@ -147,9 +160,7 @@ func (s *SettleServer) GetUserBalance(ctx context.Context, in *proto.UserID) (*p
 	if err != nil {
 		return nil, err
 	}
-	return &proto.UserBalance{
-		UserId: uint32(ub.UserId),
-	}, nil
+	return protoUserBalance(ub), nil
 }
 
 func (s *SettleServer) UserCreated(ctx context.Context, in *proto.UserID) (*proto.Empty, error) {
@@ -286,5 +297,15 @@ func newProtoUerBillPlan(userPlan *models.UserBillPlan) *proto.UerBillPlan {
 		PlanId:        uint32(userPlan.PlanId),
 		BoughtTime:    userPlan.BoughtTime.String(),
 		IsAutoRenewal: userPlan.IsAutoRenewal,
+	}
+}
+
+func protoUserBalance(ub *models.UserBalance) *proto.UserBalance {
+	return &proto.UserBalance{
+		UserId:           uint32(ub.UserId),
+		Balance:          float32(ub.Balance.InexactFloat64()),
+		BalanceOnFiatlog: float32(ub.Balance.InexactFloat64()),
+		ArrearsQuota:     float32(ub.ArrearsQuota.InexactFloat64()),
+		CfxPrice:         float32(ub.CfxPrice.InexactFloat64()),
 	}
 }

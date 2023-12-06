@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SettleClient interface {
 	Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*WxOrder, error)
+	Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*UserBalance, error)
 	GetDepositeOrder(ctx context.Context, in *ID, opts ...grpc.CallOption) (*DepositOrder, error)
 	BuyGas(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
 	BuyStorage(ctx context.Context, in *BuySponsorRequest, opts ...grpc.CallOption) (*Empty, error)
@@ -52,6 +53,15 @@ func NewSettleClient(cc grpc.ClientConnInterface) SettleClient {
 func (c *settleClient) Deposite(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*WxOrder, error) {
 	out := new(WxOrder)
 	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/Deposite", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *settleClient) Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*UserBalance, error) {
+	out := new(UserBalance)
+	err := c.cc.Invoke(ctx, "/rainbowsettle.Settle/Withdraw", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -198,6 +208,7 @@ func (c *settleClient) UpdateCmcDepositNoRelation(ctx context.Context, in *Updat
 // for forward compatibility
 type SettleServer interface {
 	Deposite(context.Context, *DepositRequest) (*WxOrder, error)
+	Withdraw(context.Context, *WithdrawRequest) (*UserBalance, error)
 	GetDepositeOrder(context.Context, *ID) (*DepositOrder, error)
 	BuyGas(context.Context, *BuySponsorRequest) (*Empty, error)
 	BuyStorage(context.Context, *BuySponsorRequest) (*Empty, error)
@@ -223,6 +234,9 @@ type UnimplementedSettleServer struct {
 
 func (UnimplementedSettleServer) Deposite(context.Context, *DepositRequest) (*WxOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Deposite not implemented")
+}
+func (UnimplementedSettleServer) Withdraw(context.Context, *WithdrawRequest) (*UserBalance, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Withdraw not implemented")
 }
 func (UnimplementedSettleServer) GetDepositeOrder(context.Context, *ID) (*DepositOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDepositeOrder not implemented")
@@ -296,6 +310,24 @@ func _Settle_Deposite_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SettleServer).Deposite(ctx, req.(*DepositRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Settle_Withdraw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WithdrawRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SettleServer).Withdraw(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rainbowsettle.Settle/Withdraw",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SettleServer).Withdraw(ctx, req.(*WithdrawRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -580,6 +612,10 @@ var Settle_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Deposite",
 			Handler:    _Settle_Deposite_Handler,
+		},
+		{
+			MethodName: "Withdraw",
+			Handler:    _Settle_Withdraw_Handler,
 		},
 		{
 			MethodName: "GetDepositeOrder",
