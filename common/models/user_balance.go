@@ -103,3 +103,15 @@ func UpdateUserBalance(tx *gorm.DB, userId uint, balance decimal.Decimal) error 
 	logrus.WithError(err).WithField("user_id", userId).WithField("balance", balance).Debug("update user balance")
 	return err
 }
+
+func UpdateUserCfxPrice(userId uint, price decimal.Decimal) error {
+	if price.LessThan(decimal.Zero) {
+		return errors.New("could not negative price")
+	}
+	ub, err := GetUserBalance(GetDB(), userId)
+	if err != nil {
+		return err
+	}
+	ub.CfxPrice = price
+	return GetDB().Save(ub).Error
+}
