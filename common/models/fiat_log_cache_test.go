@@ -9,7 +9,6 @@ import (
 	"github.com/nft-rainbow/rainbow-settle/common/config"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
 func TestMain(m *testing.M) {
@@ -29,26 +28,26 @@ func setup() {
 }
 
 func _TestMergeApiFeeFiatlog(t *testing.T) {
-	err := GetDB().Transaction(func(tx *gorm.DB) error {
+	// err := GetDB().Transaction(func(tx *gorm.DB) error {
 
-		if err := mergePayApiFeeFiatlogs(tx, time.Now().AddDate(0, 0, -1), time.Now()); err != nil {
-			return err
-		}
+	if err := mergePayApiFeeFiatlogs(time.Now().AddDate(0, 0, -1), time.Now()); err != nil {
+		assert.NoError(t, err)
+	}
 
-		if err := mergeRefundApiFeeFiatlogs(tx, time.Now().AddDate(0, 0, -1), time.Now()); err != nil {
-			return err
-		}
+	if err := mergeRefundApiFeeFiatlogs(time.Now().AddDate(0, 0, -1), time.Now()); err != nil {
+		assert.NoError(t, err)
+	}
 
-		return nil
+	// return nil
 
-	})
-	assert.NoError(t, err)
+	// })
+	// assert.NoError(t, err)
 }
 
 func _TestMergeApiQuotaFiatlog(t *testing.T) {
-	err := GetDB().Transaction(func(tx *gorm.DB) error {
-		return mergeApiQuotaFiatlogs(tx, time.Now().AddDate(0, 0, -1), time.Now())
-	})
+	// err := GetDB().Transaction(func(tx *gorm.DB) error {
+	err := mergeApiQuotaFiatlogs(time.Now().AddDate(0, 0, -1), time.Now())
+	// })
 
 	assert.NoError(t, err)
 }
