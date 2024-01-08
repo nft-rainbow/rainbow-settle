@@ -62,12 +62,12 @@ func (f FiatLogType) PayType() PayType {
 }
 
 type FiatLogCore struct {
-	UserId  uint            `gorm:"type:int;index" json:"user_id"`
-	Amount  decimal.Decimal `gorm:"type:decimal(20,2)" json:"amount"`         // 单位分
-	Type    FiatLogType     `gorm:"type:int;default:0" json:"type"`           // 1-deposit
-	Meta    datatypes.JSON  `gorm:"type:json" json:"meta"`                    // metadata
-	OrderNO string          `gorm:"type:varchar(255);unique" json:"order_no"` // order NO in rainbow platform
-	Balance decimal.Decimal `gorm:"type:decimal(20,2)" json:"balance"`        // apply log balance
+	UserId  uint            `gorm:"type:int;index;index:idx_type_merge_deleted_user,priority:20" json:"user_id"`
+	Amount  decimal.Decimal `gorm:"type:decimal(20,2)" json:"amount"`                                 // 单位分
+	Type    FiatLogType     `gorm:"type:int;index:idx_type_merge_deleted_user;default:0" json:"type"` // 1-deposit
+	Meta    datatypes.JSON  `gorm:"type:json" json:"meta"`                                            // metadata
+	OrderNO string          `gorm:"type:varchar(255);unique" json:"order_no"`                         // order NO in rainbow platform
+	Balance decimal.Decimal `gorm:"type:decimal(20,2)" json:"balance"`                                // apply log balance
 }
 type FiatLog struct {
 	BaseModel
