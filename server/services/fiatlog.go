@@ -19,7 +19,7 @@ func LoopMergeFiatlog() {
 
 	fn := func() {
 		start, end := utils.EarlistDate(), utils.TodayBegin()
-		utils.Retry(10, time.Second*5, func() error { return models.MergeToFiatlog(start, end) })
+		utils.Retry(3, time.Second*5, func() error { return models.MergeToFiatlog(start, end) })
 		logrus.WithField("val", c.Entry(eid).Next).Info("next merge fiat log time")
 	}
 	fn()
