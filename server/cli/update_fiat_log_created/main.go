@@ -41,5 +41,5 @@ func init() {
 
 func main() {
 	err := updateFlCreatedByCacheIds(time.Date(2024, 1, 8, 0, 0, 0, 0, time.Local), time.Date(2024, 1, 9, 0, 0, 0, 0, time.Local))
-	logrus.WithError(err).Info("relate all refund sponsor fiatlogs completed")
+	logrus.WithError(err).Info("update fiatlog created_at by cache_ids completed")
 }
