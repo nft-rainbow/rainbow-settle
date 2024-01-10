@@ -11,7 +11,7 @@ import (
 
 func updateFlCreatedByCacheIds(start time.Time, end time.Time) error {
 	var fls []*models.FiatLog
-	if err := models.GetDB().Where("created_at>? and created_at<?", start, end).Find(&fls).Error; err != nil {
+	if err := models.GetDB().Where("created_at>? and created_at<? and type in (7,8)", start, end).Find(&fls).Error; err != nil {
 		return err
 	}
 
