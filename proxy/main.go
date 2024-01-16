@@ -96,7 +96,7 @@ func main() {
 func initGin() *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Logger())
-	engine.Use(middlewares.Logger(&middlewares.LogOptions{HeaderLogger: reqHeaderLog}))
+	engine.Use(middlewares.Logger(&middlewares.LogOptions{ReqHeaderLogger: reqHeaderLog}))
 	if logConfig.Level == "trace" {
 		engine.Use(rpcLogger)
 	}
