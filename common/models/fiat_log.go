@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
@@ -495,18 +496,33 @@ func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, er
 		return nil, err
 	}
 
+	var w sync.WaitGroup
+
 	balances := make([]decimal.Decimal, len(userIds))
 	for i, userId := range userIds {
+		var err error
 		for _, v := range userMaxCreatedats {
 			if v.UserId == userId {
-				// select * from fiat_logs where created_at="2023-10-27 18:14:48.582" and user_id=1 order by id desc limit 1;
-				var fl FiatLog
-				err := db.Debug().Model(&FiatLog{}).Where("created_at=? and user_id=?", v.CreatedAt, v.UserId).Order("id desc").First(&fl).Error
-				if err != nil {
-					return nil, err
-				}
-				balances[i] = fl.Balance
+				w.Add(1)
+				go func() {
+					defer w.Done()
+					// select * from fiat_logs where created_at="2023-10-27 18:14:48.582" and user_id=1 order by id desc limit 1;
+					var fl FiatLog
+					_err := db.Debug().Model(&FiatLog{}).Where("created_at=? and user_id=?", v.CreatedAt, v.UserId).Order("id desc").First(&fl).Error
+					if _err != nil {
+						err = _err
+						return
+					}
+					balances[i] = fl.Balance
+				}()
+
 				break
+			}
+		}
+		if i%10 == 0 || i == len(userIds)-1 {
+			w.Wait()
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
