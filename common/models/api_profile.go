@@ -44,18 +44,13 @@ func InitApiProfile() {
 		}
 	}
 
-	var users []User
-	if GetDB().Find(&users).Error != nil {
+	um, err := GetAllUsersMap()
+	if err != nil {
 		panic(err)
 	}
 
-	userPayTypes := make(map[uint]enums.UserPayType)
-	for _, u := range users {
-		userPayTypes[u.ID] = u.UserPayType
-	}
-
 	GetApiPrice = func(userId uint, costType enums.CostType) decimal.Decimal {
-		if userPayTypes[userId] == enums.USER_PAY_TYPE_POST {
+		if um[userId].UserPayType == enums.USER_PAY_TYPE_POST {
 			if costType == enums.COST_TYPE_RAINBOW_MINT {
 				return decimal.NewFromFloat32(0.7)
 			}
