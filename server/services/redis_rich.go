@@ -20,6 +20,7 @@ func LoopSetRichFlagToRedis() {
 
 type userCostState struct {
 	UserId        uint
+	UserPayType   enums.UserPayType
 	CostType      enums.CostType
 	CountReset    int
 	CountRollover int
@@ -35,7 +36,7 @@ func refreshRichFlag() error {
 	if err := models.GetDB().Model(&models.User{}).
 		Joins("left join user_balances on users.id=user_balances.user_id").
 		Joins("left join user_api_quota on users.id=user_api_quota.user_id").
-		Select("users.id as user_id, user_api_quota.cost_type, user_api_quota.count_reset, user_api_quota.count_rollover, user_balances.balance, user_balances.arrears_quota").
+		Select("users.id as user_id, users.user_pay_type, user_api_quota.cost_type, user_api_quota.count_reset, user_api_quota.count_rollover, user_balances.balance, user_balances.arrears_quota").
 		Scan(&tmps).Error; err != nil {
 		return err
 	}
@@ -57,7 +58,7 @@ func refreshRichFlag() error {
 func calcRichFlag(states []*userCostState) int {
 	flag := 0
 	for _, cs := range states {
-		isRich := cs.CountReset+cs.CountRollover > 0 || cs.Balance.Add(cs.ArrearsQuota).GreaterThanOrEqual(models.GetApiPrice(cs.CostType))
+		isRich := cs.CountReset+cs.CountRollover > 0 || cs.Balance.Add(cs.ArrearsQuota).GreaterThanOrEqual(models.GetApiPrice(cs.UserId, cs.CostType))
 		if isRich {
 			flag = flag | 1<<int(cs.CostType)
 		}

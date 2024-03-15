@@ -24,7 +24,7 @@ type ApiProfileFilter struct {
 }
 
 var (
-	GetApiPrice func(costType enums.CostType) decimal.Decimal
+	GetApiPrice func(userId uint, costType enums.CostType) decimal.Decimal
 )
 
 func InitApiProfile() {
@@ -42,10 +42,25 @@ func InitApiProfile() {
 		if ap.CostTypeName != v {
 			panic("cost type name not match for type: " + v)
 		}
-
 	}
 
-	GetApiPrice = func(costType enums.CostType) decimal.Decimal {
+	var users []User
+	if GetDB().Find(&users).Error != nil {
+		panic(err)
+	}
+
+	userPayTypes := make(map[uint]enums.UserPayType)
+	for _, u := range users {
+		userPayTypes[u.ID] = u.UserPayType
+	}
+
+	GetApiPrice = func(userId uint, costType enums.CostType) decimal.Decimal {
+		if userPayTypes[userId] == enums.USER_PAY_TYPE_POST {
+			if costType == enums.COST_TYPE_RAINBOW_MINT {
+				return decimal.NewFromFloat32(0.7)
+			}
+			return decimal.Zero
+		}
 		if _, ok := apiProfiles[costType]; !ok {
 			panic(fmt.Sprintf("not found api price of %d", int(costType)))
 		}

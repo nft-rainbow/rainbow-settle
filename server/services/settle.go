@@ -44,6 +44,7 @@ func settle() error {
 	settleLock.Lock()
 	defer settleLock.Unlock()
 
+	userInfos := make(map[uint]*models.User)
 	userBalances := make(map[uint]*models.UserBalance)
 	userApiQuotas := make(map[uint]map[enums.CostType]*models.UserApiQuota)
 	userSettleds := make(map[uint]map[enums.CostType]*models.UserSettled)
@@ -64,6 +65,15 @@ func settle() error {
 		if err != nil {
 			logrus.WithError(err).WithField("key", k).Info("failed to parse count key")
 			continue
+		}
+
+		if userInfos[userId] == nil {
+			user, err := models.FindUserById(userId)
+			if err != nil {
+				logrus.WithError(err).WithField("user id", userId).Info("failed to get user info")
+				continue
+			}
+			userInfos[userId] = user
 		}
 
 		// load userbalance and free quota
@@ -110,7 +120,7 @@ func settle() error {
 		}
 
 		// calc count in balance
-		price := models.GetApiPrice(costType)
+		price := models.GetApiPrice(userId, costType)
 		countInBalance := int64(count - countInQuota)
 		countInBalance = mathutils.Min(countInBalance, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota).Div(price).BigInt().Int64())
 		actualCost := price.Mul(decimal.NewFromInt(countInBalance))
