@@ -504,7 +504,7 @@ func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, er
 		for _, v := range userMaxCreatedats {
 			if v.UserId == userId {
 				w.Add(1)
-				go func() {
+				go func(_i int) {
 					defer w.Done()
 					// select * from fiat_logs where created_at="2023-10-27 18:14:48.582" and user_id=1 order by id desc limit 1;
 					var fl FiatLog
@@ -513,13 +513,13 @@ func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, er
 						err = _err
 						return
 					}
-					balances[i] = fl.Balance
-				}()
+					balances[_i] = fl.Balance
+				}(i)
 
 				break
 			}
 		}
-		if i%10 == 0 || i == len(userIds)-1 {
+		if i%5 == 0 || i == len(userIds)-1 {
 			w.Wait()
 			if err != nil {
 				return nil, err
