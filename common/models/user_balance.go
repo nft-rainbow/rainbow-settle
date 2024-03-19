@@ -78,9 +78,9 @@ func GetUserCfxPrice(userId uint) (decimal.Decimal, error) {
 		}
 		return decimal.Zero, err
 	}
-	if ub.CfxPrice.IsZero() {
-		return normalCfxPrice, nil
-	}
+	// if ub.CfxPrice.IsZero() {
+	// 	return normalCfxPrice, nil
+	// }
 	return ub.CfxPrice, nil
 }
 
