@@ -122,7 +122,9 @@ func settle() error {
 		// calc count in balance
 		price := models.GetApiPrice(userId, costType)
 		countInBalance := int64(count - countInQuota)
-		countInBalance = mathutils.Min(countInBalance, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota).Div(price).BigInt().Int64())
+		if price.GreaterThan(decimal.Zero) {
+			countInBalance = mathutils.Min(countInBalance, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota).Div(price).BigInt().Int64())
+		}
 		actualCost := price.Mul(decimal.NewFromInt(countInBalance))
 
 		// needCost := price.Mul(decimal.NewFromInt(int64(count - countInQuota)))
