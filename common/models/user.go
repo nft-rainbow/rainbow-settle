@@ -90,14 +90,14 @@ func GetAllUser(filter map[string]interface{}, offset, limit int) ([]*User, erro
 }
 
 func GetAllUsersMap() (map[uint]*User, error) {
-	var users []User
+	var users []*User
 	if err := GetDB().Find(&users).Error; err != nil {
 		return nil, err
 	}
 
 	userPayTypes := make(map[uint]*User)
 	for _, u := range users {
-		userPayTypes[u.ID] = &u
+		userPayTypes[u.ID] = u
 	}
 	return userPayTypes, nil
 }
