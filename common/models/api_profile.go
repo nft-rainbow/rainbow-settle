@@ -50,6 +50,10 @@ func InitApiProfile() {
 	}
 
 	GetApiPrice = func(userId uint, costType enums.CostType) decimal.Decimal {
+		if um[userId] == nil {
+			panic(fmt.Sprintf("user %d unexists", userId))
+		}
+
 		if um[userId].UserPayType == enums.USER_PAY_TYPE_POST {
 			if costType == enums.COST_TYPE_RAINBOW_MINT {
 				return decimal.NewFromFloat32(0.7)
