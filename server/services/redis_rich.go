@@ -59,6 +59,10 @@ func calcRichFlag(states []*userCostState) int {
 	flag := 0
 	for _, cs := range states {
 		isRich := cs.CountReset+cs.CountRollover > 0 || cs.Balance.Add(cs.ArrearsQuota).GreaterThanOrEqual(models.GetApiPrice(cs.UserId, cs.CostType))
+		// only mint need pay for USER_PAY_TYPE_POST users
+		if cs.UserPayType == enums.USER_PAY_TYPE_POST && cs.CostType != enums.COST_TYPE_RAINBOW_MINT {
+			isRich = true
+		}
 		if isRich {
 			flag = flag | 1<<int(cs.CostType)
 		}
