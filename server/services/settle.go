@@ -131,7 +131,7 @@ func settle() error {
 		// actualCost := decimal.Min(needCost, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota))
 		// countInBalance := actualCost.Div(price).BigInt().Int64()
 
-		logrus.WithField("cost type", costType).WithField("in reset", countInResetQuota).WithField("in rollover", countInRolloverQuota).WithField("in balance", countInBalance).Debug("calculated cost quota")
+		logrus.WithField("cost type", costType).WithField("count", count).WithField("in reset", countInResetQuota).WithField("in rollover", countInRolloverQuota).WithField("in balance", countInBalance).Debug("calculated cost quota")
 		if countInBalance == 0 && countInQuota == 0 {
 			continue
 		}
