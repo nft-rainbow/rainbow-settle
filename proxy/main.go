@@ -86,6 +86,7 @@ func main() {
 		reqId := r.Header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 		w.Header().Add(constants.RAINBOW_REQUEST_ID_HEADER_KEY, reqId)
 		proxy.ServeHTTP(w, r)
+		fmt.Printf("resp header: %v\n", w.Header())
 	}
 
 	proxyAddr := "0.0.0.0:8020"
@@ -95,17 +96,18 @@ func main() {
 func initGin() *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Logger())
-	engine.Use(middlewares.Logger(&middlewares.LogOptions{HeaderLogger: headerLog}))
+	engine.Use(middlewares.Logger(&middlewares.LogOptions{ReqHeaderLogger: reqHeaderLog}))
 	if logConfig.Level == "trace" {
 		engine.Use(rpcLogger)
 	}
 	return engine
 }
 
-func headerLog(header http.Header) interface{} {
+func reqHeaderLog(header http.Header) interface{} {
 	targetAddr := header.Get(HEADER_KEY_TARGET_ADDR)
 	targetUrl := header.Get(HEADER_KEY_TARGET_URL)
 	appendQuery := header.Get(HEADER_KEY_APPEND_QUERY)
+	reqId := header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 	result := make(map[string]string)
 	if targetAddr != "" {
 		result[HEADER_KEY_TARGET_ADDR] = targetAddr
@@ -116,6 +118,7 @@ func headerLog(header http.Header) interface{} {
 	if appendQuery != "" {
 		result[HEADER_KEY_APPEND_QUERY] = appendQuery
 	}
+	result[constants.RAINBOW_REQUEST_ID_HEADER_KEY] = reqId
 	return result
 }
 

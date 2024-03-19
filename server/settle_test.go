@@ -41,7 +41,7 @@ func _TestSettle(t *testing.T) {
 	_, err = settleClient.RefundApiFee(context.Background(), &proto.RefundApiFeeRequest{UserId: 1, CostType: enums.COST_TYPE_RAINBOW_NORMAL.String(), Count: 1})
 	assert.NoError(t, err)
 
-	_, err = settleClient.RefundSponsor(context.Background(), &proto.RefundSponsorRequest{UserId: 1, TxId: 10})
+	_, err = settleClient.RefundSponsor(context.Background(), &proto.RefundSponsorRequest{TxId: 10})
 	assert.NoError(t, err)
 
 }

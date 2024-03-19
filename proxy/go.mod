@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/gin-gonic/gin v1.9.1
-	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230915100348-2887096113a3
+	github.com/nft-rainbow/conflux-gin-helper v0.0.0-20240116025320-fc6db7641e69
 	github.com/nft-rainbow/rainbow-settle/common v0.0.0-20230914033515-7ef720d6b97a
 	github.com/sirupsen/logrus v1.9.3
 )
@@ -66,4 +66,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-// replace github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230910134153-65f220439ecb => /Users/dayong/myspace/mywork/conflux-gin-helper
+// replace github.com/nft-rainbow/conflux-gin-helper v0.0.0-20230915100348-2887096113a3 => /Users/dayong/myspace/mywork/conflux-gin-helper

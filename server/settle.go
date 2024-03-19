@@ -134,7 +134,7 @@ func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponso
 		return nil, err
 	}
 
-	fl, err := services.RefundSponsor(uint(in.UserId), decimal.Zero.Sub(fiatlog.Amount), fiatlog.ID, fiatlog.Type, uint(in.TxId))
+	fl, err := services.RefundSponsor(uint(fiatlog.UserId), decimal.Zero.Sub(fiatlog.Amount), fiatlog.ID, fiatlog.Type, uint(in.TxId))
 	if err != nil {
 		return nil, err
 	}

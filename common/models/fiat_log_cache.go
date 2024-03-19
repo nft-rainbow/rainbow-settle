@@ -9,6 +9,7 @@ import (
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/mathutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -38,8 +39,9 @@ func unlockMergeFiatLogMutex() {
 type FiatLogCache struct {
 	BaseModel
 	FiatLogCore
+	DeletedAt      gorm.DeletedAt  `gorm:"index;index:idx_type_merge_deleted_user" json:"deleted_at"`
 	UnsettleAmount decimal.Decimal `gorm:"type:decimal(20,10)" json:"unsettle_amount"`
-	IsMerged       bool            `gorm:"default:0" json:"isMerged,omitempty"`
+	IsMerged       bool            `gorm:"index:idx_type_merge_deleted_user;default:0" json:"isMerged,omitempty"`
 }
 
 func (f *FiatLogCache) AfterCreate(tx *gorm.DB) (err error) {
@@ -92,42 +94,47 @@ func FindLastFiatLogCache(tx *gorm.DB, userId uint, logType FiatLogType) (*FiatL
 }
 
 func MergeToFiatlog(start, end time.Time) error {
+	logrus.WithField("start", start).WithField("end", end).Info("merge to fiat log")
 	lockMergeFiatLogMutex()
 	defer unlockMergeFiatLogMutex()
 
-	err := GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := mergeApiQuotaFiatlogs(tx, start, end); err != nil {
+	err := func() error {
+		if err := mergeApiQuotaFiatlogs(start, end); err != nil {
 			return err
 		}
 
-		if err := mergePayApiFeeFiatlogs(tx, start, end); err != nil {
+		if err := mergePayApiFeeFiatlogs(start, end); err != nil {
 			return err
 		}
 
-		if err := mergeRefundApiFeeFiatlogs(tx, start, end); err != nil {
+		if err := mergeRefundApiFeeFiatlogs(start, end); err != nil {
 			return err
 		}
 		return nil
-	})
+	}()
+
 	logrus.WithField("error", fmt.Sprintf("%+v", err)).WithField("start", start).WithField("end", end).Info("merged fiatlog")
 	return err
 }
 
-func mergeApiQuotaFiatlogs(tx *gorm.DB, start, end time.Time) error {
-	if err := mergeApiFiatlogs(tx, FIAT_LOG_TYPE_PAY_API_QUOTA, start, end); err != nil {
+func mergeApiQuotaFiatlogs(start, end time.Time) error {
+
+	if err := mergeApiFiatlogs(FIAT_LOG_TYPE_PAY_API_QUOTA, start, end); err != nil {
 		return err
 	}
-	if err := mergeApiFiatlogs(tx, FIAT_LOG_TYPE_REFUND_API_QUOTA, start, end); err != nil {
+
+	if err := mergeApiFiatlogs(FIAT_LOG_TYPE_REFUND_API_QUOTA, start, end); err != nil {
 		return err
 	}
-	if err := mergeApiFiatlogs(tx, FIAT_LOG_TYPE_RESET_API_QUOTA, start, end); err != nil {
+
+	if err := mergeApiFiatlogs(FIAT_LOG_TYPE_RESET_API_QUOTA, start, end); err != nil {
 		return err
 	}
 	return nil
 }
 
-func mergePayApiFeeFiatlogs(tx *gorm.DB, start, end time.Time) error {
-	return mergeApiFiatlogs(tx, FIAT_LOG_TYPE_PAY_API_FEE, start, end)
+func mergePayApiFeeFiatlogs(start, end time.Time) error {
+	return mergeApiFiatlogs(FIAT_LOG_TYPE_PAY_API_FEE, start, end)
 }
 
 type ApiInfoAggregated struct {
@@ -141,104 +148,107 @@ type FiatLogWithCount struct {
 	Count int
 }
 
-func mergeRefundApiFeeFiatlogs(tx *gorm.DB, start, end time.Time) error {
+func mergeRefundApiFeeFiatlogs(start, end time.Time) error {
+	return GetDB().Transaction(func(tx *gorm.DB) error {
+		var refundFiatlogCaches []*FiatLogCache
 
-	var refundFiatlogCaches []*FiatLogCache
-
-	err := tx.Model(&FiatLogCache{}).
-		Where("created_at>=? and created_at<?", start, end).
-		Where("type=?", FIAT_LOG_TYPE_REFUND_API_FEE).
-		Where("is_merged=?", false).
-		Find(&refundFiatlogCaches).Error
-	if err != nil {
-		return err
-	}
-	fmt.Println(refundFiatlogCaches)
-
-	userRefundFeeFlcs, err := groupFlcByUserAndCosttype(refundFiatlogCaches, FIAT_LOG_TYPE_REFUND_API_FEE)
-	if err != nil {
-		return err
-	}
-
-	// 根据refund api fee的数量往回找 pay api fee fiatlog并设置refund logids，如果fiatlog数量不足refund log则拆分refund log
-	for userId, refundFees := range userRefundFeeFlcs {
-		lastBalance, err := GetLastBlanceByFiatlog(tx, userId)
+		err := tx.Model(&FiatLogCache{}).
+			Where("created_at>=? and created_at<?", start, end).
+			Where("type=?", FIAT_LOG_TYPE_REFUND_API_FEE).
+			Where("is_merged=?", false).
+			Find(&refundFiatlogCaches).Error
 		if err != nil {
-			return err
+			return errors.WithMessage(err, "failed to query FIAT_LOG_TYPE_REFUND_API_FEE fiat log caches")
+		}
+		fmt.Println(refundFiatlogCaches)
+
+		userRefundFeeFlcs, err := groupFlcByUserAndCosttype(refundFiatlogCaches)
+		if err != nil {
+			return errors.WithMessage(err, "failed to group fiat_log_caches")
 		}
 
-		for costtype, apiAggre := range refundFees {
-
-			payFls, err := getPayApiFeeFlsForMapRefund(tx, userId, costtype, apiAggre.Count)
+		// 根据refund api fee的数量往回找 pay api fee fiatlog并设置refund logids，如果fiatlog数量不足refund log则拆分refund log
+		for userId, refundFees := range userRefundFeeFlcs {
+			lastBalance, err := GetLastBlanceByFiatlog(tx, userId)
 			if err != nil {
-				return err
+				return errors.WithMessage(err, "failed to get last balance by fiat log")
 			}
 
-			if len(payFls) == 0 {
-				continue
-			}
+			for costtype, apiAggre := range refundFees {
 
-			// 循环匹配refund fees到 pay fiatlogs，不足的分割refund fees并标注为part
-			remain := apiAggre.Count
-			for _, payFl := range payFls {
-				if remain == 0 {
-					break
+				payFls, err := getPayApiFeeFlsForMapRefund(tx, userId, costtype, apiAggre.Count)
+				if err != nil {
+					return errors.WithMessage(err, "failed to get pay api fee fiat logs")
 				}
 
-				payFlMeta := getPayApiFeeMeta(payFl.FiatLog)
-				aliveCountOfPayFl := payFl.Count - payFlMeta.RefundedCount
-				if aliveCountOfPayFl == 0 {
+				if len(payFls) == 0 {
 					continue
 				}
 
-				count := mathutils.Min(remain, aliveCountOfPayFl)
-				remain -= count
+				// 循环匹配refund fees到 pay fiatlogs，不足的分割refund fees并标注为part
+				remain := apiAggre.Count
+				for _, payFl := range payFls {
+					if remain == 0 {
+						break
+					}
 
-				lastBalance = lastBalance.Add(apiAggre.Amount)
-				refundMeta, _ := json.Marshal(FiatMetaRefundApiFee{
-					Quota: Quota{
-						CostType: costtype,
-						Count:    count,
-					},
-					IsPart: count < apiAggre.Count,
+					payFlMeta := getPayApiFeeMeta(payFl.FiatLog)
+					aliveCountOfPayFl := payFl.Count - payFlMeta.RefundedCount
+					if aliveCountOfPayFl == 0 {
+						continue
+					}
+
+					count := mathutils.Min(remain, aliveCountOfPayFl)
+					remain -= count
+
+					amount := apiAggre.Amount.Div(decimal.NewFromInt(int64(apiAggre.Count))).Mul(decimal.NewFromInt(int64(count)))
+					lastBalance = lastBalance.Add(amount)
+
+					refundMeta, _ := json.Marshal(FiatMetaRefundApiFee{
+						Quota: Quota{
+							CostType: costtype,
+							Count:    count,
+						},
+						IsPart: count < apiAggre.Count,
+					})
+
+					refundFl := FiatLog{
+						FiatLogCore: FiatLogCore{
+							UserId:  userId,
+							Amount:  amount,
+							Type:    FIAT_LOG_TYPE_REFUND_API_FEE,
+							Balance: lastBalance,
+							OrderNO: RandomOrderNO(),
+							Meta:    refundMeta,
+						},
+						CacheIds: apiAggre.CacheIds,
+					}
+					err = tx.Save(&refundFl).Error
+					if err != nil {
+						return errors.WithMessage(err, "failed to save refund fiat logs")
+					}
+
+					payFl.FiatLog.RefundLogIds = append(payFl.FiatLog.RefundLogIds, refundFl.ID)
+					// recored refunded count and amount for invoice
+					payFlMeta.RefundedCount += count
+					payFlMeta.RefundedAmount = payFlMeta.RefundedAmount.Add(refundFl.Amount)
+					payFl.Meta = utils.Must(json.Marshal(payFlMeta))
+				}
+
+				_payFls := lo.Map(payFls, func(payFl *FiatLogWithCount, index int) FiatLog {
+					return payFl.FiatLog
 				})
-
-				refundFl := FiatLog{
-					FiatLogCore: FiatLogCore{
-						UserId:  userId,
-						Amount:  apiAggre.Amount.Div(decimal.NewFromInt(int64(apiAggre.Count))).Mul(decimal.NewFromInt(int64(count))),
-						Type:    FIAT_LOG_TYPE_REFUND_API_FEE,
-						Balance: lastBalance,
-						OrderNO: RandomOrderNO(),
-						Meta:    refundMeta,
-					},
-					CacheIds: apiAggre.CacheIds,
-				}
-				err = tx.Save(&refundFl).Error
-				if err != nil {
-					return err
+				if err = tx.Save(&_payFls).Error; err != nil {
+					return errors.WithMessage(err, "failed to save pay fait logs")
 				}
 
-				payFl.FiatLog.RefundLogIds = append(payFl.FiatLog.RefundLogIds, refundFl.ID)
-				// recored refunded count and amount for invoice
-				payFlMeta.RefundedCount += count
-				payFlMeta.RefundedAmount = payFlMeta.RefundedAmount.Add(refundFl.Amount)
-				payFl.Meta = utils.Must(json.Marshal(payFlMeta))
-			}
-
-			_payFls := lo.Map(payFls, func(payFl *FiatLogWithCount, index int) FiatLog {
-				return payFl.FiatLog
-			})
-			if err = tx.Save(&_payFls).Error; err != nil {
-				return err
-			}
-
-			if err := tx.Model(&FiatLogCache{}).Where("id in ?", []uint(apiAggre.CacheIds)).Update("is_merged", true).Error; err != nil {
-				return err
+				if err := tx.Model(&FiatLogCache{}).Where("id in ?", []uint(apiAggre.CacheIds)).Update("is_merged", true).Error; err != nil {
+					return errors.WithMessage(err, "failed to update fiat log caches")
+				}
 			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 // count represents the queried pay_api_fee_fiatlogs should contains the number of costtype which unrefuned
@@ -282,53 +292,88 @@ func getPayApiFeeFlsForMapRefund(tx *gorm.DB, userId uint, costtype enums.CostTy
 }
 
 // Note: not support refund api fee fiat log caches
-func mergeApiFiatlogs(tx *gorm.DB, fiatLogType FiatLogType, start, end time.Time) error {
+func mergeApiFiatlogs(fiatLogType FiatLogType, start, end time.Time) error {
+	// split by user and length
 	if !lo.Contains([]FiatLogType{FIAT_LOG_TYPE_PAY_API_FEE, FIAT_LOG_TYPE_PAY_API_QUOTA, FIAT_LOG_TYPE_RESET_API_QUOTA, FIAT_LOG_TYPE_REFUND_API_QUOTA}, fiatLogType) {
 		return fmt.Errorf("not support %v", fiatLogType)
 	}
 
-	var fiatlogCaches []*FiatLogCache
-	err := tx.Model(&FiatLogCache{}).
+	// get user_ids
+	var user_ids []uint
+	if err := GetDB().Model(&FiatLogCache{}).
+		Select("user_id").Group("user_id").
 		Where("created_at>=? and created_at<?", start, end).
 		Where("type=?", fiatLogType).
 		Where("is_merged=?", false).
-		Find(&fiatlogCaches).Error
-	if err != nil {
-		return err
+		Find(&user_ids).Error; err != nil {
+		return errors.WithMessage(err, "failed to find need merge users")
 	}
+	logrus.WithField("users", user_ids).WithField("type", fiatLogType).WithField("start", start).WithField("end", end).Info("find need merge fiat logs")
 
-	// fmt.Println(fiatlogCaches)
+	for _, user_id := range user_ids {
+		logrus.WithField("user_id", user_id).Info("merge user fiat log")
+		isAllMeged := false
+		for {
+			if isAllMeged {
+				break
+			}
 
-	if len(fiatlogCaches) == 0 {
-		return nil
+			if err := GetDB().Transaction(func(tx *gorm.DB) error {
+				var fiatlogCaches []*FiatLogCache
+				err := tx.Model(&FiatLogCache{}).
+					Where("created_at>=? and created_at<?", start, end).
+					Where("user_id=?", user_id).
+					Where("type=?", fiatLogType).
+					Where("is_merged=?", false).
+					Limit(1000).
+					Find(&fiatlogCaches).Error
+				if err != nil {
+					return errors.WithMessage(err, "failed to query unmerged fiat_log_caches")
+				}
+				fmt.Println("aaa")
+
+				if len(fiatlogCaches) == 0 {
+					isAllMeged = true
+					return nil
+				}
+				// fmt.Println("bbb")
+
+				userApiAggregates, err := groupFlcByUserAndCosttype(fiatlogCaches)
+				if err != nil {
+					return errors.WithMessage(err, "failed to group fiat_log_caches")
+				}
+				// fmt.Println("ccc")
+				// insert db
+				userApiFiatlogs, err := convertGroupedFlcToFiatlogs(tx, userApiAggregates, fiatLogType)
+				if err != nil {
+					return errors.WithMessage(err, "failed to convert to fiatlogs")
+				}
+				// fmt.Println("ddd")
+				if err = tx.Save(&userApiFiatlogs).Error; err != nil {
+					return errors.WithMessage(err, "failed to save fiat logs")
+				}
+				// fmt.Println("eee")
+
+				for _, v := range fiatlogCaches {
+					v.IsMerged = true
+				}
+
+				if err = tx.Save(&fiatlogCaches).Error; err != nil {
+					return errors.WithMessage(err, "failed to save fait log caches")
+				}
+				// fmt.Println("fff")
+				logrus.WithField("user_id", user_id).WithField("length", len(fiatlogCaches)).Info("success merge to fiat log")
+				return nil
+			}); err != nil {
+				logrus.WithField("user_id", user_id).WithError(err).Error("merge to fiat log")
+				return err
+			}
+		}
 	}
-
-	userApiAggregates, err := groupFlcByUserAndCosttype(fiatlogCaches, fiatLogType)
-	if err != nil {
-		return err
-	}
-	// insert db
-	userApiFiatlogs, err := convertGroupedFlcToFiatlogs(tx, userApiAggregates, fiatLogType)
-	if err != nil {
-		return err
-	}
-
-	if err = tx.Save(&userApiFiatlogs).Error; err != nil {
-		return err
-	}
-
-	for _, v := range fiatlogCaches {
-		v.IsMerged = true
-	}
-
-	if err = tx.Save(&fiatlogCaches).Error; err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func groupFlcByUserAndCosttype(source []*FiatLogCache, fiatLogType FiatLogType) (map[uint]map[enums.CostType](*ApiInfoAggregated), error) {
+func groupFlcByUserAndCosttype(source []*FiatLogCache) (map[uint]map[enums.CostType](*ApiInfoAggregated), error) {
 	userPayFees := make(map[uint]map[enums.CostType](*ApiInfoAggregated))
 	for _, item := range source {
 		if _, ok := userPayFees[item.UserId]; !ok {
