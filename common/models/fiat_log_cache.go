@@ -138,6 +138,10 @@ func mergePayApiFeeFiatlogs(start, end time.Time) error {
 }
 
 type ApiInfoAggregated struct {
+	// Quota count
+	CountReset    int
+	CountRollover int
+	// Balance count
 	Count    int
 	Amount   decimal.Decimal
 	CacheIds datatypes.JSONSlice[uint]
@@ -349,6 +353,10 @@ func mergeApiFiatlogs(fiatLogType FiatLogType, start, end time.Time) error {
 					return errors.WithMessage(err, "failed to convert to fiatlogs")
 				}
 				// fmt.Println("ddd")
+
+				j, _ := json.Marshal(userApiFiatlogs)
+				fmt.Printf("convertGroupedFlcToFiatlogs %s\n", j)
+
 				if err = tx.Save(&userApiFiatlogs).Error; err != nil {
 					return errors.WithMessage(err, "failed to save fiat logs")
 				}
@@ -380,19 +388,36 @@ func groupFlcByUserAndCosttype(source []*FiatLogCache) (map[uint]map[enums.CostT
 			userPayFees[item.UserId] = make(map[enums.CostType]*ApiInfoAggregated)
 		}
 
-		var meta FiatMetaPayApiFeeForCache
-		err := json.Unmarshal(item.Meta, &meta)
-		if err != nil {
-			return nil, err
-		}
+		if lo.Contains(apiFeeRelatedFiatLogTypes, item.Type) {
+			var meta FiatMetaPayApiFeeForCache
+			err := json.Unmarshal(item.Meta, &meta)
+			if err != nil {
+				return nil, err
+			}
 
-		if _, ok := userPayFees[item.UserId][meta.CostType]; !ok {
-			userPayFees[item.UserId][meta.CostType] = &ApiInfoAggregated{}
-		}
+			if _, ok := userPayFees[item.UserId][meta.CostType]; !ok {
+				userPayFees[item.UserId][meta.CostType] = &ApiInfoAggregated{}
+			}
 
-		userPayFees[item.UserId][meta.CostType].Count += meta.Count
-		userPayFees[item.UserId][meta.CostType].Amount = userPayFees[item.UserId][meta.CostType].Amount.Add(item.Amount)
-		userPayFees[item.UserId][meta.CostType].CacheIds = append(userPayFees[item.UserId][meta.CostType].CacheIds, item.ID)
+			userPayFees[item.UserId][meta.CostType].Count += meta.Count
+			userPayFees[item.UserId][meta.CostType].Amount = userPayFees[item.UserId][meta.CostType].Amount.Add(item.Amount)
+			userPayFees[item.UserId][meta.CostType].CacheIds = append(userPayFees[item.UserId][meta.CostType].CacheIds, item.ID)
+		} else {
+			var meta FiatMetaPayApiQuota
+			err := json.Unmarshal(item.Meta, &meta)
+			if err != nil {
+				return nil, err
+			}
+
+			if _, ok := userPayFees[item.UserId][meta.CostType]; !ok {
+				userPayFees[item.UserId][meta.CostType] = &ApiInfoAggregated{}
+			}
+
+			userPayFees[item.UserId][meta.CostType].CountReset += meta.CountReset
+			userPayFees[item.UserId][meta.CostType].CountRollover += meta.CountRollover
+			userPayFees[item.UserId][meta.CostType].Amount = userPayFees[item.UserId][meta.CostType].Amount.Add(item.Amount)
+			userPayFees[item.UserId][meta.CostType].CacheIds = append(userPayFees[item.UserId][meta.CostType].CacheIds, item.ID)
+		}
 	}
 	return userPayFees, nil
 }
@@ -407,10 +432,21 @@ func convertGroupedFlcToFiatlogs(tx *gorm.DB, groupedUserApiCosts map[uint]map[e
 
 		for costType, apiAggre := range payFees {
 			lastBalance = lastBalance.Add(apiAggre.Amount)
-			meta, _ := json.Marshal(FiatMetaPayApiFeeForCache{
-				CostType: costType,
-				Count:    apiAggre.Count,
-			})
+
+			var meta []byte
+			if lo.Contains(apiFeeRelatedFiatLogTypes, fiatLogType) {
+				meta, _ = json.Marshal(FiatMetaPayApiFeeForCache{
+					CostType: costType,
+					Count:    apiAggre.Count,
+				})
+			} else {
+				meta, _ = json.Marshal(FiatMetaPayApiQuota{
+					CostType:      costType,
+					CountReset:    apiAggre.CountReset,
+					CountRollover: apiAggre.CountRollover,
+				})
+			}
+
 			userPayFiatlogs = append(userPayFiatlogs, &FiatLog{
 				FiatLogCore: FiatLogCore{
 					UserId:  userId,
