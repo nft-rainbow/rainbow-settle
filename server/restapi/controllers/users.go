@@ -9,8 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models"
+	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
 	"github.com/nft-rainbow/rainbow-settle/server/services"
 	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
 )
 
 func getUserApiQuotas(c *gin.Context) {
@@ -61,4 +63,24 @@ func getUserIdByQuery(c *gin.Context) (uint, error) {
 	}
 	userId, err := strconv.Atoi(userIdStr)
 	return uint(userId), err
+}
+
+func getUserCostTypePrice(c *gin.Context) {
+	userIdStr := c.Query("user_id")
+	if userIdStr == "" {
+		ginutils.RenderRespError(c, errors.New("missing user_id in query"), http.StatusInternalServerError)
+		return
+	}
+	userId, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		ginutils.RenderRespError(c, err, http.StatusInternalServerError)
+		return
+	}
+
+	prices := make(map[enums.CostType]decimal.Decimal)
+	for v := range enums.CostTypeValue2StrMap {
+		price := models.GetApiPrice(uint(userId), v)
+		prices[v] = price
+	}
+	ginutils.RenderRespOK(c, prices)
 }

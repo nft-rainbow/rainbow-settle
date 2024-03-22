@@ -128,6 +128,7 @@ func (s *SettleServer) UpdateBillPlanRenew(ctx context.Context, in *proto.Update
 }
 
 func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponsorRequest) (*proto.Empty, error) {
+	logrus.WithField("input", in).Info("received refund sponosr request")
 	fiatlog, err := models.FindSponsorFiatlogByTxid(uint(in.TxId))
 	if err != nil {
 		return nil, err

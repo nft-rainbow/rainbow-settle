@@ -61,6 +61,22 @@ func ResetUsersQuotas(userIds []uint) error {
 		return err
 	}
 
+	// remove plan of rainbow server for USER_PAY_TYPE_POST users
+	um, err := models.GetAllUsersMap()
+	if err != nil {
+		return err
+	}
+	for u, serverPlan := range userPlans {
+		if um[u].UserPayType != enums.USER_PAY_TYPE_POST {
+			continue
+		}
+		for s, _ := range serverPlan {
+			if s == enums.SERVER_TYPE_RAINBOW {
+				delete(userPlans[u], s)
+			}
+		}
+	}
+
 	// to plan => userids
 	planId2UserIds := make(map[uint][]uint)
 	for userId, v := range userPlans {
