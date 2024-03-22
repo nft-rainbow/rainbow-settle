@@ -89,6 +89,19 @@ func GetAllUser(filter map[string]interface{}, offset, limit int) ([]*User, erro
 	return items, err
 }
 
+func GetAllUsersMap() (map[uint]*User, error) {
+	var users []*User
+	if err := GetDB().Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	userPayTypes := make(map[uint]*User)
+	for _, u := range users {
+		userPayTypes[u.ID] = u
+	}
+	return userPayTypes, nil
+}
+
 func GetAllUserIds() ([]uint, error) {
 	users, err := GetAllUser(nil, 0, math.MaxInt)
 	if err != nil {
