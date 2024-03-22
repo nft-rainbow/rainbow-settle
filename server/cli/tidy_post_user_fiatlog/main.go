@@ -258,7 +258,7 @@ func fixInvoice(userId uint, startTime time.Time, invoicedId uint, rawNeedClearF
 
 		var fiatlogsOf40 []*models.FiatLog
 		if err := tx.Model(&models.FiatLog{}).
-			Where("refund_log_id is null and balance>=0").
+			Where("refund_log_ids=CAST('null' AS JSON) and balance>=0").
 			Where("user_id=? and invoice_id is null and amount=?", userId, -40).
 			Limit(int(num40.IntPart())).
 			Find(&fiatlogsOf40).Error; err != nil {
