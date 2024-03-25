@@ -25,7 +25,7 @@ var (
 )
 
 func main() {
-	err := tidyPostUserFls(time.Date(2024, 01, 10, 15, 0, 0, 0, time.Local), 289)
+	err := tidyPostUserFls(time.Date(2024, 01, 10, 15, 6, 0, 0, time.Local), 289)
 	logrus.WithError(err).Info("Tidy post users fiat logs done")
 }
 
@@ -120,13 +120,21 @@ func updateFlcAmountAndBalance(userId uint, startTime time.Time) error {
 
 func updateFlAmountAndBalance(userId uint, startTime time.Time) error {
 	err := models.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&models.FiatLog{}).Where("user_id=? and created_at>?", userId, startTime).Update("amount", 0).Error; err != nil {
+		// 将非 DEPOSIT｜WITHDRAW｜CMB_CHARGE 的amount都置为0
+		if err := tx.Model(&models.FiatLog{}).
+			Where("user_id=? and created_at>?", userId, startTime).
+			Where("type not in ?", []models.FiatLogType{models.FIAT_LOG_TYPE_DEPOSIT, models.FIAT_LOG_TYPE_WITHDRAW, models.FIAT_LOG_TYPE_CMB_CHARGE}).
+			Update("amount", 0).Error; err != nil {
 			return errors.WithMessage(err, "Failed to update amount of all of matched fiatlogs")
 		}
 
+		logrus.Info("Update amount to 0 for not deposit/withdraw/charge fiat logs")
+
 		// update fl amount and balance according to previous's fiatLogCaches
 		var fls []*models.FiatLog
-		if err := tx.Model(&models.FiatLog{}).Where("user_id=? and created_at>?", userId, startTime).Find(&fls).Error; err != nil {
+		if err := tx.Model(&models.FiatLog{}).
+			Where("user_id=? and created_at>?", userId, startTime).
+			Find(&fls).Error; err != nil {
 			return errors.WithMessage(err, "Failed to find")
 		}
 		for i, fl := range fls {
@@ -138,7 +146,7 @@ func updateFlAmountAndBalance(userId uint, startTime time.Time) error {
 			}
 
 			// recalculate totalAmount
-			totalAmount := decimal.Zero
+			totalAmount := fl.Amount
 			for _, flc := range flcs {
 
 				// reset amount if fiat log type is "pay api fee" or "pay api quota"
@@ -160,6 +168,7 @@ func updateFlAmountAndBalance(userId uint, startTime time.Time) error {
 						return errors.WithMessage(err, "Failed to unmarshal flc meta")
 					}
 					if meta.CostType == enums.COST_TYPE_RAINBOW_MINT {
+						fl.Type = models.FIAT_LOG_TYPE_PAY_API_FEE
 						totalAmount = totalAmount.Add(decimal.NewFromFloat32(-0.7 * float32(meta.CountReset+meta.CountRollover)))
 					}
 					continue
@@ -182,6 +191,7 @@ func updateFlAmountAndBalance(userId uint, startTime time.Time) error {
 						return errors.WithMessage(err, "Failed to unmarshal flc meta")
 					}
 					if meta.CostType == enums.COST_TYPE_RAINBOW_MINT {
+						fl.Type = models.FIAT_LOG_TYPE_REFUND_API_FEE
 						totalAmount = totalAmount.Add(decimal.NewFromFloat32(0.7 * float32(meta.CountReset+meta.CountRollover)))
 					}
 					continue
