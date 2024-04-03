@@ -18,12 +18,13 @@ func SetupRouter(c *gin.Engine) {
 	{
 		user.GET("quota", getUserApiQuotas)
 		user.GET("bill-plan", getUserWorkingBillPlans)
-		user.GET("price",getUserCostTypePrice)
+		user.GET("price", getUserCostTypePrice)
 	}
 
 	internal := v0.Group("internal")
 	{
 		internal.POST("deposit", depositForUser)
 		internal.POST("withdraw", withdrawForUser)
+		internal.POST("refund", refundForUser)
 	}
 }
