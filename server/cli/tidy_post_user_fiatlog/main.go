@@ -71,7 +71,10 @@ func tidyPostUserFls(startTime time.Time, userId uint) error {
 
 func updateFlcAmountAndBalance(userId uint, startTime time.Time) error {
 	err := models.GetDB().Debug().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&models.FiatLogCache{}).Where("user_id=? and created_at>?", userId, startTime).Update("amount", 0).Error; err != nil {
+		if err := tx.Model(&models.FiatLogCache{}).
+			Where("user_id=? and created_at>?", userId, startTime).
+			Where("type not in ?", []models.FiatLogType{models.FIAT_LOG_TYPE_DEPOSIT, models.FIAT_LOG_TYPE_WITHDRAW, models.FIAT_LOG_TYPE_CMB_CHARGE}).
+			Update("amount", 0).Error; err != nil {
 			return err
 		}
 		// update pay api fls to -0.7*count
@@ -113,6 +116,12 @@ func updateFlcAmountAndBalance(userId uint, startTime time.Time) error {
 		if err := tx.Save(flcs).Error; err != nil {
 			return err
 		}
+
+		// update user balance to last fiat_log_cache balance
+		if err := tx.Model(&models.UserBalance{}).Where("user_id=?", userId).Update("balance", flcs[len(flcs)-1].Balance).Error; err != nil {
+			return errors.WithMessage(err, "Failed to update user balance")
+		}
+
 		return nil
 	})
 	return err
@@ -217,6 +226,12 @@ func updateFlAmountAndBalance(userId uint, startTime time.Time) error {
 		if err := tx.Save(fls).Error; err != nil {
 			return errors.WithMessage(err, "Failed to save fls")
 		}
+
+		// update user balance to last fiat_log_cache balance
+		if err := tx.Model(&models.UserBalance{}).Where("user_id=?", userId).Update("balance_on_fiatlog", fls[len(fls)-1].Balance).Error; err != nil {
+			return errors.WithMessage(err, "Failed to update user balance")
+		}
+		logrus.WithField("balance_on_fiatlog", fls[len(fls)-1].Balance).Info("Update user balance_on_fiatlog")
 
 		return nil
 	})
