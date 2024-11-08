@@ -426,7 +426,7 @@ func FiatlogOfBalanceChanges(cond FiatlogSummaryFilter, offset, limit int) ([]*F
 }
 
 func FindFiatlogsWithoutSponsorlog(start, end time.Time) ([]*FiatLog, error) {
-	fiatLogIdsRefunded, err := FindFiatlogIdsRefunded(start, end)
+	fiatLogIdsRefunded, err := FindSponsorFiatlogsRefunded(start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -535,9 +535,9 @@ func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, er
 	return balances, nil
 }
 
-func FindFiatlogIdsRefunded(start, end time.Time) ([]uint, error) {
+func FindSponsorFiatlogsRefunded(start, end time.Time) ([]uint, error) {
 	var fiatLogs []*FiatLog
-	err := GetDB().Model(&FiatLog{}).Where("type=?", FIAT_LOG_TYPE_REFUND_SPONSOR).Where("created_at>=?", start).Where("created_at<?", end).Where("refund_log_ids!=CAST('null' AS JSON)").Find(&fiatLogs).Error
+	err := GetDB().Model(&FiatLog{}).Where("type in (?)", []FiatLogType{FIAT_LOG_TYPE_BUY_GAS, FIAT_LOG_TYPE_BUY_STORAGE}).Where("created_at>=?", start).Where("created_at<?", end).Where("refund_log_ids!=CAST('null' AS JSON)").Find(&fiatLogs).Error
 	if err != nil {
 		return nil, err
 	}

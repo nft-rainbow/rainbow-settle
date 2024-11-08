@@ -41,3 +41,11 @@ func TestGetLastFiatLog(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println(*f)
 }
+
+func TestFindFiatlogIdsRefunded(t *testing.T) {
+	start := time.Date(2024, 10, 1, 0, 0, 0, 0, time.Local)
+	end := time.Date(2024, 11, 1, 0, 0, 0, 0, time.Local)
+	ids, err := FindSponsorFiatlogsRefunded(start, end)
+	assert.NoError(t, err)
+	fmt.Println(ids)
+}
