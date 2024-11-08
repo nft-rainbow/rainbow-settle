@@ -75,7 +75,7 @@ type FiatLog struct {
 	FiatLogCore
 	CacheIds     datatypes.JSONSlice[uint] `json:"cache_ids"`
 	InvoiceId    *uint                     `gorm:"type:int;index" json:"invoice_id"` // 发票id, 如果某条消费 log 已开发票, 此字段会有值
-	RefundLogIds datatypes.JSONSlice[uint] `json:"refund_log_id"`                    // 退款日志id, 如果某条消费 log 被退款了, 此字段会有值
+	RefundLogIds datatypes.JSONSlice[uint] `json:"refund_log_ids"`                   // 对应的退款 fiatLog。说明当前 fiatLog 中有退款，meta中的 refunded_amount 为该fiatLog中被退款金额
 }
 
 func (f *FiatLog) AfterCreate(tx *gorm.DB) (err error) {
@@ -537,14 +537,10 @@ func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, er
 
 func FindFiatlogIdsRefunded(start, end time.Time) ([]uint, error) {
 	var fiatLogs []*FiatLog
-	err := GetDB().Model(&FiatLog{}).Where("type=?", FIAT_LOG_TYPE_REFUND_SPONSOR).Where("created_at>=?", start).Where("created_at<?", end).Find(&fiatLogs).Error
+	err := GetDB().Model(&FiatLog{}).Where("type=?", FIAT_LOG_TYPE_REFUND_SPONSOR).Where("created_at>=?", start).Where("created_at<?", end).Where("refund_log_ids!=CAST('null' AS JSON)").Find(&fiatLogs).Error
 	if err != nil {
 		return nil, err
 	}
 
-	var fiatLogIdsRefunded []uint
-	for _, fiatLog := range fiatLogs {
-		fiatLogIdsRefunded = append(fiatLogIdsRefunded, fiatLog.RefundLogIds...)
-	}
-	return fiatLogIdsRefunded, nil
+	return GetIds(fiatLogs), nil
 }
