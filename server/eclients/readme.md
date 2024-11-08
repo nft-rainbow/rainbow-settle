@@ -10,7 +10,7 @@
 
 3月底支持的按铸造个数收费
 
-## 如何设置某用户为免费
+## 如何设置某用户为免费（财务不允许设置 cfx_price 为 0）
 1. 设置 users.user_type 为 2
 2. 设置 user_balances.cfx_price 为 0
 3. 设置 user_api_quota.cost_type 3 值为无穷

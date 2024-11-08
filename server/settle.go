@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/nft-rainbow/rainbow-settle/common/models"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
@@ -128,6 +129,7 @@ func (s *SettleServer) UpdateBillPlanRenew(ctx context.Context, in *proto.Update
 }
 
 func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponsorRequest) (*proto.Empty, error) {
+	start := time.Now()
 	logrus.WithField("input", in).Info("received refund sponosr request")
 	fiatlog, err := models.FindSponsorFiatlogByTxid(uint(in.TxId))
 	if err != nil {
@@ -138,7 +140,7 @@ func (s *SettleServer) RefundSponsor(ctx context.Context, in *proto.RefundSponso
 	if err != nil {
 		return nil, err
 	}
-	logrus.WithField("fiatlog", fl).Info("refund sponsor completed")
+	logrus.WithField("fiatlog", fl).WithField("usage", time.Since(start)).Info("refund sponsor completed")
 	return &proto.Empty{}, nil
 }
 

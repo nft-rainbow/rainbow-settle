@@ -426,8 +426,13 @@ func FiatlogOfBalanceChanges(cond FiatlogSummaryFilter, offset, limit int) ([]*F
 }
 
 func FindFiatlogsWithoutSponsorlog(start, end time.Time) ([]*FiatLog, error) {
+	fiatLogIdsRefunded, err := FindFiatlogIdsRefunded(start, end)
+	if err != nil {
+		return nil, err
+	}
+
 	var fls []*FiatLog
-	err := GetDB().
+	err = GetDB().
 		// Debug().
 		Table("fiat_logs").Where("fiat_logs.deleted_at is null").
 		Where("fiat_logs.created_at>=?", start).Where("fiat_logs.created_at<?", end).
@@ -435,6 +440,7 @@ func FindFiatlogsWithoutSponsorlog(start, end time.Time) ([]*FiatLog, error) {
 		Joins("left join transactions on transactions.id=fiat_logs.meta->\"$.tx_id\"").
 		Joins("left join sponsor_logs on sponsor_logs.hash=transactions.hash").
 		Where("sponsor_logs.id is null").
+		Where("fiat_logs.id not in (?)", fiatLogIdsRefunded).
 		Select("fiat_logs.*").
 		Scan(&fls).Error
 	if err != nil {
@@ -527,4 +533,18 @@ func GetUserBalanceAtDate(userIds []uint, date time.Time) ([]decimal.Decimal, er
 		}
 	}
 	return balances, nil
+}
+
+func FindFiatlogIdsRefunded(start, end time.Time) ([]uint, error) {
+	var fiatLogs []*FiatLog
+	err := GetDB().Model(&FiatLog{}).Where("type=?", FIAT_LOG_TYPE_REFUND_SPONSOR).Where("created_at>=?", start).Where("created_at<?", end).Find(&fiatLogs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var fiatLogIdsRefunded []uint
+	for _, fiatLog := range fiatLogs {
+		fiatLogIdsRefunded = append(fiatLogIdsRefunded, fiatLog.RefundLogIds...)
+	}
+	return fiatLogIdsRefunded, nil
 }
