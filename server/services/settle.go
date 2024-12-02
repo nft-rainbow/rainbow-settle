@@ -120,7 +120,11 @@ func settle() error {
 		}
 
 		// calc count in balance
-		price := models.GetApiPrice(userId, costType)
+		price, err := models.GetApiPrice(userId, costType)
+		if err != nil {
+			logrus.WithError(err).WithField("user id", userId).WithField("cost type", costType).Info("failed to get api price")
+			continue
+		}
 		countInBalance := int64(count - countInQuota)
 		if price.GreaterThan(decimal.Zero) {
 			countInBalance = mathutils.Min(countInBalance, userBalances[userId].Balance.Add(userBalances[userId].ArrearsQuota).Div(price).BigInt().Int64())

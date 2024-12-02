@@ -79,7 +79,11 @@ func getUserCostTypePrice(c *gin.Context) {
 
 	prices := make(map[enums.CostType]decimal.Decimal)
 	for v := range enums.CostTypeValue2StrMap {
-		price := models.GetApiPrice(uint(userId), v)
+		price, err := models.GetApiPrice(uint(userId), v)
+		if err != nil {
+			ginutils.RenderRespError(c, err, http.StatusInternalServerError)
+			return
+		}
 		prices[v] = price
 	}
 	ginutils.RenderRespOK(c, prices)
