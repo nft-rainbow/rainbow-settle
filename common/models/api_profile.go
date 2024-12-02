@@ -1,11 +1,10 @@
 package models
 
 import (
-	"fmt"
-
 	"github.com/nft-rainbow/conflux-gin-helper/utils"
 	"github.com/nft-rainbow/conflux-gin-helper/utils/ginutils"
 	"github.com/nft-rainbow/rainbow-settle/common/models/enums"
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 )
 
@@ -24,7 +23,7 @@ type ApiProfileFilter struct {
 }
 
 var (
-	GetApiPrice func(userId uint, costType enums.CostType) decimal.Decimal
+	GetApiPrice func(userId uint, costType enums.CostType) (decimal.Decimal, error)
 )
 
 func InitApiProfile() {
@@ -49,21 +48,27 @@ func InitApiProfile() {
 		panic(err)
 	}
 
-	GetApiPrice = func(userId uint, costType enums.CostType) decimal.Decimal {
+	GetApiPrice = func(userId uint, costType enums.CostType) (decimal.Decimal, error) {
 		if um[userId] == nil {
-			panic(fmt.Sprintf("user %d unexists", userId))
+			um, err = GetAllUsersMap()
+			if err != nil {
+				return decimal.Zero, errors.WithMessage(err, "failed to get user and refresh all user")
+			}
+			if um[userId] == nil {
+				return decimal.Zero, errors.New("user not found")
+			}
 		}
 
 		if um[userId].UserPayType == enums.USER_PAY_TYPE_POST {
 			if costType == enums.COST_TYPE_RAINBOW_MINT {
-				return decimal.NewFromFloat32(0.7)
+				return decimal.NewFromFloat32(0.7), nil
 			}
-			return decimal.Zero
+			return decimal.Zero, nil
 		}
 		if _, ok := apiProfiles[costType]; !ok {
-			panic(fmt.Sprintf("not found api price of %d", int(costType)))
+			return decimal.Zero, errors.Errorf("not found api price of %d", int(costType))
 		}
-		return apiProfiles[costType].Price
+		return apiProfiles[costType].Price, nil
 	}
 }
 

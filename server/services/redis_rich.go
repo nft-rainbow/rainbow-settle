@@ -47,7 +47,10 @@ func refreshRichFlag() error {
 
 	// logrus.WithField("user cost states", userCostStates).Trace("debug for refresh rich flag")
 	for userId, costStates := range userCostStates {
-		flag := calcRichFlag(costStates)
+		flag, err := calcRichFlag(costStates)
+		if err != nil {
+			return err
+		}
 		if _, err := redis.DB().Set(context.Background(), redis.RichKey(userId), flag, 0).Result(); err != nil {
 			return err
 		}
@@ -55,10 +58,15 @@ func refreshRichFlag() error {
 	return nil
 }
 
-func calcRichFlag(states []*userCostState) int {
+func calcRichFlag(states []*userCostState) (int, error) {
 	flag := 0
 	for _, cs := range states {
-		isRich := cs.CountReset+cs.CountRollover > 0 || cs.Balance.Add(cs.ArrearsQuota).GreaterThanOrEqual(models.GetApiPrice(cs.UserId, cs.CostType))
+		apiPrice, err := models.GetApiPrice(cs.UserId, cs.CostType)
+		if err != nil {
+			return 0, err
+		}
+
+		isRich := cs.CountReset+cs.CountRollover > 0 || cs.Balance.Add(cs.ArrearsQuota).GreaterThanOrEqual(apiPrice)
 		// only mint need pay for USER_PAY_TYPE_POST users
 		if cs.UserPayType == enums.USER_PAY_TYPE_POST && cs.CostType != enums.COST_TYPE_RAINBOW_MINT {
 			isRich = true
@@ -68,5 +76,5 @@ func calcRichFlag(states []*userCostState) int {
 		}
 	}
 	// logrus.WithField("states", states).WithField("flag", flag).Info("calc rich flag")
-	return flag
+	return flag, nil
 }
