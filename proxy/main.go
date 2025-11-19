@@ -83,10 +83,11 @@ func main() {
 
 	handlerFn := func(w http.ResponseWriter, r *http.Request) {
 		// 写入request id
+		fmt.Printf("start handle request, req url: %s\n", r.URL.String())
 		reqId := r.Header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 		w.Header().Add(constants.RAINBOW_REQUEST_ID_HEADER_KEY, reqId)
 		proxy.ServeHTTP(w, r)
-		fmt.Printf("resp header: %v\n", w.Header())
+		fmt.Printf("end handle request, resp header: %v\n", w.Header())
 	}
 
 	proxyAddr := "0.0.0.0:8020"
@@ -95,6 +96,8 @@ func main() {
 
 func initGin() *gin.Engine {
 	engine := gin.New()
+	engine.RedirectTrailingSlash = false
+	engine.RedirectFixedPath = false
 	engine.Use(gin.Logger())
 	engine.Use(middlewares.Logger(&middlewares.LogOptions{ReqHeaderLogger: reqHeaderLog}))
 	if logConfig.Level == "trace" {
