@@ -24,7 +24,7 @@ const (
 	HEADER_KEY_APPEND_QUERY = "X-Rainbow-Append-Query"
 )
 
-var logConfig = logger.LogConfig{Level: "trace", Folder: ".log", Format: "json"}
+var logConfig = logger.LogConfig{Level: "trace", Folder: ".log", Format: "text"}
 
 func main() {
 	logger.Init(logConfig, "========== PROXY =============")
@@ -83,11 +83,11 @@ func main() {
 
 	handlerFn := func(w http.ResponseWriter, r *http.Request) {
 		// 写入request id
-		fmt.Printf("start handle request, req url: %s\n", r.URL.String())
+		fmt.Printf("[handlerFn] start handle request, req url: %s\n", r.URL.String())
 		reqId := r.Header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 		w.Header().Add(constants.RAINBOW_REQUEST_ID_HEADER_KEY, reqId)
 		proxy.ServeHTTP(w, r)
-		fmt.Printf("end handle request, resp header: %v\n", w.Header())
+		fmt.Printf("[handlerFn] end handle request, resp header: %v\n", w.Header())
 	}
 
 	proxyAddr := "0.0.0.0:8020"
@@ -164,7 +164,7 @@ func rpcLogger(c *gin.Context) {
 func RunWithGin(proxyAddr string, handlerFunc http.HandlerFunc) {
 
 	app := initGin()
-	app.Any("*path", gin.WrapF(handlerFunc))
+	app.Any("/*any", gin.WrapF(handlerFunc))
 
 	srv := &http.Server{
 		Addr:    proxyAddr,
