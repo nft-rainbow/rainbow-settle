@@ -83,11 +83,11 @@ func main() {
 
 	handlerFn := func(w http.ResponseWriter, r *http.Request) {
 		// 写入request id
-		fmt.Printf("[handlerFn] start handle request, req url: %s\n", r.URL.String())
+		logrus.WithField("req url", r.URL.String()).Info("[handlerFn] start handle request")
 		reqId := r.Header.Get(constants.RAINBOW_REQUEST_ID_HEADER_KEY)
 		w.Header().Add(constants.RAINBOW_REQUEST_ID_HEADER_KEY, reqId)
 		proxy.ServeHTTP(w, r)
-		fmt.Printf("[handlerFn] end handle request, resp header: %v\n", w.Header())
+		logrus.WithField("resp header", w.Header()).Info("[handlerFn] end handle request")
 	}
 
 	proxyAddr := "0.0.0.0:8020"
@@ -173,7 +173,7 @@ func RunWithGin(proxyAddr string, handlerFunc http.HandlerFunc) {
 
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
-	fmt.Printf("Proxy server listening on %s...\n", proxyAddr)
+	logrus.WithField("proxy addr", proxyAddr).Info("Proxy server listening on")
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Error starting proxy server: %v", err)
 	}
@@ -184,9 +184,9 @@ func RunWithRawHttp(proxyAddr string, handlerFunc http.HandlerFunc) {
 	http.HandleFunc("/", handlerFunc)
 
 	// 启动代理服务器
-	fmt.Printf("Proxy server listening on %s...\n", proxyAddr)
+	logrus.WithField("proxy addr", proxyAddr).Info("Proxy server listening on")
 	err := http.ListenAndServe(proxyAddr, nil)
 	if err != nil {
-		fmt.Println("Error starting proxy server:", err)
+		logrus.WithField("proxy addr", proxyAddr).Error("Error starting proxy server")
 	}
 }
