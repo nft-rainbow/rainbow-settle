@@ -3,3 +3,4 @@ config.yaml
 .doc
 doc/routers.sh
 .request_log
+.DS_Store
