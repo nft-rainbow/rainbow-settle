@@ -31,6 +31,12 @@ func unlockBalanceMu() {
 	logrus.Debug("balance mutex unlocked")
 }
 
+// NOTE: 只在 cli 中使用，增加用于完成充值订单相关流程，包含增加 fiat log 和更新 user balance，而由于有的用户余额为负，所以增加该方法。
+// 禁止在正常业务中使用！！
+func DepositBalanceWithoutCheckBalance(tx *gorm.DB, userId uint, amount decimal.Decimal, depositOrderId uint, logType models.FiatLogType) (uint, error) {
+	return updateUserBalanceWithTx(tx, userId, amount, logType, models.FiatMetaDeposit{depositOrderId}, false)
+}
+
 func DepositBalance(userId uint, amount decimal.Decimal, depositOrderId uint, logType models.FiatLogType) (uint, error) {
 	return updateUserBalance(userId, amount, logType, models.FiatMetaDeposit{depositOrderId})
 }

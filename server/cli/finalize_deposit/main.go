@@ -54,11 +54,29 @@ func finalizeDeposit(orderId uint, status int) error {
 		return errors.New("fiat_logs already exist")
 	}
 
-	// update order
-	err = services.UpdateDepositOrder(orderId, status)
-	if err != nil {
-		return err
-	}
+	err = models.GetDB().Transaction(func(tx *gorm.DB) error {
+		err := tx.Model(&models.DepositOrder{}).Where("id = ?", orderId).Update("status", status).Error
+		if err != nil {
+			return err
+		}
+		if status == models.DEPOSIT_SUCCESS {
+			order := models.DepositOrder{}
+			if err := tx.First(&order, orderId).Error; err != nil {
+				return err
+			}
+			if _, err = services.DepositBalanceWithoutCheckBalance(tx, order.UserId, order.Amount, orderId, models.FIAT_LOG_TYPE_DEPOSIT); err != nil {
+				utils.DingWarnf("deposit balance failed: %d %s", orderId, err.Error())
+				return err
+			}
+		}
+		return nil
+	})
+
+	// // update order
+	// err = services.UpdateDepositOrder(orderId, status)
+	// if err != nil {
+	// 	return err
+	// }
 
 	fmt.Printf("deposit order updated: %d\n", order.ID)
 	return nil
