@@ -61,7 +61,7 @@ func InitApiProfile() {
 
 		if um[userId].UserPayType == enums.USER_PAY_TYPE_POST {
 			if costType == enums.COST_TYPE_RAINBOW_MINT {
-				return decimal.NewFromFloat32(0.7), nil
+				return decimal.NewFromFloat32(0.1), nil
 			}
 			return decimal.Zero, nil
 		}
